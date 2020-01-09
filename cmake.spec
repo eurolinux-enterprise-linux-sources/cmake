@@ -12,8 +12,8 @@
 %endif
 
 Name:           cmake
-Version:        2.8.11
-Release:        4%{?dist}
+Version:        2.8.12.2
+Release:        2%{?dist}
 Summary:        Cross-platform make system
 
 Group:          Development/Tools
@@ -40,13 +40,33 @@ Patch2:         cmake-findruby.patch
 Patch3:         cmake-FindPostgreSQL.patch
 # Patch FindImageMagick.cmake for newer ImageMagick versions
 # http://public.kitware.com/Bug/view.php?id=14012
-Patch4:         cmake-2.8.11-rc1-IM_pkgconfig_hints.patch
+Patch4:         cmake-2.8.12.2-IM_pkgconfig_hints.patch
 # Add FindLua52.cmake
 Patch5:		cmake-2.8.11-rc4-lua-5.2.patch
 # Fix strict aliasing problems in cm_sha2.c
 Patch6:         cmake-strict_aliasing.patch
 # Desktop icon filenames should be without extension
 Patch7:         cmake-desktop_icon.patch
+# FindJNI: Add ppc64le architecture
+Patch8:         cmake-FindJNI.patch
+# # Fix issue with finding consistent python versions
+# http://public.kitware.com/Bug/view.php?id=13794
+# https://bugzilla.redhat.com/show_bug.cgi?id=876118
+Patch9:         cmake-FindPythonLibs-1.patch
+# BZ 1246369 add support for python version 3.4 
+Patch10:        cmake-FindPythonLibs-2.patch
+# Upstream patch to find Boost MPI library
+# http://www.cmake.org/Bug/view.php?id=14739
+# https://bugzilla.redhat.com/show_bug.cgi?id=756141
+Patch11:        cmake-boostmpi.patch
+# Fix FindFreetype for 2.5.1+
+# http://public.kitware.com/Bug/view.php?id=14601
+Patch12:         cmake-FindFreetype.patch
+# Remove automatic Qt module dep adding
+Patch13:         cmake-qtdeps.patch
+# BZ 1192188 Don't fail if certain Qt modules are unavailable.
+Patch14:         cmake-fix-mingw32-builds-of-Qt4.patch
+
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires:  gcc-gfortran
@@ -103,6 +123,13 @@ The %{name}-gui package contains the Qt based GUI for CMake.
 %patch5 -p1
 %patch6 -p1
 %patch7 -p1
+%patch8 -p1
+%patch9 -p1
+%patch10 -p1
+%patch11 -p1
+%patch12 -p1
+%patch13 -p1
+%patch14 -p1
 
 
 %build
@@ -199,6 +226,17 @@ update-mime-database %{_datadir}/mime &> /dev/null || :
 
 
 %changelog
+* Wed Mar 02 2016 Patsy Franklin <pfrankli@redhat.com> - 2.8.12.2-2
+- Clean up patches and get rid of .orig files.
+
+* Fri Feb 26 2016 Patsy Franklin <pfrankli@redhat.com> - 2.8.12.2-1
+- Rebase to 2.8.12.2 including some recent patches. (BZ #1195919)
+- Fix to find python libs version 3.4 (BZ #1246369)
+- Don't fail if certain Qt modules are unavailable. (BZ #1192188)
+
+* Wed Aug 20 2014 Patsy Franklin <pfrankli@redhat.com> - 2.8.11-5
+- Add support for ppc64le to FindJNI.cmake.
+
 * Fri Jan 24 2014 Daniel Mach <dmach@redhat.com> - 2.8.11-4
 - Mass rebuild 2014-01-24
 
