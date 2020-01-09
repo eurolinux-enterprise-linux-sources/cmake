@@ -67,17 +67,8 @@ archive_read_close(struct archive *a)
 }
 
 int
-archive_write_fail(struct archive *a)
-{
-	a->state = ARCHIVE_STATE_FATAL;
-	return a->state;
-}
-
-int
 archive_write_free(struct archive *a)
 {
-	if (a == NULL)
-		return (ARCHIVE_OK);
 	return ((a->vtable->archive_free)(a));
 }
 
@@ -86,15 +77,13 @@ archive_write_free(struct archive *a)
 int
 archive_write_finish(struct archive *a)
 {
-	return archive_write_free(a);
+	return ((a->vtable->archive_free)(a));
 }
 #endif
 
 int
 archive_read_free(struct archive *a)
 {
-	if (a == NULL)
-		return (ARCHIVE_OK);
 	return ((a->vtable->archive_free)(a));
 }
 
@@ -103,7 +92,7 @@ archive_read_free(struct archive *a)
 int
 archive_read_finish(struct archive *a)
 {
-	return archive_read_free(a);
+	return ((a->vtable->archive_free)(a));
 }
 #endif
 

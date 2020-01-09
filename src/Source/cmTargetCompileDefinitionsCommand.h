@@ -81,7 +81,7 @@ private:
 
   virtual void HandleDirectContent(cmTarget *tgt,
                                    const std::vector<std::string> &content,
-                                   bool prepend, bool system);
+                                   bool prepend);
   virtual std::string Join(const std::vector<std::string> &content);
 };
 

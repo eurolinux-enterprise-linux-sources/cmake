@@ -506,7 +506,7 @@ bool cmWin32ProcessExecution::PrivateOpen(const char *cmdstring,
 
   /* Create new output read handle and the input write handle. Set
    * the inheritance properties to FALSE. Otherwise, the child inherits
-   * these handles; resulting in non-closeable handles to the pipes
+   * the these handles; resulting in non-closeable handles to the pipes
    * being created. */
   fSuccess = DuplicateHandle(GetCurrentProcess(), this->hChildStdinWr,
                              GetCurrentProcess(), &this->hChildStdinWrDup, 0,

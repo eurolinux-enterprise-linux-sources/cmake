@@ -57,8 +57,7 @@ public:
   };
 
   static std::string Preprocess(const std::string &input,
-                                PreprocessContext context,
-                                bool resolveRelative = false);
+                                PreprocessContext context);
 
   static void Split(const std::string &input,
                     std::vector<std::string> &output);

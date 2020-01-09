@@ -20,11 +20,9 @@ Run flex like this:
 
 Modify cmListFileLexer.c:
   - remove TABs
-  - remove use of the 'register' storage class specifier
   - remove the yyunput function
   - add a statement "(void)yyscanner;" to the top of these methods:
       yy_fatal_error, cmListFileLexer_yyalloc, cmListFileLexer_yyrealloc, cmListFileLexer_yyfree
-  - remove statement "yyscanner = NULL;" from cmListFileLexer_yylex_destroy
   - remove all YY_BREAK lines occurring right after return statements
   - remove the isatty forward declaration
 
@@ -76,8 +74,6 @@ static void cmListFileLexerDestroy(cmListFileLexer* lexer);
 %x STRING
 
 MAKEVAR \$\([A-Za-z0-9_]*\)
-UNQUOTED ([^ \t\r\n\(\)#\\\"]|\\.)
-LEGACY {MAKEVAR}|{UNQUOTED}|\"({MAKEVAR}|{UNQUOTED}|[ \t])*\"
 
 %%
 
@@ -114,14 +110,7 @@ LEGACY {MAKEVAR}|{UNQUOTED}|\"({MAKEVAR}|{UNQUOTED}|[ \t])*\"
   return 1;
 }
 
-({UNQUOTED})({UNQUOTED})* {
-  lexer->token.type = cmListFileLexer_Token_ArgumentUnquoted;
-  cmListFileLexerSetToken(lexer, yytext, yyleng);
-  lexer->column += yyleng;
-  return 1;
-}
-
-({MAKEVAR}|{UNQUOTED})({LEGACY})* {
+({MAKEVAR}|[^ \t\r\n\(\)#\\\"]|\\.)({MAKEVAR}|[^ \t\r\n\(\)#\\\"]|\\.|\"({MAKEVAR}|[^\r\n\(\)#\\\"]|\\.)*\")* {
   lexer->token.type = cmListFileLexer_Token_ArgumentUnquoted;
   cmListFileLexerSetToken(lexer, yytext, yyleng);
   lexer->column += yyleng;
@@ -135,15 +124,9 @@ LEGACY {MAKEVAR}|{UNQUOTED}|\"({MAKEVAR}|{UNQUOTED}|[ \t])*\"
   BEGIN(STRING);
 }
 
-<STRING>([^\\\n\"]|\\.)+ {
+<STRING>([^\\\n\"]|\\(.|\n))+ {
   cmListFileLexerAppend(lexer, yytext, yyleng);
   lexer->column += yyleng;
-}
-
-<STRING>\\\n {
-  cmListFileLexerAppend(lexer, yytext, yyleng);
-  ++lexer->line;
-  lexer->column = 1;
 }
 
 <STRING>\n {
@@ -169,11 +152,8 @@ LEGACY {MAKEVAR}|{UNQUOTED}|\"({MAKEVAR}|{UNQUOTED}|[ \t])*\"
   return 1;
 }
 
-[ \t\r]+ {
-  lexer->token.type = cmListFileLexer_Token_Space;
-  cmListFileLexerSetToken(lexer, yytext, yyleng);
+[ \t\r] {
   lexer->column += yyleng;
-  return 1;
 }
 
 . {
@@ -424,7 +404,6 @@ const char* cmListFileLexer_GetTypeAsString(cmListFileLexer* lexer,
   switch(type)
     {
     case cmListFileLexer_Token_None: return "nothing";
-    case cmListFileLexer_Token_Space: return "space";
     case cmListFileLexer_Token_Newline: return "newline";
     case cmListFileLexer_Token_Identifier: return "identifier";
     case cmListFileLexer_Token_ParenLeft: return "left paren";

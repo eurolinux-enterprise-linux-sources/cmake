@@ -20,8 +20,3 @@ target_compile_definitions(consumer
   PRIVATE $<TARGET_PROPERTY:target_compile_definitions,INTERFACE_COMPILE_DEFINITIONS>
   -DDASH_D_DEFINE
 )
-
-# Test no items
-target_compile_definitions(consumer
-  PRIVATE
-)

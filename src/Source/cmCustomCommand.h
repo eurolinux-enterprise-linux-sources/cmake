@@ -27,7 +27,6 @@ public:
   /** Default and copy constructors for STL containers.  */
   cmCustomCommand();
   cmCustomCommand(const cmCustomCommand& r);
-  cmCustomCommand& operator=(cmCustomCommand const& r);
 
   /** Main constructor specifies all information for the command.  */
   cmCustomCommand(cmMakefile* mf,

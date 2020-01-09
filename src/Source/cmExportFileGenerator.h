@@ -15,8 +15,6 @@
 #include "cmCommand.h"
 #include "cmGeneratorExpression.h"
 
-class cmTargetExport;
-
 /** \class cmExportFileGenerator
  * \brief Generate a file exporting targets from a build or install tree.
  *
@@ -36,8 +34,6 @@ public:
 
   /** Set the namespace in which to place exported target names.  */
   void SetNamespace(const char* ns) { this->Namespace = ns; }
-
-  void SetExportOld(bool exportOld) { this->ExportOld = exportOld; }
 
   /** Add a configuration to be exported.  */
   void AddConfiguration(const char* config);
@@ -105,10 +101,6 @@ protected:
                                  cmGeneratorExpression::PreprocessContext,
                                  ImportPropertyMap &properties,
                                  std::vector<std::string> &missingTargets);
-  bool PopulateInterfaceLinkLibrariesProperty(cmTarget *target,
-                                 cmGeneratorExpression::PreprocessContext,
-                                 ImportPropertyMap &properties,
-                                 std::vector<std::string> &missingTargets);
   void PopulateInterfaceProperty(const char *propName, cmTarget *target,
                                  ImportPropertyMap &properties);
   void PopulateCompatibleInterfaceProperties(cmTarget *target,
@@ -116,7 +108,7 @@ protected:
   void GenerateInterfaceProperties(cmTarget *target, std::ostream& os,
                                    const ImportPropertyMap &properties);
   void PopulateIncludeDirectoriesInterface(
-                      cmTargetExport *target,
+                      cmTarget *target,
                       cmGeneratorExpression::PreprocessContext preprocessRule,
                       ImportPropertyMap &properties,
                       std::vector<std::string> &missingTargets);
@@ -136,13 +128,8 @@ protected:
                           std::vector<std::string> &missingTargets,
                           FreeTargetsReplace replace = NoReplaceFreeTargets);
 
-  void GenerateRequiredCMakeVersion(std::ostream& os,
-                                    const char *versionString);
-
   // The namespace in which the exports are placed in the generated file.
   std::string Namespace;
-
-  bool ExportOld;
 
   // The set of configurations to export.
   std::vector<std::string> Configurations;
@@ -172,9 +159,6 @@ private:
                                     std::vector<std::string> &missingTargets);
 
   virtual void ReplaceInstallPrefix(std::string &input);
-
-  virtual std::string InstallNameDir(cmTarget* target,
-                                     const std::string& config) = 0;
 };
 
 #endif

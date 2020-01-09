@@ -19,12 +19,7 @@
 #include <cmsys/CPU.h>
 
 // Include the ELF format information system header.
-#if defined(__OpenBSD__)
-# include <stdint.h>
-# include <elf_abi.h>
-#else
-# include <elf.h>
-#endif
+#include <elf.h>
 #if defined(__sun)
 # include <sys/link.h> // For dynamic section information
 #endif

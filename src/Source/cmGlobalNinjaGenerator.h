@@ -77,27 +77,27 @@ public:
    * It also writes the variables bound to this build statement.
    * @warning no escaping of any kind is done here.
    */
-  void WriteBuild(std::ostream& os,
-                  const std::string& comment,
-                  const std::string& rule,
-                  const cmNinjaDeps& outputs,
-                  const cmNinjaDeps& explicitDeps,
-                  const cmNinjaDeps& implicitDeps,
-                  const cmNinjaDeps& orderOnlyDeps,
-                  const cmNinjaVars& variables,
-                  const std::string& rspfile = std::string(),
-                  int cmdLineLimit = -1);
+  static void WriteBuild(std::ostream& os,
+                         const std::string& comment,
+                         const std::string& rule,
+                         const cmNinjaDeps& outputs,
+                         const cmNinjaDeps& explicitDeps,
+                         const cmNinjaDeps& implicitDeps,
+                         const cmNinjaDeps& orderOnlyDeps,
+                         const cmNinjaVars& variables,
+                         const std::string& rspfile = std::string(),
+                         int cmdLineLimit = -1);
 
   /**
    * Helper to write a build statement with the special 'phony' rule.
    */
-  void WritePhonyBuild(std::ostream& os,
-                       const std::string& comment,
-                       const cmNinjaDeps& outputs,
-                       const cmNinjaDeps& explicitDeps,
-                       const cmNinjaDeps& implicitDeps = cmNinjaDeps(),
-                       const cmNinjaDeps& orderOnlyDeps = cmNinjaDeps(),
-                       const cmNinjaVars& variables = cmNinjaVars());
+  static void WritePhonyBuild(std::ostream& os,
+                              const std::string& comment,
+                              const cmNinjaDeps& outputs,
+                              const cmNinjaDeps& explicitDeps,
+                              const cmNinjaDeps& implicitDeps = cmNinjaDeps(),
+                              const cmNinjaDeps& orderOnlyDeps = cmNinjaDeps(),
+                              const cmNinjaVars& variables = cmNinjaVars());
 
   void WriteCustomCommandBuild(const std::string& command,
                                const std::string& description,
@@ -191,7 +191,6 @@ public:
   /// Overloaded methods. @see cmGlobalGenerator::GenerateBuildCommand()
   virtual std::string GenerateBuildCommand(const char* makeProgram,
                                            const char* projectName,
-                                           const char* projectDir,
                                            const char* additionalOptions,
                                            const char* targetName,
                                            const char* config,
@@ -321,7 +320,6 @@ private:
   void WriteAssumedSourceDependencies();
 
   void WriteTargetAliases(std::ostream& os);
-  void WriteUnknownExplicitDependencies(std::ostream& os);
 
   void WriteBuiltinTargets(std::ostream& os);
   void WriteTargetAll(std::ostream& os);
@@ -358,12 +356,6 @@ private:
 
   /// The set of custom command outputs we have seen.
   std::set<std::string> CustomCommandOutputs;
-
-  //The combined explicit dependencies of all build commands that the global
-  //generator has issued. When combined with CombinedBuildOutputs it allows
-  //us to detect the set of explicit dependencies that have
-  std::set<std::string> CombinedBuildExplicitDependencies;
-  std::set<std::string> CombinedBuildOutputs;
 
   /// The mapping from source file to assumed dependencies.
   std::map<std::string, std::set<std::string> > AssumedSourceDependencies;

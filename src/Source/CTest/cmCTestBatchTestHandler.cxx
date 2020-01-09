@@ -89,7 +89,7 @@ void cmCTestBatchTestHandler::WriteTestCommand(int test, std::fstream& fout)
   command = cmSystemTools::ConvertToOutputPath(command.c_str());
 
   //Prepends memcheck args to our command string if this is a memcheck
-  this->TestHandler->GenerateTestCommand(processArgs, test);
+  this->TestHandler->GenerateTestCommand(processArgs);
   processArgs.push_back(command);
 
   for(std::vector<std::string>::iterator arg = processArgs.begin();

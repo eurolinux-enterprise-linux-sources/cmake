@@ -114,7 +114,5 @@ int main(int argc, char **argv)
 
   curl_global_cleanup();
 
-  if (headerfile)
-    fclose(headerfile);
   return 0;
 }

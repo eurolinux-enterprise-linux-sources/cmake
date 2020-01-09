@@ -22,7 +22,7 @@ cmGeneratorExpressionDAGChecker::cmGeneratorExpressionDAGChecker(
                 const GeneratorExpressionContent *content,
                 cmGeneratorExpressionDAGChecker *parent)
   : Parent(parent), Target(target), Property(property),
-    Content(content), Backtrace(backtrace), TransitivePropertiesOnly(false)
+    Content(content), Backtrace(backtrace)
 {
   const cmGeneratorExpressionDAGChecker *top = this;
   const cmGeneratorExpressionDAGChecker *p = this->Parent;
@@ -33,13 +33,8 @@ cmGeneratorExpressionDAGChecker::cmGeneratorExpressionDAGChecker(
     }
   this->CheckResult = this->checkGraph();
 
-#define TEST_TRANSITIVE_PROPERTY_METHOD(METHOD) \
-  top->METHOD () ||
-
-  if (CheckResult == DAG && (
-      CM_FOR_EACH_TRANSITIVE_PROPERTY_METHOD(TEST_TRANSITIVE_PROPERTY_METHOD)
-      false)
-     )
+  if (CheckResult == DAG && (top->EvaluatingIncludeDirectories()
+      || top->EvaluatingCompileDefinitions()))
     {
     std::map<cmStdString, std::set<cmStdString> >::const_iterator it
                                                     = top->Seen.find(target);
@@ -139,21 +134,7 @@ cmGeneratorExpressionDAGChecker::checkGraph() const
 }
 
 //----------------------------------------------------------------------------
-bool cmGeneratorExpressionDAGChecker::GetTransitivePropertiesOnly()
-{
-  const cmGeneratorExpressionDAGChecker *top = this;
-  const cmGeneratorExpressionDAGChecker *parent = this->Parent;
-  while (parent)
-    {
-    top = parent;
-    parent = parent->Parent;
-    }
-
-  return top->TransitivePropertiesOnly;
-}
-
-//----------------------------------------------------------------------------
-bool cmGeneratorExpressionDAGChecker::EvaluatingLinkLibraries(const char *tgt)
+bool cmGeneratorExpressionDAGChecker::EvaluatingLinkLibraries()
 {
   const cmGeneratorExpressionDAGChecker *top = this;
   const cmGeneratorExpressionDAGChecker *parent = this->Parent;
@@ -164,18 +145,11 @@ bool cmGeneratorExpressionDAGChecker::EvaluatingLinkLibraries(const char *tgt)
     }
 
   const char *prop = top->Property.c_str();
-
-  if (tgt)
-    {
-    return top->Target == tgt && strcmp(prop, "LINK_LIBRARIES") == 0;
-    }
-
   return (strcmp(prop, "LINK_LIBRARIES") == 0
        || strcmp(prop, "LINK_INTERFACE_LIBRARIES") == 0
        || strcmp(prop, "IMPORTED_LINK_INTERFACE_LIBRARIES") == 0
        || strncmp(prop, "LINK_INTERFACE_LIBRARIES_", 25) == 0
-       || strncmp(prop, "IMPORTED_LINK_INTERFACE_LIBRARIES_", 34) == 0)
-       || strcmp(prop, "INTERFACE_LINK_LIBRARIES") == 0;
+       || strncmp(prop, "IMPORTED_LINK_INTERFACE_LIBRARIES_", 34) == 0);
 }
 
 //----------------------------------------------------------------------------
@@ -187,26 +161,10 @@ bool cmGeneratorExpressionDAGChecker::EvaluatingIncludeDirectories() const
 }
 
 //----------------------------------------------------------------------------
-bool
-cmGeneratorExpressionDAGChecker::EvaluatingSystemIncludeDirectories() const
-{
-  const char *prop = this->Property.c_str();
-  return strcmp(prop, "INTERFACE_SYSTEM_INCLUDE_DIRECTORIES") == 0;
-}
-
-//----------------------------------------------------------------------------
 bool cmGeneratorExpressionDAGChecker::EvaluatingCompileDefinitions() const
 {
   const char *prop = this->Property.c_str();
   return (strcmp(prop, "COMPILE_DEFINITIONS") == 0
        || strcmp(prop, "INTERFACE_COMPILE_DEFINITIONS") == 0
        || strncmp(prop, "COMPILE_DEFINITIONS_", 20) == 0);
-}
-
-//----------------------------------------------------------------------------
-bool cmGeneratorExpressionDAGChecker::EvaluatingCompileOptions() const
-{
-  const char *prop = this->Property.c_str();
-  return (strcmp(prop, "COMPILE_OPTIONS") == 0
-       || strcmp(prop, "INTERFACE_COMPILE_OPTIONS") == 0 );
 }

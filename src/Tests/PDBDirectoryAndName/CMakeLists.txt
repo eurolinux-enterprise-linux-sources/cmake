@@ -20,9 +20,7 @@ set_target_properties(mylibB PROPERTIES
     PDB_NAME "mylibB_Special"
     PDB_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/mylibB_PDB"
 )
-# TODO: The only .pdb available for a static library is that generated
-# by the compiler /Fd option which is not the same as the linker /pdb.
-# list(APPEND my_targets mylibB)
+list(APPEND my_targets mylibB)
 
 add_library(mylibC SHARED mylibC.c)
 set_target_properties(mylibC PROPERTIES
@@ -34,8 +32,7 @@ add_library(mylibD STATIC mylibD.c)
 set_target_properties(mylibD PROPERTIES
     PDB_NAME "mylibD_Special"
 )
-# TODO: See comment for mylibB.
-# list(APPEND my_targets mylibD)
+list(APPEND my_targets mylibD)
 
 add_executable(myexe myexe.c)
 set_target_properties(myexe PROPERTIES
@@ -59,6 +56,10 @@ target_link_libraries(myexe2 mylibA mylibD)
 
 # The PDB_NAME and PDB_OUTPUT_DIRECTORY options do not work in VS 6.
 if("${CMAKE_GENERATOR}" MATCHES "Visual Studio 6")
+  return()
+endif()
+# PDB output not fully implemented for Intel
+if("${CMAKE_C_COMPILER_ID}" MATCHES "^(Intel)$")
   return()
 endif()
 

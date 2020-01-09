@@ -140,10 +140,10 @@ if(WIN32 AND NOT CYGWIN)
 
     set( OPENSSL_LIBRARIES ${SSL_EAY_LIBRARY} ${LIB_EAY_LIBRARY} )
   elseif(MINGW)
-    # same player, for MinGW
+    # same player, for MingW
     set(LIB_EAY_NAMES libeay32)
     set(SSL_EAY_NAMES ssleay32)
-    if(CMAKE_CROSSCOMPILING)
+    if(CMAKE_CROSS_COMPILING)
       list(APPEND LIB_EAY_NAMES crypto)
       list(APPEND SSL_EAY_NAMES ssl)
     endif()

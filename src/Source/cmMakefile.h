@@ -29,9 +29,6 @@
 
 #include <cmsys/auto_ptr.hxx>
 #include <cmsys/RegularExpression.hxx>
-#if defined(CMAKE_BUILD_WITH_CMAKE)
-# include <cmsys/hash_map.hxx>
-#endif
 
 class cmFunctionBlocker;
 class cmCommand;
@@ -209,7 +206,6 @@ public:
    */
   void AddDefineFlag(const char* definition);
   void RemoveDefineFlag(const char* definition);
-  void AddCompileOption(const char* option);
 
   /** Create a new imported target with the name and type given.  */
   cmTarget* AddImportedTarget(const char* name, cmTarget::TargetType type,
@@ -340,7 +336,6 @@ public:
   cmTarget* AddLibrary(const char *libname, cmTarget::TargetType type,
                   const std::vector<std::string> &srcs,
                   bool excludeFromAll = false);
-  void AddAlias(const char *libname, cmTarget *tgt);
 
 #if defined(CMAKE_BUILD_WITH_CMAKE)
   /**
@@ -540,12 +535,11 @@ public:
       this->GeneratorTargets = targets;
     }
 
-  cmTarget* FindTarget(const char* name, bool excludeAliases = false);
+  cmTarget* FindTarget(const char* name);
 
   /** Find a target to use in place of the given name.  The target
       returned may be imported or built within the project.  */
-  cmTarget* FindTargetToUse(const char* name, bool excludeAliases = false);
-  bool IsAlias(const char *name);
+  cmTarget* FindTargetToUse(const char* name);
   cmGeneratorTarget* FindGeneratorTargetToUse(const char* name);
 
   /**
@@ -653,7 +647,7 @@ public:
   const std::vector<std::string>& GetListFiles() const
     { return this->ListFiles; }
   ///! When the file changes cmake will be re-run from the build system.
-  void AddCMakeDependFile(const std::string& file)
+  void AddCMakeDependFile(const char* file)
     { this->ListFiles.push_back(file);}
 
     /**
@@ -671,7 +665,7 @@ public:
    */
   const std::vector<std::string>& GetOutputFiles() const
     { return this->OutputFiles; }
-  void AddCMakeOutputFile(const std::string& file)
+  void AddCMakeOutputFile(const char* file)
     { this->OutputFiles.push_back(file);}
 
   /**
@@ -872,20 +866,9 @@ public:
   {
     return this->IncludeDirectoriesEntries;
   }
-  std::vector<cmValueWithOrigin> GetCompileOptionsEntries() const
-  {
-    return this->CompileOptionsEntries;
-  }
-  std::vector<cmValueWithOrigin> GetCompileDefinitionsEntries() const
-  {
-    return this->CompileDefinitionsEntries;
-  }
 
   bool IsGeneratingBuildSystem(){ return this->GeneratingBuildSystem; }
   void SetGeneratingBuildSystem(){ this->GeneratingBuildSystem = true; }
-
-  std::set<cmStdString> const & GetSystemIncludeDirectories() const
-    { return this->SystemIncludeDirectories; }
 
 protected:
   // add link libraries and directories to the target
@@ -907,7 +890,6 @@ protected:
 
   // libraries, classes, and executables
   cmTargets Targets;
-  std::map<std::string, cmTarget*> AliasTargets;
   cmGeneratorTargetsType GeneratorTargets;
   std::vector<cmSourceFile*> SourceFiles;
 
@@ -937,8 +919,6 @@ protected:
   std::string DefineFlags;
 
   std::vector<cmValueWithOrigin> IncludeDirectoriesEntries;
-  std::vector<cmValueWithOrigin> CompileOptionsEntries;
-  std::vector<cmValueWithOrigin> CompileDefinitionsEntries;
 
   // Track the value of the computed DEFINITIONS property.
   void AddDefineFlag(const char*, std::string&);
@@ -1042,26 +1022,6 @@ private:
 
   bool GeneratingBuildSystem;
 
-  /**
-   * Old version of GetSourceFileWithOutput(const char*) kept for
-   * backward-compatibility. It implements a linear search and support
-   * relative file paths. It is used as a fall back by
-   * GetSourceFileWithOutput(const char*).
-   */
-  cmSourceFile *LinearGetSourceFileWithOutput(const char *cname);
-
-  // A map for fast output to input look up.
-#if defined(CMAKE_BUILD_WITH_CMAKE)
-  typedef cmsys::hash_map<std::string, cmSourceFile*> OutputToSourceMap;
-#else
-  typedef std::map<std::string, cmSourceFile*> OutputToSourceMap;
-#endif
-  OutputToSourceMap OutputToSource;
-
-  void UpdateOutputToSourceMap(std::vector<std::string> const& outputs,
-                               cmSourceFile* source);
-  void UpdateOutputToSourceMap(std::string const& output,
-                               cmSourceFile* source);
 };
 
 //----------------------------------------------------------------------------

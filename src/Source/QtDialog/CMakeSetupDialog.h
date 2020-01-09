@@ -77,11 +77,6 @@ protected slots:
   bool doConfigureInternal();
   bool doGenerateInternal();
   void exitLoop(int);
-  void doOutputContextMenu(const QPoint &);
-  void doOutputFindDialog();
-  void doOutputFindNext(bool directionForward = true);
-  void doOutputFindPrev();
-  void doOutputErrorNext();
 
 protected:
 
@@ -111,7 +106,6 @@ protected:
   QTextCharFormat MessageFormat;
 
   QStringList AddVariableCompletions;
-  QStringList FindHistory;
 
   QEventLoop LocalLoop;
 

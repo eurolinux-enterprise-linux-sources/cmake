@@ -192,12 +192,11 @@ static std::string stripAllGeneratorExpressions(const std::string &input)
   std::string result;
   std::string::size_type pos = 0;
   std::string::size_type lastPos = pos;
-  int nestingLevel = 0;
   while((pos = input.find("$<", lastPos)) != input.npos)
     {
     result += input.substr(lastPos, pos - lastPos);
     pos += 2;
-    nestingLevel = 1;
+    int nestingLevel = 1;
     const char *c = input.c_str() + pos;
     const char * const cStart = c;
     for ( ; *c; ++c)
@@ -225,42 +224,16 @@ static std::string stripAllGeneratorExpressions(const std::string &input)
     pos += traversed;
     lastPos = pos;
     }
-  if (nestingLevel == 0)
-    {
-    result += input.substr(lastPos);
-    }
+  result += input.substr(lastPos);
   return cmGeneratorExpression::StripEmptyListElements(result);
 }
 
 //----------------------------------------------------------------------------
-static void prefixItems(const std::string &content, std::string &result,
-                        const std::string &prefix)
-{
-  std::vector<std::string> entries;
-  cmGeneratorExpression::Split(content, entries);
-  const char *sep = "";
-  for(std::vector<std::string>::const_iterator ei = entries.begin();
-      ei != entries.end(); ++ei)
-    {
-    result += sep;
-    sep = ";";
-    if (!cmSystemTools::FileIsFullPath(ei->c_str())
-        && cmGeneratorExpression::Find(*ei) == std::string::npos)
-      {
-      result += prefix;
-      }
-    result += *ei;
-    }
-}
-
-//----------------------------------------------------------------------------
 static std::string stripExportInterface(const std::string &input,
-                          cmGeneratorExpression::PreprocessContext context,
-                          bool resolveRelative)
+                          cmGeneratorExpression::PreprocessContext context)
 {
   std::string result;
 
-  int nestingLevel = 0;
   std::string::size_type pos = 0;
   std::string::size_type lastPos = pos;
   while (true)
@@ -290,7 +263,7 @@ static std::string stripExportInterface(const std::string &input,
     const bool gotInstallInterface = input[pos + 2] == 'I';
     pos += gotInstallInterface ? sizeof("$<INSTALL_INTERFACE:") - 1
                                : sizeof("$<BUILD_INTERFACE:") - 1;
-    nestingLevel = 1;
+    int nestingLevel = 1;
     const char *c = input.c_str() + pos;
     const char * const cStart = c;
     for ( ; *c; ++c)
@@ -316,15 +289,7 @@ static std::string stripExportInterface(const std::string &input,
         else if(context == cmGeneratorExpression::InstallInterface
             && gotInstallInterface)
           {
-          const std::string content = input.substr(pos, c - cStart);
-          if (resolveRelative)
-            {
-            prefixItems(content, result, "${_IMPORT_PREFIX}/");
-            }
-          else
-            {
-            result += content;
-            }
+          result += input.substr(pos, c - cStart);
           }
         break;
         }
@@ -339,10 +304,7 @@ static std::string stripExportInterface(const std::string &input,
     pos += traversed;
     lastPos = pos;
     }
-  if (nestingLevel == 0)
-    {
-    result += input.substr(lastPos);
-    }
+  result += input.substr(lastPos);
 
   return cmGeneratorExpression::StripEmptyListElements(result);
 }
@@ -418,8 +380,7 @@ void cmGeneratorExpression::Split(const std::string &input,
 
 //----------------------------------------------------------------------------
 std::string cmGeneratorExpression::Preprocess(const std::string &input,
-                                              PreprocessContext context,
-                                              bool resolveRelative)
+                                              PreprocessContext context)
 {
   if (context == StripAllGeneratorExpressions)
     {
@@ -427,7 +388,7 @@ std::string cmGeneratorExpression::Preprocess(const std::string &input,
     }
   else if (context == BuildInterface || context == InstallInterface)
     {
-    return stripExportInterface(input, context, resolveRelative);
+    return stripExportInterface(input, context);
     }
 
   assert(!"cmGeneratorExpression::Preprocess called with invalid args");

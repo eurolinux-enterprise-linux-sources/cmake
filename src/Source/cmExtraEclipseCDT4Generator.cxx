@@ -39,7 +39,6 @@ cmExtraEclipseCDT4Generator
 
   this->SupportsVirtualFolders = true;
   this->GenerateLinkedResources = true;
-  this->SupportsGmakeErrorParser = true;
 }
 
 //----------------------------------------------------------------------------
@@ -51,7 +50,7 @@ void cmExtraEclipseCDT4Generator
   entry.Full =
     "Project files for Eclipse will be created in the top directory. "
     "In out of source builds, a linked resource to the top level source "
-    "directory will be created. "
+    "directory will be created."
     "Additionally a hierarchy of makefiles is generated into the "
     "build tree. The appropriate make program can build the project through "
     "the default make target. A \"make install\" target is also provided.";
@@ -77,10 +76,6 @@ void cmExtraEclipseCDT4Generator::Generate()
       if (version < 3006) // 3.6 is Helios
         {
         this->SupportsVirtualFolders = false;
-        }
-      if (version < 3007) // 3.7 is Indigo
-        {
-        this->SupportsGmakeErrorParser = false;
         }
       }
     }
@@ -408,17 +403,8 @@ void cmExtraEclipseCDT4Generator::CreateProjectFile()
     {
     fout << "org.eclipse.cdt.core.ICCErrorParser;";
     }
-
-  if (this->SupportsGmakeErrorParser)
-    {
-    fout << "org.eclipse.cdt.core.GmakeErrorParser;";
-    }
-  else
-    {
-    fout << "org.eclipse.cdt.core.MakeErrorParser;";
-    }
-
   fout <<
+    "org.eclipse.cdt.core.MakeErrorParser;"
     "org.eclipse.cdt.core.GCCErrorParser;"
     "org.eclipse.cdt.core.GASErrorParser;"
     "org.eclipse.cdt.core.GLDErrorParser;"
@@ -554,15 +540,12 @@ void cmExtraEclipseCDT4Generator::CreateLinksForTargets(
                 fileIt != sFiles.end();
                 ++fileIt)
               {
-              std::string fullPath = (*fileIt)->GetFullPath();
-              if (!cmSystemTools::FileIsDirectory(fullPath.c_str()))
-                {
-                std::string linkName4 = linkName3;
-                linkName4 += "/";
-                linkName4 += cmSystemTools::GetFilenameName(fullPath);
-                this->AppendLinkedResource(fout, linkName4,
-                                           fullPath, LinkToFile);
-                }
+              std::string linkName4 = linkName3;
+              linkName4 += "/";
+              linkName4 +=
+                      cmSystemTools::GetFilenameName((*fileIt)->GetFullPath());
+              this->AppendLinkedResource(fout, linkName4,
+                                         (*fileIt)->GetFullPath(), LinkToFile);
               }
             }
           }

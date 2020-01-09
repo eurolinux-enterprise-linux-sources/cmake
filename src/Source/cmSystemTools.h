@@ -56,7 +56,7 @@ public:
 
   typedef  void (*ErrorCallback)(const char*, const char*, bool&, void*);
   /**
-   *  Set the function used by GUIs to display error messages
+   *  Set the function used by GUI's to display error messages
    *  Function gets passed: message as a const char*,
    *  title as a const char*, and a reference to bool that when
    *  set to false, will disable furthur messages (cancel).
@@ -211,7 +211,7 @@ public:
    * user-viewable output from the program being run will be generated.
    * OUTPUT_MERGE is the legacy behaviour where stdout and stderr are merged
    * into stdout.  OUTPUT_NORMAL passes through the output to stdout/stderr as
-   * it was received.  OUTPUT_PASSTHROUGH passes through the original handles.
+   * it was received.
    *
    * If timeout is specified, the command will be terminated after
    * timeout expires. Timeout is specified in seconds.
@@ -230,8 +230,7 @@ public:
    {
      OUTPUT_NONE = 0,
      OUTPUT_MERGE,
-     OUTPUT_NORMAL,
-     OUTPUT_PASSTHROUGH
+     OUTPUT_NORMAL
    };
   static bool RunSingleCommand(const char* command, std::string* output = 0,
                                int* retVal = 0, const char* dir = 0,
@@ -275,7 +274,7 @@ public:
   static bool GetRunCommandOutput() { return s_DisableRunCommandOutput; }
 
   /**
-   * Some constants for different file formats.
+   * Come constants for different file formats.
    */
   enum FileFormat {
     NO_FILE_FORMAT = 0,
@@ -366,12 +365,6 @@ public:
   */
   static std::string RelativePath(const char* local, const char* remote);
 
-  /** Joins two paths while collapsing x/../ parts
-   * For example CollapseCombinedPath("a/b/c", "../../d") results in "a/d"
-   */
-  static std::string CollapseCombinedPath(std::string const& dir,
-                                          std::string const& file);
-
 #ifdef CMAKE_BUILD_WITH_CMAKE
   /** Remove an environment variable */
   static bool UnsetEnv(const char* value);
@@ -444,10 +437,6 @@ public:
 
   /** Try to guess the soname of a shared library.  */
   static bool GuessLibrarySOName(std::string const& fullPath,
-                                 std::string& soname);
-
-  /** Try to guess the install name of a shared library.  */
-  static bool GuessLibraryInstallName(std::string const& fullPath,
                                  std::string& soname);
 
   /** Try to set the RPATH in an ELF binary.  */

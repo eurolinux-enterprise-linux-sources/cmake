@@ -25,27 +25,22 @@ class cmMakefile;
 
 struct cmListFileArgument
 {
-  enum Delimiter
-    {
-    Unquoted,
-    Quoted
-    };
-  cmListFileArgument(): Value(), Delim(Unquoted), FilePath(0), Line(0) {}
+  cmListFileArgument(): Value(), Quoted(false), FilePath(0), Line(0) {}
   cmListFileArgument(const cmListFileArgument& r):
-    Value(r.Value), Delim(r.Delim), FilePath(r.FilePath), Line(r.Line) {}
-  cmListFileArgument(const std::string& v, Delimiter d, const char* file,
-                     long line): Value(v), Delim(d),
+    Value(r.Value), Quoted(r.Quoted), FilePath(r.FilePath), Line(r.Line) {}
+  cmListFileArgument(const std::string& v, bool q, const char* file,
+                     long line): Value(v), Quoted(q),
                                  FilePath(file), Line(line) {}
   bool operator == (const cmListFileArgument& r) const
     {
-    return (this->Value == r.Value) && (this->Delim == r.Delim);
+    return (this->Value == r.Value) && (this->Quoted == r.Quoted);
     }
   bool operator != (const cmListFileArgument& r) const
     {
     return !(*this == r);
     }
   std::string Value;
-  Delimiter Delim;
+  bool Quoted;
   const char* FilePath;
   long Line;
 };

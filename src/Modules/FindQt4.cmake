@@ -100,7 +100,6 @@
 #        because you need a custom filename for the moc file or something similar.
 #
 #  macro QT4_AUTOMOC(sourcefile1 sourcefile2 ... )
-#        The qt4_automoc macro is obsolete.  Use the CMAKE_AUTOMOC feature instead.
 #        This macro is still experimental.
 #        It can be used to have moc automatically handled.
 #        So if you have the files foo.h and foo.cpp, and in foo.h a
@@ -116,7 +115,7 @@
 #        You should have a look on the AUTOMOC property for targets to achieve the same results.
 #
 #  macro QT4_ADD_DBUS_INTERFACE(outfiles interface basename)
-#        Create the interface header and implementation files with the
+#        Create a the interface header and implementation files with the
 #        given basename from the given interface xml file and add it to
 #        the list of sources.
 #
@@ -172,10 +171,9 @@
 #        in:  ts_files
 #        generates commands to create .qm from .ts - files. The generated
 #        filenames can be found in qm_files. The ts_files
-#        must exist and are not updated in any way.
+#        must exists and are not updated in any way.
 #
 # function QT4_USE_MODULES( target [link_type] modules...)
-#        This function is obsolete. Use target_link_libraries with IMPORTED targets instead.
 #        Make <target> use the <modules> from Qt. Using a Qt module means
 #        to link to the library, add the relevant include directories for the module,
 #        and add the relevant compiler defines for using the module.
@@ -497,7 +495,7 @@ macro (_QT4_ADJUST_LIB_VARS _camelCaseBasename)
     set(QT_INCLUDES "${QT_${basename}_INCLUDE_DIR}" ${QT_INCLUDES})
   endif ()
 
-  # Make variables changeable to the advanced user
+  # Make variables changeble to the advanced user
   mark_as_advanced(QT_${basename}_LIBRARY QT_${basename}_LIBRARY_RELEASE QT_${basename}_LIBRARY_DEBUG QT_${basename}_INCLUDE_DIR)
 endmacro ()
 
@@ -637,10 +635,10 @@ if (QT_QMAKE_EXECUTABLE AND QTVERSION)
           )
     endif()
 
-    # try dropping a hint if trying to use Visual Studio with Qt built by MinGW
+    # try dropping a hint if trying to use Visual Studio with Qt built by mingw
     if(NOT QT_QTCORE_LIBRARY_RELEASE AND MSVC)
       if(EXISTS ${QT_LIBRARY_DIR_TMP}/libqtmain.a)
-        message( FATAL_ERROR "It appears you're trying to use Visual Studio with Qt built by MinGW.  Those compilers do not produce code compatible with each other.")
+        message( FATAL_ERROR "It appears you're trying to use Visual Studio with Qt built by mingw.  Those compilers do not produce code compatible with each other.")
       endif()
     endif()
 
@@ -659,11 +657,8 @@ if (QT_QMAKE_EXECUTABLE AND QTVERSION)
     message(WARNING "${QT_QMAKE_EXECUTABLE} reported QT_INSTALL_LIBS as \"${QT_LIBRARY_DIR_TMP}\" "
                     "but QtCore could not be found there.  "
                     "Qt is NOT installed correctly for the target build environment.")
-    set(Qt4_FOUND FALSE)
     if(Qt4_FIND_REQUIRED)
       message( FATAL_ERROR "Could NOT find QtCore. Check ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log for more details.")
-    else()
-      return()
     endif()
   endif()
 
@@ -776,7 +771,7 @@ if (QT_QMAKE_EXECUTABLE AND QTVERSION)
     endif()
   endif ()
 
-  # Make variables changeable to the advanced user
+  # Make variables changeble to the advanced user
   mark_as_advanced( QT_LIBRARY_DIR QT_DOC_DIR QT_MKSPECS_DIR
                     QT_PLUGINS_DIR QT_TRANSLATIONS_DIR)
 
@@ -1012,7 +1007,6 @@ if (QT_QMAKE_EXECUTABLE AND QTVERSION)
 
   macro(_qt4_add_target_depends _QT_MODULE)
     get_target_property(_configs Qt4::${_QT_MODULE} IMPORTED_CONFIGURATIONS)
-    _qt4_add_target_depends_internal(${_QT_MODULE} INTERFACE_LINK_LIBRARIES ${ARGN})
     foreach(_config ${_configs})
       _qt4_add_target_depends_internal(${_QT_MODULE} IMPORTED_LINK_INTERFACE_LIBRARIES_${_config} ${ARGN})
     endforeach()
@@ -1058,13 +1052,11 @@ if (QT_QMAKE_EXECUTABLE AND QTVERSION)
     _QT4_ADJUST_LIB_VARS(qtmain)
 
     _QT4_ADJUST_LIB_VARS(QAxServer)
-    if(QT_QAXSERVER_FOUND)
-      set_property(TARGET Qt4::QAxServer PROPERTY
-        INTERFACE_QT4_NO_LINK_QTMAIN ON
-      )
-      set_property(TARGET Qt4::QAxServer APPEND PROPERTY
-        COMPATIBLE_INTERFACE_BOOL QT4_NO_LINK_QTMAIN)
-    endif()
+    set_property(TARGET Qt4::QAxServer PROPERTY
+      INTERFACE_QT4_NO_LINK_QTMAIN ON
+    )
+    set_property(TARGET Qt4::QAxServer APPEND PROPERTY
+      COMPATIBLE_INTERFACE_BOOL QT4_NO_LINK_QTMAIN)
 
     _QT4_ADJUST_LIB_VARS(QAxContainer)
   endif()
@@ -1088,9 +1080,7 @@ if (QT_QMAKE_EXECUTABLE AND QTVERSION)
   _qt4_add_target_depends(QtWebKit Gui Network)
 
   _qt4_add_target_private_depends(Qt3Support Xml)
-  if(QT_VERSION VERSION_GREATER 4.6)
-    _qt4_add_target_private_depends(QtSvg Xml)
-  endif()
+  _qt4_add_target_private_depends(QtSvg Xml)
   _qt4_add_target_private_depends(QtDBus Xml)
   _qt4_add_target_private_depends(QtUiTools Xml Gui)
   _qt4_add_target_private_depends(QtHelp Sql Xml Network)
@@ -1100,12 +1090,8 @@ if (QT_QMAKE_EXECUTABLE AND QTVERSION)
   _qt4_add_target_private_depends(QtDeclarative XmlPatterns Svg Sql Gui)
   _qt4_add_target_private_depends(QtMultimedia Gui)
   _qt4_add_target_private_depends(QtOpenGL Gui)
-  if(QT_QAXSERVER_FOUND)
-    _qt4_add_target_private_depends(QAxServer Gui)
-  endif()
-  if(QT_QAXCONTAINER_FOUND)
-    _qt4_add_target_private_depends(QAxContainer Gui)
-  endif()
+  _qt4_add_target_private_depends(QAxServer Gui)
+  _qt4_add_target_private_depends(QAxContainer Gui)
   _qt4_add_target_private_depends(phonon Gui)
   if(QT_QTDBUS_FOUND)
     _qt4_add_target_private_depends(phonon DBus)
@@ -1117,10 +1103,6 @@ if (QT_QMAKE_EXECUTABLE AND QTVERSION)
     set(_isNotExcluded $<NOT:$<BOOL:$<TARGET_PROPERTY:QT4_NO_LINK_QTMAIN>>>)
     set(_isPolicyNEW $<TARGET_POLICY:CMP0020>)
     get_target_property(_configs Qt4::QtCore IMPORTED_CONFIGURATIONS)
-    set_property(TARGET Qt4::QtCore APPEND PROPERTY
-        INTERFACE_LINK_LIBRARIES
-          $<$<AND:${_isExe},${_isWin32},${_isNotExcluded},${_isPolicyNEW}>:Qt4::qtmain>
-    )
     foreach(_config ${_configs})
       set_property(TARGET Qt4::QtCore APPEND PROPERTY
         IMPORTED_LINK_INTERFACE_LIBRARIES_${_config}

@@ -82,6 +82,7 @@ bool cmCTestSubdirCommand
   std::string cwd = cmSystemTools::GetCurrentWorkingDirectory();
   for ( it = args.begin(); it != args.end(); ++ it )
     {
+    cmSystemTools::ChangeDirectory(cwd.c_str());
     std::string fname;
 
     if(cmSystemTools::FileIsFullPath(it->c_str()))
@@ -115,6 +116,7 @@ bool cmCTestSubdirCommand
     else
       {
       // No CTestTestfile? Who cares...
+      cmSystemTools::ChangeDirectory(cwd.c_str());
       continue;
       }
     fname += "/";
@@ -131,7 +133,6 @@ bool cmCTestSubdirCommand
       return false;
       }
     }
-  cmSystemTools::ChangeDirectory(cwd.c_str());
   return true;
 }
 
@@ -1107,7 +1108,7 @@ void cmCTestTestHandler::ProcessDirectory(std::vector<cmStdString> &passed,
 }
 
 //----------------------------------------------------------------------
-void cmCTestTestHandler::GenerateTestCommand(std::vector<std::string>&, int)
+void cmCTestTestHandler::GenerateTestCommand(std::vector<std::string>&)
 {
 }
 
@@ -1302,9 +1303,10 @@ int cmCTestTestHandler::ExecuteCommands(std::vector<cmStdString>& vec)
   for ( it = vec.begin(); it != vec.end(); ++it )
     {
     int retVal = 0;
-    cmCTestLog(this->CTest, HANDLER_VERBOSE_OUTPUT, "Run command: " << *it
+    std::string cmd = cmSystemTools::ConvertToOutputPath(it->c_str());
+    cmCTestLog(this->CTest, HANDLER_VERBOSE_OUTPUT, "Run command: " << cmd
       << std::endl);
-    if ( !cmSystemTools::RunSingleCommand(it->c_str(), 0, &retVal, 0,
+    if ( !cmSystemTools::RunSingleCommand(cmd.c_str(), 0, &retVal, 0,
                                           cmSystemTools::OUTPUT_MERGE
         /*this->Verbose*/) || retVal != 0 )
       {
@@ -1361,7 +1363,7 @@ void cmCTestTestHandler
     tempPath += filename;
     attempted.push_back(tempPath);
     attemptedConfigs.push_back(ctest->GetConfigType());
-    // If the file is an OSX bundle then the configtype
+    // If the file is an OSX bundle then the configtyp
     // will be at the start of the path
     tempPath = ctest->GetConfigType();
     tempPath += "/";
@@ -1372,7 +1374,7 @@ void cmCTestTestHandler
     }
   else
     {
-    // no config specified - try some options...
+    // no config specified to try some options
     tempPath = filepath;
     tempPath += "Release/";
     tempPath += filename;

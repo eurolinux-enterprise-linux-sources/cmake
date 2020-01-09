@@ -85,8 +85,6 @@ protected:
 
   void ComplainAboutImportPrefix(cmInstallTargetGenerator* itgen);
 
-  std::string InstallNameDir(cmTarget* target, const std::string& config);
-
   cmInstallExportGenerator* IEGen;
 
   std::string ImportPrefix;

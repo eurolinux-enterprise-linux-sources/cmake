@@ -126,9 +126,6 @@ void cmGeneratorExpressionParser::ParseGeneratorExpression(
   std::vector<std::vector<cmGeneratorExpressionToken>::const_iterator>
                                                             commaTokens;
   std::vector<cmGeneratorExpressionToken>::const_iterator colonToken;
-
-  bool emptyParamTermination = false;
-
   if (this->it != this->Tokens.end() &&
       this->it->TokenType == cmGeneratorExpressionToken::ColonSeparator)
     {
@@ -136,10 +133,6 @@ void cmGeneratorExpressionParser::ParseGeneratorExpression(
     parameters.resize(parameters.size() + 1);
     assert(this->it != this->Tokens.end());
     ++this->it;
-    if(this->it == this->Tokens.end())
-      {
-      emptyParamTermination = true;
-      }
 
     while (this->it != this->Tokens.end() &&
            this->it->TokenType == cmGeneratorExpressionToken::CommaSeparator)
@@ -148,10 +141,6 @@ void cmGeneratorExpressionParser::ParseGeneratorExpression(
       parameters.resize(parameters.size() + 1);
       assert(this->it != this->Tokens.end());
       ++this->it;
-      if(this->it == this->Tokens.end())
-        {
-        emptyParamTermination = true;
-        }
       }
     while (this->it != this->Tokens.end() &&
            this->it->TokenType == cmGeneratorExpressionToken::ColonSeparator)
@@ -175,10 +164,6 @@ void cmGeneratorExpressionParser::ParseGeneratorExpression(
         parameters.resize(parameters.size() + 1);
         assert(this->it != this->Tokens.end());
         ++this->it;
-        if(this->it == this->Tokens.end())
-          {
-          emptyParamTermination = true;
-          }
         }
       while (this->it != this->Tokens.end() &&
              this->it->TokenType == cmGeneratorExpressionToken::ColonSeparator)
@@ -218,10 +203,7 @@ void cmGeneratorExpressionParser::ParseGeneratorExpression(
       assert(parameters.size() > commaTokens.size());
       for ( ; pit != pend; ++pit, ++commaIt)
         {
-        if (!pit->empty() && !emptyParamTermination)
-          {
-          extendResult(result, *pit);
-          }
+        extendResult(result, *pit);
         if (commaIt != commaTokens.end())
           {
           extendText(result, *commaIt);

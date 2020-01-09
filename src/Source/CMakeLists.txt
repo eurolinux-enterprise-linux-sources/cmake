@@ -11,11 +11,7 @@
 #=============================================================================
 include(CheckIncludeFile)
 # Check if we can build support for ELF parsing.
-if(CMAKE_CXX_PLATFORM_ID MATCHES "OpenBSD")
-  CHECK_INCLUDE_FILES("stdint.h;elf_abi.h" HAVE_ELF_H)
-else()
-  CHECK_INCLUDE_FILE("elf.h" HAVE_ELF_H)
-endif()
+CHECK_INCLUDE_FILE("elf.h" HAVE_ELF_H)
 if(HAVE_ELF_H)
   set(CMAKE_USE_ELF_PARSER 1)
 else()
@@ -117,8 +113,7 @@ endif()
 set(SRCS
   cmStandardIncludes.cxx
   cmArchiveWrite.cxx
-  cmBootstrapCommands1.cxx
-  cmBootstrapCommands2.cxx
+  cmBootstrapCommands.cxx
   cmCacheManager.cxx
   cmCacheManager.h
   cmCommands.cxx
@@ -350,8 +345,6 @@ if (WIN32)
       cmGlobalVisualStudio10Generator.cxx
       cmGlobalVisualStudio11Generator.h
       cmGlobalVisualStudio11Generator.cxx
-      cmGlobalVisualStudio12Generator.h
-      cmGlobalVisualStudio12Generator.cxx
       cmGlobalVisualStudioGenerator.cxx
       cmGlobalVisualStudioGenerator.h
       cmGlobalWatcomWMakeGenerator.cxx
@@ -364,10 +357,6 @@ if (WIN32)
       cmLocalVisualStudio7Generator.h
       cmLocalVisualStudioGenerator.cxx
       cmLocalVisualStudioGenerator.h
-      cmVisualStudioSlnData.h
-      cmVisualStudioSlnData.cxx
-      cmVisualStudioSlnParser.h
-      cmVisualStudioSlnParser.cxx
       cmVisualStudioWCEPlatformParser.h
       cmVisualStudioWCEPlatformParser.cxx
       cmWin32ProcessExecution.cxx
@@ -394,7 +383,7 @@ if(WIN32 AND NOT CYGWIN AND NOT BORLAND)
   set_source_files_properties(cmcldeps.cxx PROPERTIES COMPILE_DEFINITIONS _WIN32_WINNT=0x0501)
   add_executable(cmcldeps cmcldeps.cxx)
   target_link_libraries(cmcldeps CMakeLib)
-  install(TARGETS cmcldeps DESTINATION bin)
+  install_targets(/bin cmcldeps)
 endif()
 
 # create a library used by the command line and the GUI
@@ -548,13 +537,12 @@ endif()
 add_executable(cmake cmakemain.cxx)
 target_link_libraries(cmake CMakeLib)
 
-# Build special executable for running programs on Windows 98.
-# Included on any Windows (unconditional packaging required!).
+# Build special executable for running programs on Windows 98
 if(WIN32)
   if(NOT UNIX)
     add_executable(cmw9xcom cmw9xcom.cxx)
     target_link_libraries(cmw9xcom CMakeLib)
-    install(TARGETS cmw9xcom DESTINATION bin)
+    install_targets(/bin cmw9xcom)
   endif()
 endif()
 
@@ -580,9 +568,11 @@ endif()
 include (${CMake_BINARY_DIR}/Source/LocalUserOptions.cmake OPTIONAL)
 include (${CMake_SOURCE_DIR}/Source/LocalUserOptions.cmake OPTIONAL)
 
-install(TARGETS cmake ctest cpack DESTINATION bin)
+install_targets(/bin cmake)
+install_targets(/bin ctest)
+install_targets(/bin cpack)
 if(APPLE)
-  install(TARGETS cmakexbuild DESTINATION bin)
+  install_targets(/bin cmakexbuild)
 endif()
 
-install(FILES cmCPluginAPI.h DESTINATION ${CMAKE_DATA_DIR}/include)
+install_files(${CMAKE_DATA_DIR}/include cmCPluginAPI.h)

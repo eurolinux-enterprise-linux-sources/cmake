@@ -1,7 +1,7 @@
-diff -Nrup a/Modules/FindRuby.cmake b/Modules/FindRuby.cmake
---- a/Modules/FindRuby.cmake	2014-01-16 12:15:08.000000000 -0500
-+++ b/Modules/FindRuby.cmake	2016-03-02 16:10:18.242811297 -0500
-@@ -101,14 +101,8 @@ if(RUBY_EXECUTABLE  AND NOT  RUBY_VERSIO
+diff -up cmake-2.8.10-rc1/Modules/FindRuby.cmake.findruby cmake-2.8.10-rc1/Modules/FindRuby.cmake
+--- cmake-2.8.10-rc1/Modules/FindRuby.cmake.findruby	2012-10-02 10:12:18.000000000 -0600
++++ cmake-2.8.10-rc1/Modules/FindRuby.cmake	2012-10-02 15:50:30.463292214 -0600
+@@ -92,14 +92,8 @@ if(RUBY_EXECUTABLE  AND NOT  RUBY_VERSIO
     _RUBY_CONFIG_VAR("sitearchdir" RUBY_SITEARCH_DIR)
     _RUBY_CONFIG_VAR("sitelibdir" RUBY_SITELIB_DIR)
  

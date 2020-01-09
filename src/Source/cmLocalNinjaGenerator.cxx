@@ -27,6 +27,7 @@ cmLocalNinjaGenerator::cmLocalNinjaGenerator()
   , ConfigName("")
   , HomeRelativeOutputPath("")
 {
+  this->IsMakefileGenerator = true;
 #ifdef _WIN32
   this->WindowsShell = true;
 #endif
@@ -301,12 +302,7 @@ void cmLocalNinjaGenerator::AppendCustomCommandLines(const cmCustomCommand *cc,
       wd = this->GetMakefile()->GetStartOutputDirectory();
 
     cmOStringStream cdCmd;
-#ifdef _WIN32
-        std::string cdStr = "cd /D ";
-#else
-        std::string cdStr = "cd ";
-#endif
-    cdCmd << cdStr << this->ConvertToOutputFormat(wd, SHELL);
+    cdCmd << "cd " << this->ConvertToOutputFormat(wd, SHELL);
     cmdLines.push_back(cdCmd.str());
   }
   for (unsigned i = 0; i != ccg.GetNumberOfCommands(); ++i) {
@@ -339,15 +335,14 @@ cmLocalNinjaGenerator::WriteCustomCommandBuildStatement(
   this->AppendCustomCommandLines(cc, cmdLines);
 
   if (cmdLines.empty()) {
-    this->GetGlobalNinjaGenerator()->WritePhonyBuild(
-      this->GetBuildFileStream(),
-      "Phony custom command for " +
-      ninjaOutputs[0],
-      ninjaOutputs,
-      ninjaDeps,
-      cmNinjaDeps(),
-      orderOnlyDeps,
-      cmNinjaVars());
+    cmGlobalNinjaGenerator::WritePhonyBuild(this->GetBuildFileStream(),
+                                            "Phony custom command for " +
+                                              ninjaOutputs[0],
+                                            ninjaOutputs,
+                                            ninjaDeps,
+                                            cmNinjaDeps(),
+                                            orderOnlyDeps,
+                                            cmNinjaVars());
   } else {
     this->GetGlobalNinjaGenerator()->WriteCustomCommandBuild(
       this->BuildCommandLine(cmdLines),

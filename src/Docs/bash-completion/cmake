@@ -100,23 +100,21 @@ _cmake()
             return
             ;;
         -G)
+            # FIXME: doesn't work properly
             local IFS=$'\n'
-            local quoted
-            printf -v quoted %q "$cur"
             COMPREPLY=( $( compgen -W '$( cmake --help 2>/dev/null | sed -n \
-                -e "1,/^Generators/d" \
-                -e "/^  *[^ =]/{s|^ *\([^=]*[^ =]\).*$|\1|;s| |\\\\ |g;p}" \
-                2>/dev/null )' -- "$quoted" ) )
+                "/^.*[^ ].*= Generates/{s|^ *\(.*[^ ]\) *= Generates.*$|\1|;s| |\\\\ |g;p}" \
+                2>/dev/null )' -- "$cur" ) )
             return
             ;;
         --help-command)
             COMPREPLY=( $( compgen -W '$( cmake --help-command-list 2>/dev/null|
-                grep -v "^cmake version " )' -- "$cur" ) )
+                tail -n +2 )' -- "$cur" ) )
             return
             ;;
         --help-module)
             COMPREPLY=( $( compgen -W '$( cmake --help-module-list 2>/dev/null|
-                grep -v "^cmake version " )' -- "$cur" ) )
+                tail -n +2 )' -- "$cur" ) )
             return
             ;;
          --help-policy)
@@ -126,12 +124,12 @@ _cmake()
             ;;
          --help-property)
             COMPREPLY=( $( compgen -W '$( cmake --help-property-list \
-                2>/dev/null | grep -v "^cmake version " )' -- "$cur" ) )
+                2>/dev/null | tail -n +2 )' -- "$cur" ) )
             return
             ;;
          --help-variable)
             COMPREPLY=( $( compgen -W '$( cmake --help-variable-list \
-                2>/dev/null | grep -v "^cmake version " )' -- "$cur" ) )
+                2>/dev/null | tail -n +2 )' -- "$cur" ) )
             return
             ;;
     esac

@@ -17,16 +17,9 @@
 #include "cmMakefile.h"
 #include "cmake.h"
 
-cmGlobalVisualStudio7Generator::cmGlobalVisualStudio7Generator(
-  const char* platformName)
+cmGlobalVisualStudio7Generator::cmGlobalVisualStudio7Generator()
 {
   this->FindMakeProgramFile = "CMakeVS7FindMake.cmake";
-
-  if (!platformName)
-    {
-    platformName = "Win32";
-    }
-  this->PlatformName = platformName;
 }
 
 
@@ -38,16 +31,6 @@ void cmGlobalVisualStudio7Generator
   mf->AddDefinition("CMAKE_GENERATOR_NO_COMPILER_ENV", "1");
   mf->AddDefinition("CMAKE_GENERATOR_FC", "ifort");
   this->AddPlatformDefinitions(mf);
-  if(!mf->GetDefinition("CMAKE_CONFIGURATION_TYPES"))
-    {
-    mf->AddCacheDefinition(
-      "CMAKE_CONFIGURATION_TYPES",
-      "Debug;Release;MinSizeRel;RelWithDebInfo",
-      "Semicolon separated list of supported configuration types, "
-      "only supports Debug, Release, MinSizeRel, and RelWithDebInfo, "
-      "anything else will be ignored.",
-      cmCacheManager::STRING);
-    }
 
   // Create list of configurations requested by user's cache, if any.
   this->cmGlobalGenerator::EnableLanguage(lang, mf, optional);
@@ -73,12 +56,10 @@ void cmGlobalVisualStudio7Generator
 
 std::string cmGlobalVisualStudio7Generator
 ::GenerateBuildCommand(const char* makeProgram,
-                       const char *projectName, const char *projectDir,
+                       const char *projectName,
                        const char* additionalOptions, const char *targetName,
                        const char* config, bool ignoreErrors, bool)
 {
-  // Visual studio 7 doesn't need project dir
-  (void) projectDir;
   // Ingoring errors is not implemented in visual studio 6
   (void) ignoreErrors;
 
@@ -149,13 +130,6 @@ cmLocalGenerator *cmGlobalVisualStudio7Generator::CreateLocalGenerator()
   lg->SetExtraFlagTable(this->GetExtraFlagTableVS7());
   lg->SetGlobalGenerator(this);
   return lg;
-}
-
-//----------------------------------------------------------------------------
-void cmGlobalVisualStudio7Generator::AddPlatformDefinitions(cmMakefile* mf)
-{
-  cmGlobalVisualStudioGenerator::AddPlatformDefinitions(mf);
-  mf->AddDefinition("CMAKE_VS_PLATFORM_NAME", this->GetPlatformName());
 }
 
 void cmGlobalVisualStudio7Generator::GenerateConfigurations(cmMakefile* mf)
@@ -615,20 +589,20 @@ void cmGlobalVisualStudio7Generator
   const std::set<std::string>& configsPartOfDefaultBuild,
   const char* platformMapping)
 {
-  const char* platformName =
-    platformMapping ? platformMapping : this->GetPlatformName();
   std::string guid = this->GetGUID(name);
   for(std::vector<std::string>::iterator i = this->Configurations.begin();
       i != this->Configurations.end(); ++i)
     {
     fout << "\t\t{" << guid << "}." << *i
-         << ".ActiveCfg = " << *i << "|" << platformName << "\n";
+         << ".ActiveCfg = " << *i << "|"
+         << (platformMapping ? platformMapping : "Win32") << "\n";
       std::set<std::string>::const_iterator
         ci = configsPartOfDefaultBuild.find(*i);
       if(!(ci == configsPartOfDefaultBuild.end()))
       {
       fout << "\t\t{" << guid << "}." << *i
-           << ".Build.0 = " << *i << "|" << platformName << "\n";
+           << ".Build.0 = " << *i << "|"
+           << (platformMapping ? platformMapping : "Win32") << "\n";
       }
     }
 }

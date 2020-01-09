@@ -94,7 +94,6 @@ public:
       "         [RANDOM_SEED <seed>] <output variable>)\n"
       "  string(FIND <string> <substring> <output variable> [REVERSE])\n"
       "  string(TIMESTAMP <output variable> [<format string>] [UTC])\n"
-      "  string(MAKE_C_IDENTIFIER <input string> <output variable>)\n"
       "REGEX MATCH will match the regular expression once and store the "
       "match in the output variable.\n"
       "REGEX MATCHALL will match the regular expression as many times as "
@@ -177,9 +176,7 @@ public:
       "and copied to the output as-is.\n"
       "If no explicit <format string> is given it will default to:\n"
       "   %Y-%m-%dT%H:%M:%S    for local time.\n"
-      "   %Y-%m-%dT%H:%M:%SZ   for UTC.\n"
-      "MAKE_C_IDENTIFIER will write a string which can be used as an "
-      "identifier in C.";
+      "   %Y-%m-%dT%H:%M:%SZ   for UTC.";
     }
 
   cmTypeMacro(cmStringCommand, cmCommand);
@@ -203,7 +200,6 @@ protected:
   bool HandleRandomCommand(std::vector<std::string> const& args);
   bool HandleFindCommand(std::vector<std::string> const& args);
   bool HandleTimestampCommand(std::vector<std::string> const& args);
-  bool HandleMakeCIdentifierCommand(std::vector<std::string> const& args);
 
   class RegexReplacement
   {

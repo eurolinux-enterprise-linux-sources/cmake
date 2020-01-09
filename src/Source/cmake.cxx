@@ -65,7 +65,6 @@
 #    include "cmGlobalVisualStudio9Generator.h"
 #    include "cmGlobalVisualStudio10Generator.h"
 #    include "cmGlobalVisualStudio11Generator.h"
-#    include "cmGlobalVisualStudio12Generator.h"
 #    include "cmGlobalBorlandMakefileGenerator.h"
 #    include "cmGlobalNMakeMakefileGenerator.h"
 #    include "cmGlobalJOMMakefileGenerator.h"
@@ -129,7 +128,7 @@ void cmNeedBackwardsCompatibility(const std::string& variable,
       "by CMake in versions prior to 1.6. To fix this you might need to set "
       "the cache value of CMAKE_BACKWARDS_COMPATIBILITY to 1.4 or less. If "
       "you are writing a CMakeLists file, (or have already set "
-      "CMAKE_BACKWARDS_COMPATIBILITY to 1.4 or less) then you probably need "
+      "CMAKE_BACKWARDS_COMPATABILITY to 1.4 or less) then you probably need "
       "to include a CMake module to test for the feature this variable "
       "defines.";
     cmSystemTools::Error(message.c_str());
@@ -384,22 +383,11 @@ bool cmake::SetCacheArgs(const std::vector<std::string>& args)
       cmCacheManager::CacheEntryType type = cmCacheManager::UNINITIALIZED;
       if(cmCacheManager::ParseEntry(entry.c_str(), var, value, type))
         {
-        // The value is transformed if it is a filepath for example, so
-        // we can't compare whether the value is already in the cache until
-        // after we call AddCacheEntry.
-        const char *cachedValue =
-                              this->CacheManager->GetCacheValue(var.c_str());
-
         this->CacheManager->AddCacheEntry(var.c_str(), value.c_str(),
           "No help, variable specified on the command line.", type);
         if(this->WarnUnusedCli)
           {
-          if (!cachedValue
-              || strcmp(this->CacheManager->GetCacheValue(var.c_str()),
-                        cachedValue) != 0)
-            {
-            this->WatchUnusedCli(var.c_str());
-            }
+          this->WatchUnusedCli(var.c_str());
           }
         }
       else
@@ -550,7 +538,7 @@ void cmake::ReadListFile(const std::vector<std::string>& args,
       }
     if (!lg->GetMakefile()->ReadListFile(0, path))
       {
-      cmSystemTools::Error("Error processing file: ", path);
+      cmSystemTools::Error("Error processing file:", path);
       }
     }
 
@@ -612,7 +600,7 @@ bool cmake::FindPackage(const std::vector<std::string>& args)
     std::vector<std::string> includeDirs;
     cmSystemTools::ExpandListArgument(includes, includeDirs);
 
-    std::string includeFlags = lg->GetIncludeFlags(includeDirs, 0,
+    std::string includeFlags = lg->GetIncludeFlags(includeDirs,
                                                    language.c_str(), false);
 
     std::string definitions = mf->GetSafeDefinition("PACKAGE_DEFINITIONS");
@@ -1169,8 +1157,9 @@ void CMakeCommandUsage(const char* program)
     << "  remove_directory dir      - remove a directory and its contents\n"
     << "  rename oldname newname    - rename a file or directory "
        "(on one volume)\n"
-    << "  tar [cxt][vfz][cvfj] file.tar [file/dir1 file/dir2 ...]\n"
-    << "                            - create or extract a tar or zip archive\n"
+    << "  tar [cxt][vfz][cvfj] file.tar "
+    "file/dir1 file/dir2 ... - create a tar "
+    "archive\n"
     << "  time command [args] ...   - run command and return elapsed time\n"
     << "  touch file                - touch a file.\n"
     << "  touch_nocreate file       - touch a file but do not create it.\n"
@@ -1734,11 +1723,10 @@ int cmake::ExecuteCMakeCommand(std::vector<std::string>& args)
       {
       return cmake::ExecuteEchoColor(args);
       }
-    else if (args[1] == "cmake_automoc" && args.size() >= 4)
+    else if (args[1] == "cmake_automoc")
       {
         cmQtAutomoc automoc;
-        const char *config = args[3].empty() ? 0 : args[3].c_str();
-        bool automocSuccess = automoc.Run(args[2].c_str(), config);
+        bool automocSuccess = automoc.Run(args[2].c_str());
         return automocSuccess ? 0 : 1;
       }
 #endif
@@ -2256,7 +2244,6 @@ int cmake::ActualConfigure()
         {"9.0", "Visual Studio 9 2008"},
         {"10.0", "Visual Studio 10"},
         {"11.0", "Visual Studio 11"},
-        {"12.0", "Visual Studio 12"},
         {0, 0}};
       for(int i=0; version[i].MSVersion != 0; i++)
         {
@@ -2378,7 +2365,7 @@ int cmake::ActualConfigure()
   // EXECUTABLE_OUTPUT_PATH.  They are now documented as old-style and
   // should no longer be used.  Therefore we present them only if the
   // project requires compatibility with CMake 2.4.  We detect this
-  // here by looking for the old CMAKE_BACKWARDS_COMPATIBILITY
+  // here by looking for the old CMAKE_BACKWARDS_COMPATABILITY
   // variable created when CMP0001 is not set to NEW.
   if(this->GetCacheManager()->GetCacheValue("CMAKE_BACKWARDS_COMPATIBILITY"))
     {
@@ -2644,8 +2631,7 @@ const char* cmake::GetCacheDefinition(const char* name) const
 void cmake::AddDefaultCommands()
 {
   std::list<cmCommand*> commands;
-  GetBootstrapCommands1(commands);
-  GetBootstrapCommands2(commands);
+  GetBootstrapCommands(commands);
   GetPredefinedCommands(commands);
   for(std::list<cmCommand*>::iterator i = commands.begin();
       i != commands.end(); ++i)
@@ -2666,8 +2652,6 @@ void cmake::AddDefaultGenerators()
     cmGlobalVisualStudio10Generator::NewFactory());
   this->Generators.push_back(
     cmGlobalVisualStudio11Generator::NewFactory());
-  this->Generators.push_back(
-    cmGlobalVisualStudio12Generator::NewFactory());
   this->Generators.push_back(
     cmGlobalVisualStudio71Generator::NewFactory());
   this->Generators.push_back(
@@ -3607,14 +3591,6 @@ void cmake::DefineProperties(cmake *cm)
      "for the FOLDER target property.");
 
   cm->DefineProperty
-    ("AUTOMOC_TARGETS_FOLDER", cmProperty::GLOBAL,
-     "Name of FOLDER for *_automoc targets that are added automatically by "
-     "CMake for targets for which AUTOMOC is enabled.",
-     "If not set, CMake uses the FOLDER property of the parent target as a "
-     "default value for this property. See also the documentation for the "
-     "FOLDER target property and the AUTOMOC target property.");
-
-  cm->DefineProperty
     ("PREDEFINED_TARGETS_FOLDER", cmProperty::GLOBAL,
      "Name of FOLDER for targets that are added automatically by CMake.",
      "If not set, CMake uses \"CMakePredefinedTargets\" as a default "
@@ -3667,11 +3643,11 @@ void cmake::RecordPropertyAccess(const char *name,
 
 void cmake::ReportUndefinedPropertyAccesses(const char *filename)
 {
-  if(!this->GlobalGenerator)
-    { return; }
   FILE *progFile = fopen(filename,"w");
-  if(!progFile)
-    { return; }
+  if (!progFile || !this->GlobalGenerator)
+    {
+    return;
+    }
 
   // what are the enabled languages?
   std::vector<std::string> enLangs;
@@ -4069,7 +4045,7 @@ static bool cmakeCheckStampFile(const char* stampName)
   // TODO: Teach cmGeneratedFileStream to use a random temp file (with
   // multiple tries in unlikely case of conflict) and use that here.
   std::ofstream stamp(stampTemp);
-  stamp << "# CMake generation timestamp file for this directory.\n";
+  stamp << "# CMake generation timestamp file this directory.\n";
   }
   if(cmSystemTools::RenameFile(stampTemp, stampName))
     {
@@ -4141,7 +4117,7 @@ int cmake::WindowsCEEnvironment(const char* version, const std::string& name)
   return -1;
 }
 
-// For visual studio 2005 and newer manifest files need to be embedded into
+// For visual studio 2005 and newer manifest files need to be embeded into
 // exe and dll's.  This code does that in such a way that incremental linking
 // still works.
 int cmake::VisualStudioLink(std::vector<std::string>& args, int type)
@@ -4197,7 +4173,7 @@ int cmake::VisualStudioLink(std::vector<std::string>& args, int type)
     {
     if(verbose)
       {
-      std::cout << "Visual Studio Incremental Link with embedded manifests\n";
+      std::cout << "Visual Studio Incremental Link with embeded manifests\n";
       }
     return cmake::VisualStudioLinkIncremental(expandedArgs, type, verbose);
     }

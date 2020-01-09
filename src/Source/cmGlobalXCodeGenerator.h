@@ -55,7 +55,6 @@ public:
    */
   virtual std::string GenerateBuildCommand(const char* makeProgram,
                                            const char *projectName,
-                                           const char *projectDir,
                                            const char* additionalOptions,
                                            const char *targetName,
                                            const char* config,
@@ -85,7 +84,6 @@ public:
   virtual bool IsMultiConfig();
 
   virtual bool SetGeneratorToolset(std::string const& ts);
-  void AppendFlag(std::string& flags, std::string const& flag);
 private:
   cmXCodeObject* CreateOrGetPBXGroup(cmTarget& cmtarget,
                                      cmSourceGroup* sg);
@@ -199,6 +197,7 @@ private:
   void AppendDefines(BuildObjectListOrString& defs,
                      std::vector<std::string> const& defines,
                      bool dflag = false);
+  void AppendFlag(std::string& flags, std::string const& flag);
 
 protected:
   virtual const char* GetInstallTargetName() const { return "install"; }

@@ -227,7 +227,7 @@ bool cmMacroHelperCommand::InvokeInitialPass
         }
 
       arg.Value = tmps;
-      arg.Delim = k->Delim;
+      arg.Quoted = k->Quoted;
       arg.FilePath = k->FilePath;
       arg.Line = k->Line;
       newLFF.Arguments.push_back(arg);

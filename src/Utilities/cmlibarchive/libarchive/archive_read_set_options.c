@@ -78,7 +78,7 @@ archive_set_format_option(struct archive *_a, const char *m, const char *o,
 	struct archive_read *a = (struct archive_read *)_a;
 	struct archive_format_descriptor *format;
 	size_t i;
-	int r, rv = ARCHIVE_WARN;
+	int r, rv = ARCHIVE_FAILED;
 
 	for (i = 0; i < sizeof(a->formats)/sizeof(a->formats[0]); i++) {
 		format = &a->formats[i];
@@ -102,10 +102,6 @@ archive_set_format_option(struct archive *_a, const char *m, const char *o,
 		if (r == ARCHIVE_OK)
 			rv = ARCHIVE_OK;
 	}
-	/* If the format name didn't match, return a special code for
-	 * _archive_set_option[s]. */
-	if (rv == ARCHIVE_WARN && m != NULL)
-		rv = ARCHIVE_WARN - 1;
 	return (rv);
 }
 
@@ -116,7 +112,7 @@ archive_set_filter_option(struct archive *_a, const char *m, const char *o,
 	struct archive_read *a = (struct archive_read *)_a;
 	struct archive_read_filter *filter;
 	struct archive_read_filter_bidder *bidder;
-	int r, rv = ARCHIVE_WARN;
+	int r, rv = ARCHIVE_FAILED;
 
 	for (filter = a->filter; filter != NULL; filter = filter->upstream) {
 		bidder = filter->bidder;
@@ -139,10 +135,6 @@ archive_set_filter_option(struct archive *_a, const char *m, const char *o,
 		if (r == ARCHIVE_OK)
 			rv = ARCHIVE_OK;
 	}
-	/* If the filter name didn't match, return a special code for
-	 * _archive_set_option[s]. */
-	if (rv == ARCHIVE_WARN && m != NULL)
-		rv = ARCHIVE_WARN - 1;
 	return (rv);
 }
 

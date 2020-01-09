@@ -17,7 +17,7 @@
 #
 #  USE_ITK_FILE - The full path to the UseITK.cmake file.
 #                 This is provided for backward
-#                 compatibility.  Use ITK_USE_FILE
+#                 compatability.  Use ITK_USE_FILE
 #                 instead.
 
 #=============================================================================
@@ -52,6 +52,6 @@ if(NOT ITK_FOUND)
 endif()
 
 if(ITK_FOUND)
-  # Set USE_ITK_FILE for backward-compatibility.
+  # Set USE_ITK_FILE for backward-compatability.
   set(USE_ITK_FILE ${ITK_USE_FILE})
 endif()

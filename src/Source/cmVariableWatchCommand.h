@@ -14,6 +14,13 @@
 
 #include "cmCommand.h"
 
+class cmVariableWatchCommandHandler
+{
+public:
+  typedef std::vector<std::string> VectorOfCommands;
+  VectorOfCommands Commands;
+};
+
 /** \class cmVariableWatchCommand
  * \brief Watch when the variable changes and invoke command
  *
@@ -31,9 +38,6 @@ public:
 
   //! Default constructor
   cmVariableWatchCommand();
-
-  //! Destructor.
-  ~cmVariableWatchCommand();
 
   /**
    * This is called when the command is first encountered in
@@ -79,8 +83,13 @@ public:
 
   cmTypeMacro(cmVariableWatchCommand, cmCommand);
 
+  void VariableAccessed(const std::string& variable, int access_type,
+    const char* newValue, const cmMakefile* mf);
+
 protected:
-  std::set<std::string> WatchedVariables;
+  std::map<std::string, cmVariableWatchCommandHandler> Handlers;
+
+  bool InCallback;
 };
 
 

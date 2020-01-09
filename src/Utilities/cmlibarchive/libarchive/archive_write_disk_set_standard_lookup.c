@@ -122,7 +122,6 @@ lookup_gid(void *private_data, const char *gname, int64_t gid)
 		char _buffer[128];
 		size_t bufsize = 128;
 		char *buffer = _buffer;
-		char *allocated = NULL;
 		struct group	grent, *result;
 		int r;
 
@@ -134,15 +133,16 @@ lookup_gid(void *private_data, const char *gname, int64_t gid)
 			if (r != ERANGE)
 				break;
 			bufsize *= 2;
-			free(allocated);
-			allocated = malloc(bufsize);
-			if (allocated == NULL)
+			if (buffer != _buffer)
+				free(buffer);
+			buffer = malloc(bufsize);
+			if (buffer == NULL)
 				break;
-			buffer = allocated;
 		}
 		if (result != NULL)
 			gid = result->gr_gid;
-		free(allocated);
+		if (buffer != _buffer)
+			free(buffer);
 	}
 #  else /* HAVE_GETGRNAM_R */
 	{
@@ -158,7 +158,7 @@ lookup_gid(void *private_data, const char *gname, int64_t gid)
 #else
 	#error No way to perform gid lookups on this platform
 #endif
-	b->id = (gid_t)gid;
+	b->id = gid;
 
 	return (gid);
 }
@@ -192,7 +192,6 @@ lookup_uid(void *private_data, const char *uname, int64_t uid)
 		char _buffer[128];
 		size_t bufsize = 128;
 		char *buffer = _buffer;
-		char *allocated = NULL;
 		struct passwd	pwent, *result;
 		int r;
 
@@ -204,15 +203,16 @@ lookup_uid(void *private_data, const char *uname, int64_t uid)
 			if (r != ERANGE)
 				break;
 			bufsize *= 2;
-			free(allocated);
-			allocated = malloc(bufsize);
-			if (allocated == NULL)
+			if (buffer != _buffer)
+				free(buffer);
+			buffer = malloc(bufsize);
+			if (buffer == NULL)
 				break;
-			buffer = allocated;
 		}
 		if (result != NULL)
 			uid = result->pw_uid;
-		free(allocated);
+		if (buffer != _buffer)
+			free(buffer);
 	}
 #  else /* HAVE_GETPWNAM_R */
 	{
@@ -228,7 +228,7 @@ lookup_uid(void *private_data, const char *uname, int64_t uid)
 #else
 	#error No way to look up uids on this platform
 #endif
-	b->id = (uid_t)uid;
+	b->id = uid;
 
 	return (uid);
 }

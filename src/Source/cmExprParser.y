@@ -20,7 +20,6 @@ Run bison like this:
 
 Modify cmExprParser.cxx:
   - remove TABs
-  - remove use of the 'register' storage class specifier
   - add __HP_aCC to the #if test for yyerrorlab warning suppression
 
 */

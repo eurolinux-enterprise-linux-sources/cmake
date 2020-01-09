@@ -163,7 +163,6 @@ archive_read_support_filter_compress(struct archive *_a)
 		return (ARCHIVE_FATAL);
 
 	bidder->data = NULL;
-	bidder->name = "compress (.Z)";
 	bidder->bid = compress_bidder_bid;
 	bidder->init = compress_bidder_init;
 	bidder->options = NULL;
@@ -213,7 +212,7 @@ compress_bidder_init(struct archive_read_filter *self)
 	void *out_block;
 	int code;
 
-	self->code = ARCHIVE_FILTER_COMPRESS;
+	self->code = ARCHIVE_COMPRESSION_COMPRESS;
 	self->name = "compress (.Z)";
 
 	state = (struct private_data *)calloc(sizeof(*state), 1);

@@ -19,14 +19,6 @@
 
 #include <cmsys/auto_ptr.hxx>
 
-#define CM_FOR_EACH_TARGET_POLICY(F) \
-  F(CMP0003) \
-  F(CMP0004) \
-  F(CMP0008) \
-  F(CMP0020) \
-  F(CMP0021) \
-  F(CMP0022)
-
 class cmake;
 class cmMakefile;
 class cmSourceFile;
@@ -93,19 +85,26 @@ public:
 
   ///! Set/Get the name of the target
   const char* GetName() const {return this->Name.c_str();}
-  const char* GetExportName();
 
   ///! Set the cmMakefile that owns this target
   void SetMakefile(cmMakefile *mf);
   cmMakefile *GetMakefile() const { return this->Makefile;};
 
-#define DECLARE_TARGET_POLICY(POLICY) \
-  cmPolicies::PolicyStatus GetPolicyStatus ## POLICY () const \
-    { return this->PolicyStatus ## POLICY; }
+  /** Get the status of policy CMP0003 when the target was created.  */
+  cmPolicies::PolicyStatus GetPolicyStatusCMP0003() const
+    { return this->PolicyStatusCMP0003; }
 
-  CM_FOR_EACH_TARGET_POLICY(DECLARE_TARGET_POLICY)
+  /** Get the status of policy CMP0004 when the target was created.  */
+  cmPolicies::PolicyStatus GetPolicyStatusCMP0004() const
+    { return this->PolicyStatusCMP0004; }
 
-#undef DECLARE_TARGET_POLICY
+  /** Get the status of policy CMP0008 when the target was created.  */
+  cmPolicies::PolicyStatus GetPolicyStatusCMP0008() const
+    { return this->PolicyStatusCMP0008; }
+
+  /** Get the status of policy CMP0020 when the target was created.  */
+  cmPolicies::PolicyStatus GetPolicyStatusCMP0020() const
+    { return this->PolicyStatusCMP0020; }
 
   /**
    * Get the list of the custom commands for this target
@@ -190,12 +189,6 @@ public:
   void AddLinkLibrary(cmMakefile& mf,
                       const char *target, const char* lib,
                       LinkLibraryType llt);
-  enum TLLSignature {
-    KeywordTLLSignature,
-    PlainTLLSignature
-  };
-  bool PushTLLCommandTrace(TLLSignature signature);
-  void GetTllSignatureTraces(cmOStringStream &s, TLLSignature sig) const;
 
   void MergeLinkLibraries( cmMakefile& mf, const char* selfname,
                            const LinkLibraryVectorType& libs );
@@ -278,9 +271,6 @@ public:
       if the target cannot be linked.  */
   LinkInterface const* GetLinkInterface(const char* config,
                                         cmTarget *headTarget);
-  void GetTransitivePropertyLinkLibraries(const char* config,
-                                        cmTarget *headTarget,
-                                        std::vector<std::string> &libs);
 
   /** The link implementation specifies the direct library
       dependencies needed by the object files of the target.  */
@@ -346,7 +336,7 @@ public:
    * Trace through the source files in this target and add al source files
    * that they depend on, used by all generators
    */
-  void TraceDependencies();
+  void TraceDependencies(const char* vsProjectFile);
 
   /**
    * Make sure the full path to all source files is known.
@@ -371,9 +361,6 @@ public:
 
   /** Get the soname of the target.  Allowed only for a shared library.  */
   std::string GetSOName(const char* config);
-
-  /** Whether this library has @rpath and platform supports it.  */
-  bool HasMacOSXRpath(const char* config);
 
   /** Test for special case of a third-party shared library that has
       no soname at all.  */
@@ -420,14 +407,10 @@ public:
   /** Return true if builtin chrpath will work for this target */
   bool IsChrpathUsed(const char* config);
 
-  /** Return the install name directory for the target in the
-    * build tree.  For example: "@rpath/", "@loader_path/",
-    * or "/full/path/to/library".  */
-  std::string GetInstallNameDirForBuildTree(const char* config);
-
-  /** Return the install name directory for the target in the
-    * install tree.  For example: "@rpath/" or "@loader_path/". */
-  std::string GetInstallNameDirForInstallTree();
+  std::string GetInstallNameDirForBuildTree(const char* config,
+                                            bool for_xcode = false);
+  std::string GetInstallNameDirForInstallTree(const char* config,
+                                              bool for_xcode = false);
 
   cmComputeLinkInformation* GetLinkInformation(const char* config,
                                                cmTarget *head = 0);
@@ -447,8 +430,7 @@ public:
       If no macro should be defined null is returned.  */
   const char* GetExportMacro();
 
-  void GetCompileDefinitions(std::vector<std::string> &result,
-                             const char *config);
+  std::string GetCompileDefinitions(const char *config);
 
   // Compute the set of languages compiled by the target.  This is
   // computed every time it is called because the languages can change
@@ -480,10 +462,6 @@ public:
   /** Return whether this target is an executable Bundle on Apple.  */
   bool IsAppBundleOnApple();
 
-  /** Return whether this target is an executable Bundle, a framework
-      or CFBundle on Apple.  */
-  bool IsBundleOnApple();
-
   /** Return the framework version string.  Undefined if
       IsFrameworkOnApple returns false.  */
   std::string GetFrameworkVersion();
@@ -498,34 +476,27 @@ public:
       directory.  */
   bool UsesDefaultOutputDir(const char* config, bool implib);
 
+  /** Append to @a base the mac content directory and return it. */
+  std::string BuildMacContentDirectory(const std::string& base,
+                                       const char* config = 0,
+                                       bool includeMacOS = true);
+
   /** @return the mac content directory for this target. */
-  std::string GetMacContentDirectory(const char* config,
-                                     bool implib);
+  std::string GetMacContentDirectory(const char* config = 0,
+                                     bool implib = false,
+                                     bool includeMacOS = true);
 
   /** @return whether this target have a well defined output file name. */
   bool HaveWellDefinedOutputFiles();
 
   /** @return the Mac framework directory without the base. */
-  std::string GetFrameworkDirectory(const char* config, bool rootDir);
-
-  /** @return the Mac CFBundle directory without the base */
-  std::string GetCFBundleDirectory(const char* config, bool contentOnly);
-
-  /** @return the Mac App directory without the base */
-  std::string GetAppBundleDirectory(const char* config, bool contentOnly);
+  std::string GetFrameworkDirectory(const char* config = 0);
 
   std::vector<std::string> GetIncludeDirectories(const char *config);
   void InsertInclude(const cmValueWithOrigin &entry,
                      bool before = false);
-  void InsertCompileOption(const cmValueWithOrigin &entry,
-                     bool before = false);
-  void InsertCompileDefinition(const cmValueWithOrigin &entry,
-                     bool before = false);
 
   void AppendBuildInterfaceIncludes();
-
-  void GetCompileOptions(std::vector<std::string> &result,
-                         const char *config);
 
   bool IsNullImpliedByLinkLibraries(const std::string &p);
   bool IsLinkInterfaceDependentBoolProperty(const std::string &p,
@@ -541,24 +512,7 @@ public:
 
   std::string GetDebugGeneratorExpressions(const std::string &value,
                                   cmTarget::LinkLibraryType llt);
-
-  void AddSystemIncludeDirectories(const std::set<cmStdString> &incs);
-  void AddSystemIncludeDirectories(const std::vector<std::string> &incs);
-  std::set<cmStdString> const & GetSystemIncludeDirectories() const
-    { return this->SystemIncludeDirectories; }
-
-  void FinalizeSystemIncludeDirectories();
-
-  bool LinkLanguagePropagatesToDependents() const
-  { return this->TargetTypeValue == STATIC_LIBRARY; }
-
 private:
-  // The set of include directories that are marked as system include
-  // directories.
-  std::set<cmStdString> SystemIncludeDirectories;
-
-  std::vector<std::pair<TLLSignature, cmListFileBacktrace> > TLLCommands;
-
   /**
    * A list of direct dependencies. Use in conjunction with DependencyMap.
    */
@@ -642,11 +596,6 @@ private:
       the same as GetFullName.  */
   std::string NormalGetRealName(const char* config);
 
-  /** Append to @a base the mac content directory and return it. */
-  std::string BuildMacContentDirectory(const std::string& base,
-                                       const char* config,
-                                       bool contentOnly);
-
 private:
   std::string Name;
   std::vector<cmCustomCommand> PreBuildCommands;
@@ -673,8 +622,6 @@ private:
   bool IsApple;
   bool IsImportedTarget;
   bool DebugIncludesDone;
-  bool DebugCompileOptionsDone;
-  bool DebugCompileDefinitionsDone;
   mutable std::set<std::string> LinkImplicitNullProperties;
   bool BuildInterfaceIncludesAppended;
 
@@ -713,12 +660,10 @@ private:
   cmMakefile* Makefile;
 
   // Policy status recorded when target was created.
-#define TARGET_POLICY_MEMBER(POLICY) \
-  cmPolicies::PolicyStatus PolicyStatus ## POLICY;
-
-  CM_FOR_EACH_TARGET_POLICY(TARGET_POLICY_MEMBER)
-
-#undef TARGET_POLICY_MEMBER
+  cmPolicies::PolicyStatus PolicyStatusCMP0003;
+  cmPolicies::PolicyStatus PolicyStatusCMP0004;
+  cmPolicies::PolicyStatus PolicyStatusCMP0008;
+  cmPolicies::PolicyStatus PolicyStatusCMP0020;
 
   // Internal representation details.
   friend class cmTargetInternals;

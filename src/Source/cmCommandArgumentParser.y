@@ -20,7 +20,6 @@ Run bison like this:
 
 Modify cmCommandArgumentParser.cxx:
   - remove TABs
-  - remove use of the 'register' storage class specifier
   - put header block at top of file
 
 */

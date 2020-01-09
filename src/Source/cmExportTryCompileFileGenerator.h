@@ -43,8 +43,6 @@ protected:
                           ImportPropertyMap& properties,
                           std::set<cmTarget*> &emitted);
 
-  std::string InstallNameDir(cmTarget* target,
-                             const std::string& config);
 private:
   std::string FindTargets(const char *prop, cmTarget *tgt,
                    std::set<cmTarget*> &emitted);

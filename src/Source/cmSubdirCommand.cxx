@@ -64,7 +64,7 @@ bool cmSubdirCommand
     else
       {
       std::string error = "Incorrect SUBDIRS command. Directory: ";
-      error += *i + " does not exist.";
+      error += *i + " does not exists.";
       this->SetError(error.c_str());
       res = false;
       }

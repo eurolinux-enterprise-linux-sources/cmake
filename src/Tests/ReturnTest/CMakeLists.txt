@@ -140,7 +140,7 @@ endwhile()
 if ("${iter}" STREQUAL "aaa")
   pass ("break in a while")
 else ()
-  failed ("break in a while got: ${whiletestResult}")
+  failed ("break in a whi;e got: ${whiletestResult}")
 endif ()
 
 

@@ -23,7 +23,7 @@
 class cmGlobalVisualStudio71Generator : public cmGlobalVisualStudio7Generator
 {
 public:
-  cmGlobalVisualStudio71Generator(const char* platformName = NULL);
+  cmGlobalVisualStudio71Generator();
   static cmGlobalGeneratorFactory* NewFactory() {
     return new cmGlobalGeneratorSimpleFactory
       <cmGlobalVisualStudio71Generator>(); }

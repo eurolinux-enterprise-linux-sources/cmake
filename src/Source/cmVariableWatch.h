@@ -26,7 +26,6 @@ class cmVariableWatch
 public:
   typedef void (*WatchMethod)(const std::string& variable, int access_type,
     void* client_data, const char* newValue, const cmMakefile* mf);
-  typedef void (*DeleteData)(void* client_data);
 
   cmVariableWatch();
   ~cmVariableWatch();
@@ -34,10 +33,9 @@ public:
   /**
    * Add watch to the variable
    */
-  bool AddWatch(const std::string& variable, WatchMethod method,
-                void* client_data=0, DeleteData delete_data=0);
-  void RemoveWatch(const std::string& variable, WatchMethod method,
-                   void* client_data=0);
+  void AddWatch(const std::string& variable, WatchMethod method,
+                void* client_data=0);
+  void RemoveWatch(const std::string& variable, WatchMethod method);
 
   /**
    * This method is called when variable is accessed
@@ -69,18 +67,10 @@ protected:
   {
     WatchMethod Method;
     void*        ClientData;
-    DeleteData   DeleteDataCall;
-    Pair() : Method(0), ClientData(0), DeleteDataCall(0) {}
-    ~Pair()
-      {
-      if (this->DeleteDataCall && this->ClientData)
-        {
-        this->DeleteDataCall(this->ClientData);
-        }
-      }
+    Pair() : Method(0), ClientData(0) {}
   };
 
-  typedef std::vector< Pair* > VectorOfPairs;
+  typedef std::vector< Pair > VectorOfPairs;
   typedef std::map<cmStdString, VectorOfPairs > StringToVectorOfPairs;
 
   StringToVectorOfPairs WatchMap;

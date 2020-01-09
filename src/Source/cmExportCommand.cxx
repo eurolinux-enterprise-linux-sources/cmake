@@ -30,7 +30,6 @@ cmExportCommand::cmExportCommand()
 ,Append(&Helper, "APPEND", &ArgumentGroup)
 ,Namespace(&Helper, "NAMESPACE", &ArgumentGroup)
 ,Filename(&Helper, "FILE", &ArgumentGroup)
-,ExportOld(&Helper, "EXPORT_LINK_INTERFACE_LIBRARIES", &ArgumentGroup)
 {
   // at first TARGETS
   this->Targets.Follows(0);
@@ -114,15 +113,6 @@ bool cmExportCommand
       currentTarget != this->Targets.GetVector().end();
       ++currentTarget)
     {
-    if (this->Makefile->IsAlias(currentTarget->c_str()))
-      {
-      cmOStringStream e;
-      e << "given ALIAS target \"" << *currentTarget
-        << "\" which may not be exported.";
-      this->SetError(e.str().c_str());
-      return false;
-      }
-
     if(cmTarget* target =
        this->Makefile->GetLocalGenerator()->
        GetGlobalGenerator()->FindTarget(0, currentTarget->c_str()))
@@ -168,7 +158,6 @@ bool cmExportCommand
   ebfg.SetAppendMode(this->Append.IsEnabled());
   ebfg.SetExports(&targets);
   ebfg.SetCommand(this);
-  ebfg.SetExportOld(this->ExportOld.IsEnabled());
 
   // Compute the set of configurations exported.
   std::vector<std::string> configurationTypes;
@@ -221,7 +210,7 @@ bool cmExportCommand::HandlePackage(std::vector<std::string> const& args)
     else
       {
       cmOStringStream e;
-      e << "PACKAGE given unknown argument: " << args[i];
+      e << "PACKAGE given unknown argumsnt: " << args[i];
       this->SetError(e.str().c_str());
       return false;
       }

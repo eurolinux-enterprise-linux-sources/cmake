@@ -21,7 +21,7 @@ class cmQtAutomoc
 {
 public:
   cmQtAutomoc();
-  bool Run(const char* targetDirectory, const char *config);
+  bool Run(const char* targetDirectory);
 
   bool InitializeMocSourceFile(cmTarget* target);
   void SetupAutomocTarget(cmTarget* target);
@@ -31,8 +31,7 @@ private:
                                            const char* targetDirectory);
 
   bool ReadAutomocInfoFile(cmMakefile* makefile,
-                           const char* targetDirectory,
-                           const char *config);
+                           const char* targetDirectory);
   bool ReadOldMocDefinitionsFile(cmMakefile* makefile,
                                  const char* targetDirectory);
   void WriteOldMocDefinitionsFile(const char* targetDirectory);

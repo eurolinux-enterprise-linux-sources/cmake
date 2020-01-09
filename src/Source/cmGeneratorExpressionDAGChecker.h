@@ -16,18 +16,6 @@
 
 #include "cmGeneratorExpressionEvaluator.h"
 
-#define CM_FOR_EACH_TRANSITIVE_PROPERTY_METHOD(F) \
-  F(EvaluatingIncludeDirectories) \
-  F(EvaluatingSystemIncludeDirectories) \
-  F(EvaluatingCompileDefinitions) \
-  F(EvaluatingCompileOptions)
-
-#define CM_FOR_EACH_TRANSITIVE_PROPERTY_NAME(F) \
-  F(INTERFACE_INCLUDE_DIRECTORIES) \
-  F(INTERFACE_SYSTEM_INCLUDE_DIRECTORIES) \
-  F(INTERFACE_COMPILE_DEFINITIONS) \
-  F(INTERFACE_COMPILE_OPTIONS)
-
 //----------------------------------------------------------------------------
 struct cmGeneratorExpressionDAGChecker
 {
@@ -49,16 +37,9 @@ struct cmGeneratorExpressionDAGChecker
   void reportError(cmGeneratorExpressionContext *context,
                    const std::string &expr);
 
-  bool EvaluatingLinkLibraries(const char *tgt = 0);
-
-#define DECLARE_TRANSITIVE_PROPERTY_METHOD(METHOD) \
-  bool METHOD () const;
-
-CM_FOR_EACH_TRANSITIVE_PROPERTY_METHOD(DECLARE_TRANSITIVE_PROPERTY_METHOD)
-
-  bool GetTransitivePropertiesOnly();
-  void SetTransitivePropertiesOnly()
-    { this->TransitivePropertiesOnly = true; }
+  bool EvaluatingLinkLibraries();
+  bool EvaluatingIncludeDirectories() const;
+  bool EvaluatingCompileDefinitions() const;
 
 private:
   Result checkGraph() const;
@@ -71,7 +52,6 @@ private:
   const GeneratorExpressionContent * const Content;
   const cmListFileBacktrace Backtrace;
   Result CheckResult;
-  bool TransitivePropertiesOnly;
 };
 
 #endif

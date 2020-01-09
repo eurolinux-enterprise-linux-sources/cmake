@@ -16,8 +16,7 @@
 #include "cmake.h"
 
 //----------------------------------------------------------------------------
-cmGlobalVisualStudio71Generator::cmGlobalVisualStudio71Generator(
-  const char* platformName) : cmGlobalVisualStudio7Generator(platformName)
+cmGlobalVisualStudio71Generator::cmGlobalVisualStudio71Generator()
 {
   this->FindMakeProgramFile = "CMakeVS71FindMake.cmake";
   this->ProjectConfigurationSectionName = "ProjectConfiguration";
@@ -282,20 +281,20 @@ void cmGlobalVisualStudio71Generator
   const std::set<std::string>& configsPartOfDefaultBuild,
   const char* platformMapping)
 {
-  const char* platformName =
-    platformMapping ? platformMapping : this->GetPlatformName();
   std::string guid = this->GetGUID(name);
   for(std::vector<std::string>::iterator i = this->Configurations.begin();
       i != this->Configurations.end(); ++i)
     {
     fout << "\t\t{" << guid << "}." << *i
-         << ".ActiveCfg = " << *i << "|" << platformName << std::endl;
+         << ".ActiveCfg = " << *i << "|"
+         << (platformMapping ? platformMapping : "Win32") << std::endl;
     std::set<std::string>::const_iterator
       ci = configsPartOfDefaultBuild.find(*i);
     if(!(ci == configsPartOfDefaultBuild.end()))
       {
       fout << "\t\t{" << guid << "}." << *i
-           << ".Build.0 = " << *i << "|" << platformName << std::endl;
+           << ".Build.0 = " << *i << "|"
+           << (platformMapping ? platformMapping : "Win32") << std::endl;
       }
     }
 }

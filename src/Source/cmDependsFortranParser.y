@@ -33,7 +33,6 @@ Run bison like this:
 
 Modify cmDependsFortranParser.cxx:
   - remove TABs
-  - remove use of the 'register' storage class specifier
   - Remove the yyerrorlab block in range ["goto yyerrlab1", "yyerrlab1:"]
 */
 

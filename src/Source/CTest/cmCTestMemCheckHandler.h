@@ -37,7 +37,7 @@ public:
 protected:
   virtual int PreProcessHandler();
   virtual int PostProcessHandler();
-  virtual void GenerateTestCommand(std::vector<std::string>& args, int test);
+  virtual void GenerateTestCommand(std::vector<std::string>& args);
 
 private:
 
@@ -89,7 +89,6 @@ private:
   std::string              BoundsCheckerDPBDFile;
   std::string              BoundsCheckerXMLFile;
   std::string              MemoryTester;
-  std::vector<cmStdString> MemoryTesterDynamicOptions;
   std::vector<cmStdString> MemoryTesterOptions;
   int                      MemoryTesterStyle;
   std::string              MemoryTesterOutputFile;
@@ -118,16 +117,8 @@ private:
   bool ProcessMemCheckBoundsCheckerOutput(const std::string& str,
                                           std::string& log, int* results);
 
-  void PostProcessPurifyTest(cmCTestTestResult& res, int test);
-  void PostProcessBoundsCheckerTest(cmCTestTestResult& res, int test);
-  void PostProcessValgrindTest(cmCTestTestResult& res, int test);
-
-  ///! append MemoryTesterOutputFile to the test log
-  void appendMemTesterOutput(cmCTestTestHandler::cmCTestTestResult& res,
-                             int test);
-
-  ///! generate the output filename for the given test index
-  cmStdString testOutputFileName(int test);
+  void PostProcessPurifyTest(cmCTestTestResult& res);
+  void PostProcessBoundsCheckerTest(cmCTestTestResult& res);
 };
 
 #endif

@@ -61,8 +61,6 @@ protected:
                                  cmTarget* target,
                                  ImportPropertyMap& properties);
 
-  std::string InstallNameDir(cmTarget* target, const std::string& config);
-
   std::vector<cmTarget*> const* Exports;
   cmExportCommand* ExportCommand;
 };

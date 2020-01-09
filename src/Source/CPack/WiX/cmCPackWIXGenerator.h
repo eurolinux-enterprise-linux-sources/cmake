@@ -83,11 +83,7 @@ private:
     cmWIXSourceWriter& fileDefinitions,
     cmWIXSourceWriter& featureDefinitions,
     size_t& directoryCounter,
-    size_t& fileCounter,
-    const std::vector<std::string>& pkgExecutables,
-    std::vector<std::string>& dirIdExecutables
-    );
-
+    size_t& fileCounter);
 
   bool RequireOption(const std::string& name, std::string& value) const;
 

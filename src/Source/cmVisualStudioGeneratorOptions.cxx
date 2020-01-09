@@ -6,7 +6,6 @@
 inline std::string cmVisualStudio10GeneratorOptionsEscapeForXML(const char* s)
 {
   std::string ret = s;
-  cmSystemTools::ReplaceString(ret, ";", "%3B");
   cmSystemTools::ReplaceString(ret, "&", "&amp;");
   cmSystemTools::ReplaceString(ret, "<", "&lt;");
   cmSystemTools::ReplaceString(ret, ">", "&gt;");
@@ -67,7 +66,6 @@ void cmVisualStudioGeneratorOptions::FixExceptionHandlingDefault()
       break;
     case cmLocalVisualStudioGenerator::VS10:
     case cmLocalVisualStudioGenerator::VS11:
-    case cmLocalVisualStudioGenerator::VS12:
       // by default VS puts <ExceptionHandling></ExceptionHandling> empty
       // for a project, to make our projects look the same put a new line
       // and space over for the closing </ExceptionHandling> as the default
@@ -100,13 +98,13 @@ void cmVisualStudioGeneratorOptions::SetVerboseMakefile(bool verbose)
     }
 }
 
-bool cmVisualStudioGeneratorOptions::IsDebug() const
+bool cmVisualStudioGeneratorOptions::IsDebug()
 {
   return this->FlagMap.find("DebugInformationFormat") != this->FlagMap.end();
 }
 
 //----------------------------------------------------------------------------
-bool cmVisualStudioGeneratorOptions::UsingUnicode() const
+bool cmVisualStudioGeneratorOptions::UsingUnicode()
 {
   // Look for the a _UNICODE definition.
   for(std::vector<std::string>::const_iterator di = this->Defines.begin();
@@ -120,7 +118,7 @@ bool cmVisualStudioGeneratorOptions::UsingUnicode() const
   return false;
 }
 //----------------------------------------------------------------------------
-bool cmVisualStudioGeneratorOptions::UsingSBCS() const
+bool cmVisualStudioGeneratorOptions::UsingSBCS()
 {
   // Look for the a _SBCS definition.
   for(std::vector<std::string>::const_iterator di = this->Defines.begin();
@@ -230,7 +228,7 @@ cmVisualStudioGeneratorOptions
     }
   if(this->Version >= cmLocalVisualStudioGenerator::VS10)
     {
-    // if there are configuration specific flags, then
+    // if there are configuration specifc flags, then
     // use the configuration specific tag for PreprocessorDefinitions
     if(this->Configuration.size())
       {

@@ -166,7 +166,6 @@ bool cmCTestRunTest::EndTest(size_t completed, size_t total, bool started)
         {
         found = true;
         reason = "Required regular expression found.";
-        break;
         }
       }
     if ( !found )
@@ -197,7 +196,6 @@ bool cmCTestRunTest::EndTest(size_t completed, size_t total, bool started)
         reason += passIt->second;
         reason += "]";
         forceFail = true;
-        break;
         }
       }
     }
@@ -386,19 +384,13 @@ void cmCTestRunTest::MemCheckPostProcess()
              << this->TestResult.Name.c_str() << std::endl);
   cmCTestMemCheckHandler * handler = static_cast<cmCTestMemCheckHandler*>
     (this->TestHandler);
-  switch ( handler->MemoryTesterStyle )
+  if(handler->MemoryTesterStyle == cmCTestMemCheckHandler::BOUNDS_CHECKER)
     {
-    case cmCTestMemCheckHandler::VALGRIND:
-      handler->PostProcessValgrindTest(this->TestResult, this->Index);
-      break;
-    case cmCTestMemCheckHandler::PURIFY:
-      handler->PostProcessPurifyTest(this->TestResult, this->Index);
-      break;
-    case cmCTestMemCheckHandler::BOUNDS_CHECKER:
-      handler->PostProcessBoundsCheckerTest(this->TestResult, this->Index);
-      break;
-    default:
-      break;
+    handler->PostProcessBoundsCheckerTest(this->TestResult);
+    }
+  else if(handler->MemoryTesterStyle == cmCTestMemCheckHandler::PURIFY)
+    {
+    handler->PostProcessPurifyTest(this->TestResult);
     }
 }
 
@@ -524,7 +516,7 @@ void cmCTestRunTest::ComputeArguments()
     = cmSystemTools::ConvertToOutputPath(this->ActualCommand.c_str());
 
   //Prepends memcheck args to our command string
-  this->TestHandler->GenerateTestCommand(this->Arguments, this->Index);
+  this->TestHandler->GenerateTestCommand(this->Arguments);
   for(std::vector<std::string>::iterator i = this->Arguments.begin();
       i != this->Arguments.end(); ++i)
     {
