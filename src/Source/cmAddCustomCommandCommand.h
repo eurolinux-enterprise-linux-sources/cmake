@@ -1,26 +1,22 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmAddCustomCommandCommand.h,v $
-  Language:  C++
-  Date:      $Date: 2009-04-07 19:32:07 $
-  Version:   $Revision: 1.33.2.4 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmAddCustomCommandCommand_h
 #define cmAddCustomCommandCommand_h
 
 #include "cmCommand.h"
+#include "cmDocumentGeneratorExpressions.h"
 
 /** \class cmAddCustomCommandCommand
- * \brief 
+ * \brief
  *
  *  cmAddCustomCommandCommand defines a new command (rule) that can
  *  be executed within the build process
@@ -33,7 +29,7 @@ public:
   /**
    * This is a virtual constructor for the command.
    */
-  virtual cmCommand* Clone() 
+  virtual cmCommand* Clone()
     {
     return new cmAddCustomCommandCommand;
     }
@@ -48,20 +44,20 @@ public:
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() {return "add_custom_command";}
-  
+  virtual const char* GetName() const {return "add_custom_command";}
+
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation() 
+  virtual const char* GetTerseDocumentation() const
     {
     return "Add a custom build rule to the generated build system.";
     }
-  
+
   /**
    * More documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
     return
       "There are two main signatures for add_custom_command "
@@ -72,13 +68,18 @@ public:
       "                     [COMMAND command2 [ARGS] [args2...] ...]\n"
       "                     [MAIN_DEPENDENCY depend]\n"
       "                     [DEPENDS [depends...]]\n"
-      "                     [IMPLICIT_DEPENDS <lang1> depend1 ...]\n"
+      "                     [IMPLICIT_DEPENDS <lang1> depend1\n"
+      "                                      [<lang2> depend2] ...]\n"
       "                     [WORKING_DIRECTORY dir]\n"
       "                     [COMMENT comment] [VERBATIM] [APPEND])\n"
       "This defines a command to generate specified OUTPUT file(s).  "
       "A target created in the same directory (CMakeLists.txt file) that "
       "specifies any output of the custom command as a source file is given "
       "a rule to generate the file using the command at build time.  "
+      "Do not list the output in more than one independent target that may "
+      "build in parallel or the two instances of the rule may conflict "
+      "(instead use add_custom_target to drive the command and make the "
+      "other targets depend on that one).  "
       "If an output name is a relative path it will be interpreted "
       "relative to the build tree directory corresponding to the current "
       "source directory. "
@@ -114,6 +115,8 @@ public:
       "will be treated as PRE_LINK.\n"
       "If WORKING_DIRECTORY is specified the command will be executed "
       "in the directory given. "
+      "If it is a relative path it will be interpreted relative to the "
+      "build tree directory corresponding to the current source directory. "
       "If COMMENT is set, the value will be displayed as a "
       "message before the commands are executed at build time. "
       "If APPEND is specified the COMMAND and DEPENDS option values "
@@ -140,6 +143,8 @@ public:
       "dependencies of an input file.  The language given specifies the "
       "programming language whose corresponding dependency scanner should "
       "be used.  Currently only C and CXX language scanners are supported. "
+      "The language has to be specified for every file in the "
+      "IMPLICIT_DEPENDS list. "
       "Dependencies discovered from the scanning are added to those of "
       "the custom command at build time.  Note that the IMPLICIT_DEPENDS "
       "option is currently supported only for Makefile generators and "
@@ -151,12 +156,22 @@ public:
       "target-level dependency will be added so that the executable target "
       "will be built before any target using this custom command.  However "
       "this does NOT add a file-level dependency that would cause the "
-      "custom command to re-run whenever the executable is recompiled.\n"
-
+      "custom command to re-run whenever the executable is recompiled."
+      "\n"
+      "Arguments to COMMAND may use \"generator expressions\" with the "
+      "syntax \"$<...>\".  "
+      CM_DOCUMENT_COMMAND_GENERATOR_EXPRESSIONS
+      "References to target names in generator expressions imply "
+      "target-level dependencies, but NOT file-level dependencies.  "
+      "List target names with the DEPENDS option to add file dependencies."
+      "\n"
       "The DEPENDS option specifies files on which the command depends.  "
       "If any dependency is an OUTPUT of another custom command in the "
       "same directory (CMakeLists.txt file) CMake automatically brings the "
       "other custom command into the target in which this command is built.  "
+      "If DEPENDS is not specified the command will run whenever the OUTPUT "
+      "is missing; if the command does not actually create the OUTPUT then "
+      "the rule will always run.  "
       "If DEPENDS specifies any target (created by an ADD_* command) "
       "a target-level dependency is created to make sure the target is "
       "built before any target using this custom command.  Additionally, "
@@ -165,7 +180,7 @@ public:
       "is recompiled.\n"
       ;
     }
-  
+
   cmTypeMacro(cmAddCustomCommandCommand, cmCommand);
 protected:
   bool CheckOutputs(const std::vector<std::string>& outputs);

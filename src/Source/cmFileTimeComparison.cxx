@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmFileTimeComparison.cxx,v $
-  Language:  C++
-  Date:      $Date: 2008-01-03 05:01:38 $
-  Version:   $Revision: 1.7 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmFileTimeComparison.h"
 
 // Use a hash table to avoid duplicate file time checks from disk.
@@ -121,7 +116,7 @@ cmFileTimeComparison::~cmFileTimeComparison()
 }
 
 //----------------------------------------------------------------------------
-bool cmFileTimeComparison::FileTimeCompare(const char* f1, 
+bool cmFileTimeComparison::FileTimeCompare(const char* f1,
                                            const char* f2, int* result)
 {
   return this->Internals->FileTimeCompare(f1, f2, result);
@@ -134,7 +129,7 @@ bool cmFileTimeComparison::FileTimesDiffer(const char* f1, const char* f2)
 }
 
 //----------------------------------------------------------------------------
-int cmFileTimeComparisonInternal::Compare(cmFileTimeComparison_Type* s1, 
+int cmFileTimeComparisonInternal::Compare(cmFileTimeComparison_Type* s1,
                                           cmFileTimeComparison_Type* s2)
 {
 #if !defined(_WIN32) || defined(__CYGWIN__)

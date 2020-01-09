@@ -1,26 +1,21 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmCreateTestSourceList.h,v $
-  Language:  C++
-  Date:      $Date: 2008-01-23 15:27:59 $
-  Version:   $Revision: 1.16 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmCreateTestSourceList_h
 #define cmCreateTestSourceList_h
 
 #include "cmCommand.h"
 
 /** \class cmCreateTestSourceList
- * \brief 
+ * \brief
  *
  */
 
@@ -30,7 +25,7 @@ public:
   /**
    * This is a virtual constructor for the command.
    */
-  virtual cmCommand* Clone() 
+  virtual cmCommand* Clone()
     {
     return new cmCreateTestSourceList;
     }
@@ -45,20 +40,20 @@ public:
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() {return "create_test_sourcelist";}
-  
+  virtual const char* GetName() const {return "create_test_sourcelist";}
+
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation() 
+  virtual const char* GetTerseDocumentation() const
     {
     return "Create a test driver and source list for building test programs.";
     }
-  
+
   /**
    * More documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
     return
       "  create_test_sourcelist(sourceListName driverName\n"
@@ -86,7 +81,7 @@ public:
       "CMAKE_TESTDRIVER_AFTER_TESTMAIN can be set to have code that will be "
       "placed directly after the call to the test main function.";
     }
-  
+
   cmTypeMacro(cmCreateTestSourceList, cmCommand);
 };
 

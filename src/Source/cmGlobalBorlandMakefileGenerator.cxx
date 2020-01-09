@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmGlobalBorlandMakefileGenerator.cxx,v $
-  Language:  C++
-  Date:      $Date: 2007-10-22 16:48:39 $
-  Version:   $Revision: 1.28 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmGlobalBorlandMakefileGenerator.h"
 #include "cmLocalUnixMakefileGenerator3.h"
 #include "cmMakefile.h"
@@ -30,14 +25,14 @@ cmGlobalBorlandMakefileGenerator::cmGlobalBorlandMakefileGenerator()
 
 
 void cmGlobalBorlandMakefileGenerator
-::EnableLanguage(std::vector<std::string>const& l, 
-                 cmMakefile *mf, 
+::EnableLanguage(std::vector<std::string>const& l,
+                 cmMakefile *mf,
                  bool optional)
 {
   std::string outdir = this->CMakeInstance->GetStartOutputDirectory();
   mf->AddDefinition("BORLAND", "1");
   mf->AddDefinition("CMAKE_GENERATOR_CC", "bcc32");
-  mf->AddDefinition("CMAKE_GENERATOR_CXX", "bcc32"); 
+  mf->AddDefinition("CMAKE_GENERATOR_CXX", "bcc32");
   this->cmGlobalUnixMakefileGenerator3::EnableLanguage(l, mf, optional);
 }
 
@@ -60,9 +55,9 @@ cmLocalGenerator *cmGlobalBorlandMakefileGenerator::CreateLocalGenerator()
 
 //----------------------------------------------------------------------------
 void cmGlobalBorlandMakefileGenerator
-::GetDocumentation(cmDocumentationEntry& entry) const
+::GetDocumentation(cmDocumentationEntry& entry)
 {
-  entry.Name = this->GetName();
+  entry.Name = cmGlobalBorlandMakefileGenerator::GetActualName();
   entry.Brief = "Generates Borland makefiles.";
   entry.Full = "";
 }

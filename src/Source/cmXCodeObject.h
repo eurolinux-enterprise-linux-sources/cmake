@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmXCodeObject.h,v $
-  Language:  C++
-  Date:      $Date: 2008-09-03 13:43:18 $
-  Version:   $Revision: 1.18.2.1 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmXCodeObject_h
 #define cmXCodeObject_h
 
@@ -24,13 +19,13 @@ class cmXCodeObject
 {
 public:
   enum Type { OBJECT_LIST, STRING, ATTRIBUTE_GROUP, OBJECT_REF, OBJECT };
-  enum PBXType { PBXGroup, PBXBuildStyle, PBXProject, PBXHeadersBuildPhase, 
-                 PBXSourcesBuildPhase, PBXFrameworksBuildPhase, 
-                 PBXNativeTarget, PBXFileReference, PBXBuildFile, 
+  enum PBXType { PBXGroup, PBXBuildStyle, PBXProject, PBXHeadersBuildPhase,
+                 PBXSourcesBuildPhase, PBXFrameworksBuildPhase,
+                 PBXNativeTarget, PBXFileReference, PBXBuildFile,
                  PBXContainerItemProxy, PBXTargetDependency,
                  PBXShellScriptBuildPhase, PBXResourcesBuildPhase,
-                 PBXApplicationReference, PBXExecutableFileReference, 
-                 PBXLibraryReference, PBXToolTarget, PBXLibraryTarget, 
+                 PBXApplicationReference, PBXExecutableFileReference,
+                 PBXLibraryReference, PBXToolTarget, PBXLibraryTarget,
                  PBXAggregateTarget,XCBuildConfiguration,XCConfigurationList,
                  PBXCopyFilesBuildPhase,
                  None
@@ -43,16 +38,16 @@ public:
   PBXType GetIsA() { return this->IsA;}
 
   void SetString(const char* s);
-  const char* GetString() 
+  const char* GetString()
     {
       return this->String.c_str();
     }
-  
+
   void AddAttribute(const char* name, cmXCodeObject* value)
     {
       this->ObjectAttributes[name] = value;
     }
-  
+
   void SetObject(cmXCodeObject* value)
     {
       this->Object = value;
@@ -65,14 +60,14 @@ public:
     {
       this->List.push_back(value);
     }
-  bool HasObject(cmXCodeObject* o) 
+  bool HasObject(cmXCodeObject* o)
   {
-    return !(std::find(this->List.begin(), this->List.end(), o) 
+    return !(std::find(this->List.begin(), this->List.end(), o)
              == this->List.end());
   }
   void AddUniqueObject(cmXCodeObject* value)
   {
-    if(std::find(this->List.begin(), this->List.end(), value) 
+    if(std::find(this->List.begin(), this->List.end(), value)
        == this->List.end())
       {
       this->List.push_back(value);
@@ -82,11 +77,15 @@ public:
   void Print(std::ostream& out);
   virtual void PrintComment(std::ostream&) {};
 
-  static void PrintList(std::vector<cmXCodeObject*> const&, 
+  static void PrintList(std::vector<cmXCodeObject*> const&,
                         std::ostream& out);
   const char* GetId()
     {
       return this->Id.c_str();
+    }
+  void SetId(const char* id)
+    {
+      this->Id = id;
     }
   cmTarget* GetTarget()
     {
@@ -120,17 +119,9 @@ public:
         }
       return 0;
     }
-  
-  cmXCodeObject* GetPBXTargetDependency()
-    {
-      return this->PBXTargetDependencyValue;
-    }
-  void SetPBXTargetDependency(cmXCodeObject* d)
-    {
-      this->PBXTargetDependencyValue = d;
-    }
+
   void CopyAttributes(cmXCodeObject* );
-  
+
   void AddDependLibrary(const char* configName,
                         const char* l)
     {
@@ -144,8 +135,22 @@ public:
     {
       return this->DependLibraries;
     }
+  void AddDependTarget(const char* configName,
+                       const char* tName)
+    {
+      if(!configName)
+        {
+        configName = "";
+        }
+      this->DependTargets[configName].push_back(tName);
+    }
+  std::map<cmStdString, StringVec> const& GetDependTargets()
+    {
+    return this->DependTargets;
+    }
   std::vector<cmXCodeObject*> const& GetObjectList() { return this->List;}
   void SetComment(const char* c) { this->Comment = c;}
+  static void PrintString(std::ostream& os,cmStdString String);
 protected:
   void PrintString(std::ostream& os) const;
 
@@ -157,9 +162,9 @@ protected:
   cmStdString Comment;
   cmStdString String;
   cmXCodeObject* Object;
-  cmXCodeObject* PBXTargetDependencyValue;
   std::vector<cmXCodeObject*> List;
   std::map<cmStdString, StringVec> DependLibraries;
+  std::map<cmStdString, StringVec> DependTargets;
   std::map<cmStdString, cmXCodeObject*> ObjectAttributes;
 };
 #endif

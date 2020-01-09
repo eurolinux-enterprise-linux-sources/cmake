@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmSubdirDependsCommand.h,v $
-  Language:  C++
-  Date:      $Date: 2008-01-23 15:27:59 $
-  Version:   $Revision: 1.12 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmSubdirDependsCommand_h
 #define cmSubdirDependsCommand_h
 
@@ -32,7 +27,7 @@ public:
   /**
    * This is a virtual constructor for the command.
    */
-  virtual cmCommand* Clone() 
+  virtual cmCommand* Clone()
     {
     return new cmSubdirDependsCommand;
     }
@@ -47,29 +42,29 @@ public:
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() { return "subdir_depends";}
+  virtual const char* GetName() const { return "subdir_depends";}
 
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation() 
+  virtual const char* GetTerseDocumentation() const
     {
     return "Deprecated.  Does nothing.";
     }
-  
+
   /**
    * More documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
     return
       "  subdir_depends(subdir dep1 dep2 ...)\n"
       "Does not do anything.  This command used to help projects order "
       "parallel builds correctly.  This functionality is now automatic.";
     }
-  
+
   /** This command is kept for compatibility with older CMake versions. */
-  virtual bool IsDiscouraged()
+  virtual bool IsDiscouraged() const
     {
     return true;
     }

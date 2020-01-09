@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmAddExecutableCommand.h,v $
-  Language:  C++
-  Date:      $Date: 2008-02-11 18:35:39 $
-  Version:   $Revision: 1.21 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmExecutablesCommand_h
 #define cmExecutablesCommand_h
 
@@ -46,12 +41,12 @@ public:
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() { return "add_executable";}
+  virtual const char* GetName() const { return "add_executable";}
 
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation()
+  virtual const char* GetTerseDocumentation() const
     {
     return
       "Add an executable to the project using the specified source files.";
@@ -60,10 +55,11 @@ public:
   /**
    * More documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
     return
-      "  add_executable(<name> [WIN32] [MACOSX_BUNDLE] [EXCLUDE_FROM_ALL]\n"
+      "  add_executable(<name> [WIN32] [MACOSX_BUNDLE]\n"
+      "                 [EXCLUDE_FROM_ALL]\n"
       "                 source1 source2 ... sourceN)\n"
       "Adds an executable target called <name> to be built from the "
       "source files listed in the command invocation.  "
@@ -96,12 +92,12 @@ public:
       "\n"
       "The add_executable command can also create IMPORTED executable "
       "targets using this signature:\n"
-      "  add_executable(<name> IMPORTED)\n"
+      "  add_executable(<name> IMPORTED [GLOBAL])\n"
       "An IMPORTED executable target references an executable file located "
       "outside the project.  "
       "No rules are generated to build it.  "
       "The target name has scope in the directory in which it is created "
-      "and below.  "
+      "and below, but the GLOBAL option extends visibility.  "
       "It may be referenced like any target built within the project.  "
       "IMPORTED executables are useful for convenient reference from "
       "commands like add_custom_command.  "
@@ -111,6 +107,19 @@ public:
       "(and its per-configuration version IMPORTED_LOCATION_<CONFIG>) "
       "which specifies the location of the main executable file on disk.  "
       "See documentation of the IMPORTED_* properties for more information."
+      "\n"
+      "The signature\n"
+      "  add_executable(<name> ALIAS <target>)\n"
+      "creates an alias, such that <name> can be used to refer to <target> "
+      "in subsequent commands.  The <name> does not appear in the generated "
+      "buildsystem as a make target.  The <target> may not be an IMPORTED "
+      "target or an ALIAS.  Alias targets can be used as linkable targets, "
+      "targets to read properties from, executables for custom commands and "
+      "custom targets.  They can also be tested for existance with the "
+      "regular if(TARGET) subcommand.  The <name> may not be used to modify "
+      "properties of <target>, that is, it may not be used as the operand of "
+      "set_property, set_target_properties, target_link_libraries etc.  An "
+      "ALIAS target may not be installed of exported."
       ;
     }
 

@@ -1,20 +1,15 @@
 %{
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmCommandArgumentLexer.in.l,v $
-  Language:  C++
-  Date:      $Date: 2009-01-01 17:49:41 $
-  Version:   $Revision: 1.10.4.1 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 /*
 
 This file must be translated to C and modified to build everywhere.
@@ -27,6 +22,7 @@ Modify cmCommandArgumentLexer.cxx:
   - add #include "cmStandardIncludes.h" to top of file
   - put header block at top of file
   - remove TABs
+  - remove use of the 'register' storage class specifier
   - remove "yyscanner" argument from these methods:
       yy_fatal_error, cmCommandArgument_yyalloc, cmCommandArgument_yyrealloc, cmCommandArgument_yyfree
   - remove all YY_BREAK lines occurring right after return statements
@@ -71,43 +67,43 @@ Modify cmCommandArgumentLexer.h:
   return cal_ENVCURLY;
 }
 
-\$[A-Za-z0-9/_.+-]+\{ { 
+\$[A-Za-z0-9/_.+-]+\{ {
   //std::cerr << __LINE__ << " here: [" << yytext << "]" << std::endl;
-  yyextra->AllocateParserType(yylvalp, yytext+1, strlen(yytext)-2); 
-  return cal_NCURLY; 
-} 
+  yyextra->AllocateParserType(yylvalp, yytext+1, strlen(yytext)-2);
+  return cal_NCURLY;
+}
 
-@[A-Za-z0-9/_.+-]+@ { 
+@[A-Za-z0-9/_.+-]+@ {
   //std::cerr << __LINE__ << " here: [" << yytext << "]" << std::endl;
-  yyextra->AllocateParserType(yylvalp, yytext+1, strlen(yytext)-2); 
-  return cal_ATNAME; 
-} 
+  yyextra->AllocateParserType(yylvalp, yytext+1, strlen(yytext)-2);
+  return cal_ATNAME;
+}
 
 "${" {
   //std::cerr << __LINE__ << " here: [" << yytext << "]" << std::endl;
-  //yyextra->AllocateParserType(yylvalp, yytext, strlen(yytext)); 
+  //yyextra->AllocateParserType(yylvalp, yytext, strlen(yytext));
   yylvalp->str = yyextra->DCURLYVariable;
   return cal_DCURLY;
 }
 
 "}" {
   //std::cerr << __LINE__ << " here: [" << yytext << "]" << std::endl;
-  //yyextra->AllocateParserType(yylvalp, yytext, strlen(yytext)); 
+  //yyextra->AllocateParserType(yylvalp, yytext, strlen(yytext));
   yylvalp->str = yyextra->RCURLYVariable;
   return cal_RCURLY;
 }
 
 "@" {
   //std::cerr << __LINE__ << " here: [" << yytext << "]" << std::endl;
-  //yyextra->AllocateParserType(yylvalp, yytext, strlen(yytext)); 
+  //yyextra->AllocateParserType(yylvalp, yytext, strlen(yytext));
   yylvalp->str = yyextra->ATVariable;
   return cal_AT;
 }
 
-[A-Za-z0-9/_.+-]+ { 
+[A-Za-z0-9/_.+-]+ {
   //std::cerr << __LINE__ << " here: [" << yytext << "]" << std::endl;
-  yyextra->AllocateParserType(yylvalp, yytext, strlen(yytext)); 
-  return cal_NAME; 
+  yyextra->AllocateParserType(yylvalp, yytext, strlen(yytext));
+  return cal_NAME;
 }
 
 <ESCAPES>\\. {
@@ -115,31 +111,31 @@ Modify cmCommandArgumentLexer.h:
     {
     return cal_ERROR;
     }
-  return cal_SYMBOL; 
+  return cal_SYMBOL;
 }
 
-[^\${}\\@]+ { 
+[^\${}\\@]+ {
   //std::cerr << __LINE__ << " here: [" << yytext << "]" << std::endl;
-  yyextra->AllocateParserType(yylvalp, yytext, strlen(yytext)); 
-  return cal_SYMBOL; 
+  yyextra->AllocateParserType(yylvalp, yytext, strlen(yytext));
+  return cal_SYMBOL;
 }
 
 "$" {
-  //yyextra->AllocateParserType(yylvalp, yytext, strlen(yytext)); 
+  //yyextra->AllocateParserType(yylvalp, yytext, strlen(yytext));
   yylvalp->str = yyextra->DOLLARVariable;
-  return cal_DOLLAR; 
+  return cal_DOLLAR;
 }
 
 "{" {
-  //yyextra->AllocateParserType(yylvalp, yytext, strlen(yytext)); 
+  //yyextra->AllocateParserType(yylvalp, yytext, strlen(yytext));
   yylvalp->str = yyextra->LCURLYVariable;
-  return cal_LCURLY; 
+  return cal_LCURLY;
 }
 
 <ESCAPES>"\\" {
-  //yyextra->AllocateParserType(yylvalp, yytext, strlen(yytext)); 
+  //yyextra->AllocateParserType(yylvalp, yytext, strlen(yytext));
   yylvalp->str = yyextra->BSLASHVariable;
-  return cal_BSLASH; 
+  return cal_BSLASH;
 }
 
 <NOESCAPES>"\\" {

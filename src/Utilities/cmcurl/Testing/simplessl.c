@@ -5,7 +5,7 @@
  *                            | (__| |_| |  _ <| |___ 
  *                             \___|\___/|_| \_\_____|
  *
- * $Id: simplessl.c,v 1.1 2005-06-24 13:02:16 andy Exp $
+ * $Id$
  */
 
 #include <stdio.h>
@@ -114,5 +114,7 @@ int main(int argc, char **argv)
 
   curl_global_cleanup();
 
+  if (headerfile)
+    fclose(headerfile);
   return 0;
 }

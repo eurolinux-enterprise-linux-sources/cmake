@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmSourceFile.h,v $
-  Language:  C++
-  Date:      $Date: 2008-05-01 16:35:40 $
-  Version:   $Revision: 1.25.2.1 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmSourceFile_h
 #define cmSourceFile_h
 
@@ -26,7 +21,7 @@ class cmake;
 /** \class cmSourceFile
  * \brief Represent a class loaded from a makefile.
  *
- * cmSourceFile is represents a class loaded from 
+ * cmSourceFile is represents a class loaded from
  * a makefile.
  */
 class cmSourceFile
@@ -49,7 +44,7 @@ public:
 
   ///! Set/Get a property of this source file
   void SetProperty(const char *prop, const char *value);
-  void AppendProperty(const char* prop, const char* value);
+  void AppendProperty(const char* prop, const char* value,bool asString=false);
   const char *GetProperty(const char *prop) const;
   bool GetPropertyAsBool(const char *prop) const;
 
@@ -65,7 +60,7 @@ public:
    * horrible interface, but is necessary for backwards
    * compatibility).
    */
-  std::string const& GetFullPath();
+  std::string const& GetFullPath(std::string* error = 0);
   std::string const& GetFullPath() const;
 
   /**
@@ -113,12 +108,15 @@ private:
   std::string FullPath;
   bool FindFullPathFailed;
 
-  bool FindFullPath();
+  bool FindFullPath(std::string* error);
   bool TryFullPath(const char* tryPath, const char* ext);
   void CheckExtension();
   void CheckLanguage(std::string const& ext);
 
   std::vector<std::string> Depends;
 };
+
+// TODO: Factor out into platform information modules.
+#define CM_HEADER_REGEX "\\.(h|hh|h\\+\\+|hm|hpp|hxx|in|txx|inl)$"
 
 #endif

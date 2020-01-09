@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmCPackGeneratorFactory.cxx,v $
-  Language:  C++
-  Date:      $Date: 2009-02-04 16:44:18 $
-  Version:   $Revision: 1.2.2.2 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 
 #include "cmCPackGeneratorFactory.h"
 
@@ -24,6 +19,7 @@
 #include "cmCPackZIPGenerator.h"
 #include "cmCPackSTGZGenerator.h"
 #include "cmCPackNSISGenerator.h"
+
 #ifdef __APPLE__
 #  include "cmCPackDragNDropGenerator.h"
 #  include "cmCPackBundleGenerator.h"
@@ -36,53 +32,111 @@
 #  include "cmCPackCygwinSourceGenerator.h"
 #endif
 
-#if !defined(_WIN32) && !defined(__APPLE__) \
- && !defined(__QNXNTO__) && !defined(__BEOS__)
+#if !defined(_WIN32) \
+ && !defined(__QNXNTO__) && !defined(__BEOS__) && !defined(__HAIKU__)
 #  include "cmCPackDebGenerator.h"
 #  include "cmCPackRPMGenerator.h"
 #endif
 
+#ifdef _WIN32
+#  include "WiX/cmCPackWIXGenerator.h"
+#endif
 
 #include "cmCPackLog.h"
+
+#if defined(__BORLANDC__)
+# pragma warn -8008 /* condition is always true */
+#endif
 
 //----------------------------------------------------------------------
 cmCPackGeneratorFactory::cmCPackGeneratorFactory()
 {
-  this->RegisterGenerator("TGZ", "Tar GZip compression",
-    cmCPackTGZGenerator::CreateGenerator);
-  this->RegisterGenerator("STGZ", "Self extracting Tar GZip compression",
-    cmCPackSTGZGenerator::CreateGenerator);
-  this->RegisterGenerator("NSIS", "Null Soft Installer",
-    cmCPackNSISGenerator::CreateGenerator);
+  if (cmCPackTGZGenerator::CanGenerate())
+    {
+    this->RegisterGenerator("TGZ", "Tar GZip compression",
+      cmCPackTGZGenerator::CreateGenerator);
+    }
+  if (cmCPackSTGZGenerator::CanGenerate())
+    {
+    this->RegisterGenerator("STGZ", "Self extracting Tar GZip compression",
+      cmCPackSTGZGenerator::CreateGenerator);
+    }
+  if (cmCPackNSISGenerator::CanGenerate())
+    {
+    this->RegisterGenerator("NSIS", "Null Soft Installer",
+      cmCPackNSISGenerator::CreateGenerator);
+    this->RegisterGenerator("NSIS64", "Null Soft Installer (64-bit)",
+      cmCPackNSISGenerator::CreateGenerator64);
+    }
 #ifdef __CYGWIN__
-  this->RegisterGenerator("CygwinBinary", "Cygwin Binary Installer",
-                          cmCPackCygwinBinaryGenerator::CreateGenerator);
-  this->RegisterGenerator("CygwinSource", "Cygwin Source Installer",
-                          cmCPackCygwinSourceGenerator::CreateGenerator);
+  if (cmCPackCygwinBinaryGenerator::CanGenerate())
+    {
+    this->RegisterGenerator("CygwinBinary", "Cygwin Binary Installer",
+                            cmCPackCygwinBinaryGenerator::CreateGenerator);
+    }
+  if (cmCPackCygwinSourceGenerator::CanGenerate())
+    {
+    this->RegisterGenerator("CygwinSource", "Cygwin Source Installer",
+                            cmCPackCygwinSourceGenerator::CreateGenerator);
+    }
 #endif
 
-  this->RegisterGenerator("ZIP", "ZIP file format",
-    cmCPackZIPGenerator::CreateGenerator);
-  this->RegisterGenerator("TBZ2", "Tar BZip2 compression",
-    cmCPackTarBZip2Generator::CreateGenerator);
-  this->RegisterGenerator("TZ", "Tar Compress compression",
-    cmCPackTarCompressGenerator::CreateGenerator);
-#ifdef __APPLE__
-  this->RegisterGenerator("DragNDrop", "Mac OSX Drag And Drop",
-    cmCPackDragNDropGenerator::CreateGenerator);
-  this->RegisterGenerator("Bundle", "Mac OSX bundle",
-    cmCPackBundleGenerator::CreateGenerator);
-  this->RegisterGenerator("PackageMaker", "Mac OSX Package Maker installer",
-    cmCPackPackageMakerGenerator::CreateGenerator);
-  this->RegisterGenerator("OSXX11", "Mac OSX X11 bundle",
-    cmCPackOSXX11Generator::CreateGenerator);
+  if (cmCPackZIPGenerator::CanGenerate())
+    {
+    this->RegisterGenerator("ZIP", "ZIP file format",
+      cmCPackZIPGenerator::CreateGenerator);
+    }
+#ifdef _WIN32
+  if (cmCPackWIXGenerator::CanGenerate())
+    {
+    this->RegisterGenerator("WIX", "MSI file format via WiX tools",
+      cmCPackWIXGenerator::CreateGenerator);
+    }
 #endif
-#if !defined(_WIN32) && !defined(__APPLE__) \
-  && !defined(__QNXNTO__) && !defined(__BEOS__)
-  this->RegisterGenerator("DEB", "Debian packages",
-    cmCPackDebGenerator::CreateGenerator);
-  this->RegisterGenerator("RPM", "RPM packages",
-    cmCPackRPMGenerator::CreateGenerator);
+  if (cmCPackTarBZip2Generator::CanGenerate())
+    {
+    this->RegisterGenerator("TBZ2", "Tar BZip2 compression",
+      cmCPackTarBZip2Generator::CreateGenerator);
+    }
+  if (cmCPackTarCompressGenerator::CanGenerate())
+    {
+    this->RegisterGenerator("TZ", "Tar Compress compression",
+      cmCPackTarCompressGenerator::CreateGenerator);
+    }
+#ifdef __APPLE__
+  if (cmCPackDragNDropGenerator::CanGenerate())
+    {
+    this->RegisterGenerator("DragNDrop", "Mac OSX Drag And Drop",
+      cmCPackDragNDropGenerator::CreateGenerator);
+    }
+  if (cmCPackBundleGenerator::CanGenerate())
+    {
+    this->RegisterGenerator("Bundle", "Mac OSX bundle",
+      cmCPackBundleGenerator::CreateGenerator);
+    }
+  if (cmCPackPackageMakerGenerator::CanGenerate())
+    {
+    this->RegisterGenerator("PackageMaker", "Mac OSX Package Maker installer",
+      cmCPackPackageMakerGenerator::CreateGenerator);
+    }
+  if (cmCPackOSXX11Generator::CanGenerate())
+    {
+    this->RegisterGenerator("OSXX11", "Mac OSX X11 bundle",
+      cmCPackOSXX11Generator::CreateGenerator);
+    }
+#endif
+#if !defined(_WIN32) \
+  && !defined(__QNXNTO__) && !defined(__BEOS__) && !defined(__HAIKU__)
+  if (cmCPackDebGenerator::CanGenerate())
+    {
+    this->RegisterGenerator("DEB", "Debian packages",
+      cmCPackDebGenerator::CreateGenerator);
+    }
+  if (cmCPackRPMGenerator::CanGenerate())
+    {
+    this->RegisterGenerator("RPM", "RPM packages",
+      cmCPackRPMGenerator::CreateGenerator);
+    }
 #endif
 }
 

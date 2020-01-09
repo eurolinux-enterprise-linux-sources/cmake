@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmSourceGroup.cxx,v $
-  Language:  C++
-  Date:      $Date: 2008-05-23 20:09:38 $
-  Version:   $Revision: 1.19.2.1 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmSourceGroup.h"
 
 class cmSourceGroupInternals
@@ -23,10 +18,17 @@ public:
 };
 
 //----------------------------------------------------------------------------
-cmSourceGroup::cmSourceGroup(const char* name, const char* regex): Name(name)
+cmSourceGroup::cmSourceGroup(const char* name, const char* regex,
+                             const char* parentName): Name(name)
 {
   this->Internal = new cmSourceGroupInternals;
   this->SetGroupRegex(regex);
+  if(parentName)
+    {
+    this->FullName = parentName;
+    this->FullName += "\\";
+    }
+  this->FullName += this->Name;
 }
 
 //----------------------------------------------------------------------------
@@ -39,6 +41,7 @@ cmSourceGroup::~cmSourceGroup()
 cmSourceGroup::cmSourceGroup(cmSourceGroup const& r)
 {
   this->Name = r.Name;
+  this->FullName = r.FullName;
   this->GroupRegex = r.GroupRegex;
   this->GroupFiles = r.GroupFiles;
   this->SourceFiles = r.SourceFiles;
@@ -68,19 +71,25 @@ void cmSourceGroup::SetGroupRegex(const char* regex)
     this->GroupRegex.compile("^$");
     }
 }
-  
+
 //----------------------------------------------------------------------------
 void cmSourceGroup::AddGroupFile(const char* name)
 {
   this->GroupFiles.insert(name);
 }
-  
+
 //----------------------------------------------------------------------------
 const char* cmSourceGroup::GetName() const
 {
   return this->Name.c_str();
 }
-  
+
+//----------------------------------------------------------------------------
+const char* cmSourceGroup::GetFullName() const
+{
+  return this->FullName.c_str();
+}
+
 //----------------------------------------------------------------------------
 bool cmSourceGroup::MatchesRegex(const char* name)
 {
@@ -111,12 +120,6 @@ const std::vector<const cmSourceFile*>& cmSourceGroup::GetSourceFiles() const
 }
 
 //----------------------------------------------------------------------------
-std::vector<const cmSourceFile*>& cmSourceGroup::GetSourceFiles()
-{
-  return this->SourceFiles;
-}
-
-//----------------------------------------------------------------------------
 void cmSourceGroup::AddChild(cmSourceGroup child)
 {
   this->Internal->GroupChildren.push_back(child);
@@ -134,12 +137,12 @@ cmSourceGroup *cmSourceGroup::lookupChild(const char* name)
   // st
   for(;iter!=end; ++iter)
     {
-    std::string sgName = iter->GetName(); 
+    std::string sgName = iter->GetName();
 
     // look if descenened is the one were looking for
     if(sgName == name)
       {
-      return &(*iter); // if it so return it 
+      return &(*iter); // if it so return it
       }
     }
 
@@ -179,10 +182,6 @@ cmSourceGroup *cmSourceGroup::MatchChildrenRegex(const char *name)
   std::vector<cmSourceGroup>::iterator end =
     this->Internal->GroupChildren.end();
 
-  if(this->MatchesRegex(name))
-    {
-    return this;
-    }
   for(;iter!=end; ++iter)
     {
     cmSourceGroup *result = iter->MatchChildrenRegex(name);
@@ -191,6 +190,11 @@ cmSourceGroup *cmSourceGroup::MatchChildrenRegex(const char *name)
       return result;
       }
     }
+  if(this->MatchesRegex(name))
+    {
+    return this;
+    }
+
   return 0;
 }
 

@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmTryRunCommand.h,v $
-  Language:  C++
-  Date:      $Date: 2008-01-23 15:27:59 $
-  Version:   $Revision: 1.15 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmTryRunCommand_h
 #define cmTryRunCommand_h
 
@@ -30,7 +25,7 @@ public:
   /**
    * This is a virtual constructor for the command.
    */
-  virtual cmCommand* Clone() 
+  virtual cmCommand* Clone()
     {
     return new cmTryRunCommand;
     }
@@ -45,20 +40,20 @@ public:
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() { return "try_run";}
+  virtual const char* GetName() const { return "try_run";}
 
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation() 
+  virtual const char* GetTerseDocumentation() const
     {
     return "Try compiling and then running some code.";
     }
-  
+
   /**
    * More documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
     return
       "  try_run(RUN_RESULT_VAR COMPILE_RESULT_VAR\n"
@@ -77,7 +72,7 @@ public:
       "the compile step goes. RUN_OUTPUT_VARIABLE specifies the variable "
       "where the output from the running executable goes.\n"
       "For compatibility reasons OUTPUT_VARIABLE is still supported, which "
-      "gives you the output from the compile and run step combined.\n\n"
+      "gives you the output from the compile and run step combined.\n"
       "Cross compiling issues\n"
       "When cross compiling, the executable compiled in the first step "
       "usually cannot be run on the build host. try_run() checks the "
@@ -86,7 +81,7 @@ public:
       "the executable, but it will not try to run the executable. Instead it "
       "will create cache variables which must be filled by the user or by "
       "presetting them in some CMake script file to the values the "
-      "executable would have produced if it would have been run on its actual "
+      "executable would have produced if it had been run on its actual "
       "target platform. These variables are RUN_RESULT_VAR (explanation see "
       "above) and if RUN_OUTPUT_VARIABLE (or OUTPUT_VARIABLE) was used, an "
       "additional cache variable "
@@ -98,15 +93,18 @@ public:
       "that when crosscompiling, the cache variables will have to be set "
       "manually to the output of the executable. You can also \"guard\" the "
       "calls to try_run with if(CMAKE_CROSSCOMPILING) and provide an "
-      "easy-to-preset alternative for this case.\n";
+      "easy-to-preset alternative for this case.\n"
+      "Set variable CMAKE_TRY_COMPILE_CONFIGURATION to choose a build "
+      "configuration."
+      ;
     }
 
   cmTypeMacro(cmTryRunCommand, cmCoreTryCompile);
 private:
-  void RunExecutable(const std::string& runArgs, 
+  void RunExecutable(const std::string& runArgs,
                      std::string* runOutputContents);
-  void DoNotRunExecutable(const std::string& runArgs, 
-                          const std::string& srcFile, 
+  void DoNotRunExecutable(const std::string& runArgs,
+                          const std::string& srcFile,
                           std::string* runOutputContents);
 
   std::string CompileResultVariable;

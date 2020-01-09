@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmSiteNameCommand.cxx,v $
-  Language:  C++
-  Date:      $Date: 2008-01-23 15:27:59 $
-  Version:   $Revision: 1.24 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmSiteNameCommand.h"
 
 #include <cmsys/RegularExpression.hxx>
@@ -34,25 +29,25 @@ bool cmSiteNameCommand
   paths.push_back("/bin");
   paths.push_back("/sbin");
   paths.push_back("/usr/local/bin");
-  
+
   const char* cacheValue
     = this->Makefile->GetDefinition(args[0].c_str());
   if(cacheValue)
     {
     return true;
     }
-  
+
   const char *temp = this->Makefile->GetDefinition("HOSTNAME");
   std::string hostname_cmd;
   if(temp)
     {
     hostname_cmd = temp;
     }
-  else 
+  else
     {
     hostname_cmd = cmSystemTools::FindProgram("hostname", paths);
     }
-  
+
   std::string siteName = "unknown";
 #if defined(_WIN32) && !defined(__CYGWIN__)
   std::string host;
@@ -68,8 +63,8 @@ bool cmSiteNameCommand
     {
     std::string host;
     cmSystemTools::RunSingleCommand(hostname_cmd.c_str(),
-      &host, 0, 0, false);
-    
+      &host, 0, 0, cmSystemTools::OUTPUT_NONE);
+
     // got the hostname
     if (host.length())
       {

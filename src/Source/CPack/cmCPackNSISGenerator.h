@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc.
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmCPackNSISGenerator.h,v $
-  Language:  C++
-  Date:      $Date: 2008-10-24 15:18:55 $
-  Version:   $Revision: 1.11.2.3 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc. All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 
 #ifndef cmCPackNSISGenerator_h
 #define cmCPackNSISGenerator_h
@@ -32,30 +27,34 @@ class cmCPackNSISGenerator : public cmCPackGenerator
 public:
   cmCPackTypeMacro(cmCPackNSISGenerator, cmCPackGenerator);
 
+  static cmCPackGenerator* CreateGenerator64()
+    { return new cmCPackNSISGenerator(true); }
+
   /**
    * Construct generator
    */
-  cmCPackNSISGenerator();
+  cmCPackNSISGenerator(bool nsis64 = false);
   virtual ~cmCPackNSISGenerator();
 
 protected:
   virtual int InitializeInternal();
   void CreateMenuLinks( cmOStringStream& str,
                         cmOStringStream& deleteStr);
-  int CompressFiles(const char* outFileName, const char* toplevel,
-    const std::vector<std::string>& files);
+  int PackageFiles();
   virtual const char* GetOutputExtension() { return ".exe"; }
   virtual const char* GetOutputPostfix() { return "win32"; }
 
   bool GetListOfSubdirectories(const char* dir,
     std::vector<std::string>& dirs);
 
+  enum cmCPackGenerator::CPackSetDestdirSupport SupportsSetDestdir() const;
+  virtual bool SupportsAbsoluteDestination() const;
   virtual bool SupportsComponentInstallation() const;
 
-  /// Produce a string that contains the NSIS code to describe a 
-  /// particular component. Any added macros will be emitted via 
+  /// Produce a string that contains the NSIS code to describe a
+  /// particular component. Any added macros will be emitted via
   /// macrosOut.
-  std::string 
+  std::string
   CreateComponentDescription(cmCPackComponent *component,
                              cmOStringStream& macrosOut);
 
@@ -71,16 +70,18 @@ protected:
                 (cmCPackComponent *component,
                  std::set<cmCPackComponent *>& visited);
 
-  /// Produce a string that contains the NSIS code to describe a 
+  /// Produce a string that contains the NSIS code to describe a
   /// particular component group, including its components. Any
   /// added macros will be emitted via macrosOut.
-  std::string 
+  std::string
   CreateComponentGroupDescription(cmCPackComponentGroup *group,
                                   cmOStringStream& macrosOut);
 
-  /// Translations any newlines found in the string into \r\n, so that the 
+  /// Translations any newlines found in the string into \\r\\n, so that the
   /// resulting string can be used within NSIS.
   static std::string TranslateNewlines(std::string str);
+
+  bool Nsis64;
 };
 
 #endif

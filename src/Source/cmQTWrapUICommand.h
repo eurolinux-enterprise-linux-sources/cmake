@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmQTWrapUICommand.h,v $
-  Language:  C++
-  Date:      $Date: 2008-01-23 15:27:59 $
-  Version:   $Revision: 1.14 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmQTWrapUICommand_h
 #define cmQTWrapUICommand_h
 
@@ -22,9 +17,9 @@
 #include "cmSourceFile.h"
 
 /** \class cmQTWrapUICommand
- * \brief Create .h and .cxx files rules for QT user interfaces files
+ * \brief Create .h and .cxx files rules for Qt user interfaces files
  *
- * cmQTWrapUICommand is used to create wrappers for QT classes into normal C++
+ * cmQTWrapUICommand is used to create wrappers for Qt classes into normal C++
  */
 class cmQTWrapUICommand : public cmCommand
 {
@@ -33,7 +28,7 @@ public:
   /**
    * This is a virtual constructor for the command.
    */
-  virtual cmCommand* Clone() 
+  virtual cmCommand* Clone()
     {
     return new cmQTWrapUICommand;
     }
@@ -48,20 +43,20 @@ public:
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() { return "qt_wrap_ui";}
+  virtual const char* GetName() const { return "qt_wrap_ui";}
 
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation() 
+  virtual const char* GetTerseDocumentation() const
     {
     return "Create Qt user interfaces Wrappers.";
     }
-  
+
   /**
    * More documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
     return
       "  qt_wrap_ui(resultingLibraryName HeadersDestName\n"

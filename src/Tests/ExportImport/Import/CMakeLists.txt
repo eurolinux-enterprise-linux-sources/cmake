@@ -1,10 +1,5 @@
-cmake_minimum_required (VERSION 2.6)
-project(Import C)
-
-# We need ansi C support.
-if(CMAKE_ANSI_CFLAGS)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_ANSI_CFLAGS}")
-endif(CMAKE_ANSI_CFLAGS)
+cmake_minimum_required (VERSION 2.7.20090711)
+project(Import C CXX)
 
 # Import everything in a subdirectory.
 add_subdirectory(A)
@@ -22,3 +17,5 @@ add_executable(imp_testTransExe1 imp_testTransExe1.c)
 target_link_libraries(imp_testTransExe1 imp_lib1)
 add_executable(imp_testTransExe1b imp_testTransExe1.c)
 target_link_libraries(imp_testTransExe1b imp_lib1b)
+
+add_subdirectory(try_compile)

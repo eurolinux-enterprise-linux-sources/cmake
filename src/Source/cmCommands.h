@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmCommands.h,v $
-  Language:  C++
-  Date:      $Date: 2005-01-21 15:27:51 $
-  Version:   $Revision: 1.6 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmCommands_h
 #define cmCommands_h
 #include "cmStandardIncludes.h"
@@ -21,12 +16,13 @@
 class cmCommand;
 /**
  * Global function to return all compiled in commands.
- * To add a new command edit cmCommands.cxx or cmBootstrapCommands.cxx
+ * To add a new command edit cmCommands.cxx or cmBootstrapCommands[12].cxx
  * and add your command.
  * It is up to the caller to delete the commands created by this
  * call.
  */
-void GetBootstrapCommands(std::list<cmCommand*>& commands);
+void GetBootstrapCommands1(std::list<cmCommand*>& commands);
+void GetBootstrapCommands2(std::list<cmCommand*>& commands);
 void GetPredefinedCommands(std::list<cmCommand*>& commands);
 
 

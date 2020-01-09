@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmFunctionCommand.cxx,v $
-  Language:  C++
-  Date:      $Date: 2009-02-04 16:44:17 $
-  Version:   $Revision: 1.6.2.2 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmFunctionCommand.h"
 
 #include "cmake.h"
@@ -26,6 +21,17 @@ public:
 
   ///! clean up any memory allocated by the function
   ~cmFunctionHelperCommand() {};
+
+  /**
+   * This is used to avoid including this command
+   * in documentation. This is mainly used by
+   * cmMacroHelperCommand and cmFunctionHelperCommand
+   * which cannot provide appropriate documentation.
+   */
+  virtual bool ShouldAppearInDocumentation() const
+    {
+    return false;
+    }
 
   /**
    * This is a virtual constructor for the command.
@@ -43,7 +49,7 @@ public:
   /**
    * This determines if the command is invoked when in script mode.
    */
-  virtual bool IsScriptable() { return true; }
+  virtual bool IsScriptable() const { return true; }
 
   /**
    * This is called when the command is first encountered in
@@ -58,12 +64,12 @@ public:
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() { return this->Args[0].c_str(); }
-  
+  virtual const char* GetName() const { return this->Args[0].c_str(); }
+
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation()
+  virtual const char* GetTerseDocumentation() const
   {
     std::string docs = "Function named: ";
     docs += this->GetName();
@@ -73,7 +79,7 @@ public:
   /**
    * More documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
   {
     return this->GetTerseDocumentation();
   }
@@ -118,20 +124,22 @@ bool cmFunctionHelperCommand::InvokeInitialPass
   cmOStringStream strStream;
   strStream << expandedArgs.size();
   this->Makefile->AddDefinition("ARGC",strStream.str().c_str());
+  this->Makefile->MarkVariableAsUsed("ARGC");
 
   // set the values for ARGV0 ARGV1 ...
   for (unsigned int t = 0; t < expandedArgs.size(); ++t)
     {
     cmOStringStream tmpStream;
     tmpStream << "ARGV" << t;
-    this->Makefile->AddDefinition(tmpStream.str().c_str(), 
+    this->Makefile->AddDefinition(tmpStream.str().c_str(),
                                   expandedArgs[t].c_str());
+    this->Makefile->MarkVariableAsUsed(tmpStream.str().c_str());
     }
-  
+
   // define the formal arguments
   for (unsigned int j = 1; j < this->Args.size(); ++j)
     {
-    this->Makefile->AddDefinition(this->Args[j].c_str(), 
+    this->Makefile->AddDefinition(this->Args[j].c_str(),
                                   expandedArgs[j-1].c_str());
     }
 
@@ -158,7 +166,9 @@ bool cmFunctionHelperCommand::InvokeInitialPass
     cnt ++;
     }
   this->Makefile->AddDefinition("ARGV", argvDef.c_str());
+  this->Makefile->MarkVariableAsUsed("ARGV");
   this->Makefile->AddDefinition("ARGN", argnDef.c_str());
+  this->Makefile->MarkVariableAsUsed("ARGN");
 
   // Invoke all the functions that were collected in the block.
   // for each function
@@ -198,7 +208,7 @@ IsFunctionBlocked(const cmListFileFunction& lff, cmMakefile &mf,
   else if(!cmSystemTools::Strucmp(lff.Name.c_str(),"endfunction"))
     {
     // if this is the endfunction for this function then execute
-    if (!this->Depth) 
+    if (!this->Depth)
       {
       std::string name = this->Args[0];
       std::vector<std::string>::size_type cc;
@@ -214,20 +224,20 @@ IsFunctionBlocked(const cmListFileFunction& lff, cmMakefile &mf,
       f->Args = this->Args;
       f->Functions = this->Functions;
       mf.RecordPolicies(f->Policies);
-      
+
       // Set the FilePath on the arguments to match the function since it is
       // not stored and the original values may be freed
       for (unsigned int i = 0; i < f->Functions.size(); ++i)
         {
         for (unsigned int j = 0; j < f->Functions[i].Arguments.size(); ++j)
           {
-          f->Functions[i].Arguments[j].FilePath = 
+          f->Functions[i].Arguments[j].FilePath =
             f->Functions[i].FilePath.c_str();
           }
         }
 
       std::string newName = "_" + this->Args[0];
-      mf.GetCMakeInstance()->RenameCommand(this->Args[0].c_str(), 
+      mf.GetCMakeInstance()->RenameCommand(this->Args[0].c_str(),
                                            newName.c_str());
       mf.AddCommand(f);
 
@@ -255,9 +265,9 @@ ShouldRemove(const cmListFileFunction& lff, cmMakefile &mf)
   if(!cmSystemTools::Strucmp(lff.Name.c_str(),"endfunction"))
     {
     std::vector<std::string> expandedArguments;
-    mf.ExpandArguments(lff.Arguments, expandedArguments); 
+    mf.ExpandArguments(lff.Arguments, expandedArguments);
     // if the endfunction has arguments then make sure
-    // they match the ones in the openeing function command
+    // they match the ones in the opening function command
     if ((expandedArguments.empty() ||
          (expandedArguments[0] == this->Args[0])))
       {
@@ -281,7 +291,7 @@ bool cmFunctionCommand
   cmFunctionFunctionBlocker *f = new cmFunctionFunctionBlocker();
   for(std::vector<std::string>::const_iterator j = args.begin();
       j != args.end(); ++j)
-    {   
+    {
     f->Args.push_back(*j);
     }
   this->Makefile->AddFunctionBlocker(f);

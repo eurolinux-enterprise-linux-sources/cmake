@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmOutputRequiredFilesCommand.cxx,v $
-  Language:  C++
-  Date:      $Date: 2008-10-24 15:18:54 $
-  Version:   $Revision: 1.16.2.1 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmOutputRequiredFilesCommand.h"
 #include "cmMakeDepend.h"
 
@@ -33,7 +28,7 @@ void cmLBDepend::DependWalk(cmDependInformation* info)
     cmSystemTools::Error("error can not open ", info->FullPath.c_str());
     return;
     }
-  
+
   std::string line;
   while(cmSystemTools::GetLineFromStream(fin, line))
     {
@@ -50,7 +45,7 @@ void cmLBDepend::DependWalk(cmDependInformation* info)
         // if a < is not found then move on
         if(qstart == std::string::npos)
           {
-          cmSystemTools::Error("unknown include directive ", 
+          cmSystemTools::Error("unknown include directive ",
                                currentline.c_str() );
           continue;
           }
@@ -78,7 +73,7 @@ void cmLBDepend::DependWalk(cmDependInformation* info)
           }
         continue;
         }
-      
+
       // Add this file and all its dependencies.
       this->AddDependency(info, includeFile.c_str());
       /// add the cxx file if it exists
@@ -94,7 +89,7 @@ void cmLBDepend::DependWalk(cmDependInformation* info)
           {
           found = true;
           }
-        for(std::vector<std::string>::iterator i = 
+        for(std::vector<std::string>::iterator i =
               this->IncludeDirectories.begin();
             i != this->IncludeDirectories.end(); ++i)
           {
@@ -113,7 +108,7 @@ void cmLBDepend::DependWalk(cmDependInformation* info)
             {
             found = true;
             }
-          for(std::vector<std::string>::iterator i = 
+          for(std::vector<std::string>::iterator i =
                 this->IncludeDirectories.begin();
               i != this->IncludeDirectories.end(); ++i)
             {
@@ -133,7 +128,7 @@ void cmLBDepend::DependWalk(cmDependInformation* info)
             {
             found = true;
             }
-          for(std::vector<std::string>::iterator i = 
+          for(std::vector<std::string>::iterator i =
                 this->IncludeDirectories.begin();
               i != this->IncludeDirectories.end(); ++i)
             {
@@ -153,7 +148,7 @@ void cmLBDepend::DependWalk(cmDependInformation* info)
             {
             found = true;
             }
-          for(std::vector<std::string>::iterator i = 
+          for(std::vector<std::string>::iterator i =
                 this->IncludeDirectories.begin();
               i != this->IncludeDirectories.end(); ++i)
             {
@@ -188,7 +183,7 @@ bool cmOutputRequiredFilesCommand
   // store the arg for final pass
   this->File = args[0];
   this->OutputFile = args[1];
-  
+
   // compute the list of files
   cmLBDepend md;
   md.SetMakefile(this->Makefile);
@@ -222,7 +217,7 @@ ListDependencies(cmDependInformation const *info,
   // add info to the visited set
   visited->insert(info);
   // now recurse with info's dependencies
-  for(cmDependInformation::DependencySetType::const_iterator d = 
+  for(cmDependInformation::DependencySetType::const_iterator d =
         info->DependencySet.begin();
       d != info->DependencySet.end(); ++d)
     {

@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmAddSubDirectoryCommand.cxx,v $
-  Language:  C++
-  Date:      $Date: 2008-01-23 15:27:59 $
-  Version:   $Revision: 1.11 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmAddSubDirectoryCommand.h"
 
 // cmAddSubDirectoryCommand
@@ -25,11 +20,11 @@ bool cmAddSubDirectoryCommand::InitialPass
     this->SetError("called with incorrect number of arguments");
     return false;
     }
-  
+
   // store the binpath
   std::string srcArg = args[0];
   std::string binArg;
-  
+
   bool excludeFromAll = false;
 
   // process the rest of the arguments looking for optional args
@@ -83,7 +78,7 @@ bool cmAddSubDirectoryCommand::InitialPass
     // No binary directory was specified.  If the source directory is
     // not a subdirectory of the current directory then it is an
     // error.
-    if(!cmSystemTools::FindLastString(srcPath.c_str(),
+    if(!cmSystemTools::IsSubDirectory(srcPath.c_str(),
                                       this->Makefile->GetCurrentDirectory()))
       {
       cmOStringStream e;
@@ -98,10 +93,15 @@ bool cmAddSubDirectoryCommand::InitialPass
 
     // Remove the CurrentDirectory from the srcPath and replace it
     // with the CurrentOutputDirectory.
-    binPath = srcPath;
-    cmSystemTools::ReplaceString(binPath,
-                                 this->Makefile->GetCurrentDirectory(),
-                                 this->Makefile->GetCurrentOutputDirectory());
+    const char* src = this->Makefile->GetCurrentDirectory();
+    const char* bin = this->Makefile->GetCurrentOutputDirectory();
+    size_t srcLen = strlen(src);
+    size_t binLen = strlen(bin);
+    if(srcLen > 0 && src[srcLen-1] == '/')
+      { --srcLen; }
+    if(binLen > 0 && bin[binLen-1] == '/')
+      { --binLen; }
+    binPath = std::string(bin, binLen) + srcPath.substr(srcLen);
     }
   else
     {

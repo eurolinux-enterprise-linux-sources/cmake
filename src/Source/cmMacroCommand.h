@@ -1,50 +1,36 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmMacroCommand.h,v $
-  Language:  C++
-  Date:      $Date: 2009-02-04 16:44:17 $
-  Version:   $Revision: 1.16.2.1 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmMacroCommand_h
 #define cmMacroCommand_h
 
 #include "cmCommand.h"
 #include "cmFunctionBlocker.h"
 
-/** \class cmMacroFunctionBlocker
- * \brief subclass of function blocker
- *
- *
- */
 class cmMacroFunctionBlocker : public cmFunctionBlocker
 {
 public:
   cmMacroFunctionBlocker() {this->Depth=0;}
   virtual ~cmMacroFunctionBlocker() {}
-  virtual bool IsFunctionBlocked(const cmListFileFunction&, 
+  virtual bool IsFunctionBlocked(const cmListFileFunction&,
                                  cmMakefile &mf,
                                  cmExecutionStatus &);
   virtual bool ShouldRemove(const cmListFileFunction&, cmMakefile &mf);
-  
+
   std::vector<std::string> Args;
   std::vector<cmListFileFunction> Functions;
   int Depth;
 };
 
-/** \class cmMacroCommand
- * \brief starts an if block
- *
- * cmMacroCommand starts an if block
- */
+/// Starts macro() ... endmacro() block
 class cmMacroCommand : public cmCommand
 {
 public:
@@ -66,17 +52,17 @@ public:
   /**
    * This determines if the command is invoked when in script mode.
    */
-  virtual bool IsScriptable() { return true; }
+  virtual bool IsScriptable() const { return true; }
 
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() { return "macro";}
+  virtual const char* GetName() const { return "macro";}
 
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation()
+  virtual const char* GetTerseDocumentation() const
     {
     return "Start recording a macro for later invocation as a command.";
     }
@@ -84,7 +70,7 @@ public:
   /**
    * More documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
     return
       "  macro(<name> [arg1 [arg2 [arg3 ...]]])\n"
@@ -106,18 +92,17 @@ public:
       "facilitates creating macros with optional arguments. Additionally "
       "${ARGV} holds the list of all arguments given to the macro and "
       "${ARGN} "
-      "holds the list of argument pass the last expected argument. "
+      "holds the list of arguments past the last expected argument. "
       "Note that the parameters to a macro and values such as ARGN "
       "are not variables in the usual CMake sense. They are string "
-      "replacements much like the c preprocessor would do with a "
-      "macro. If you want true CMake variables you should look at "
-      "the function command."
+      "replacements much like the C preprocessor would do with a macro. "
+      "If you want true CMake variables and/or better CMake scope control "
+      "you should look at the function command."
       "\n"
       "See the cmake_policy() command documentation for the behavior of "
       "policies inside macros."
       ;
     }
-
   cmTypeMacro(cmMacroCommand, cmCommand);
 };
 

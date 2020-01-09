@@ -1,20 +1,15 @@
 %{
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmExprLexer.in.l,v $
-  Language:  C++
-  Date:      $Date: 2006-08-08 18:00:28 $
-  Version:   $Revision: 1.3 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 /*
 
 This file must be translated to C and modified to build everywhere.
@@ -25,6 +20,7 @@ Run flex like this:
 
 Modify cmExprLexer.cxx:
   - remove TABs
+  - remove use of the 'register' storage class specifier
   - remove "yyscanner" argument from these methods:
       yy_fatal_error, cmExpr_yyalloc, cmExpr_yyrealloc, cmExpr_yyfree
   - remove all YY_BREAK lines occurring right after return statements
@@ -59,19 +55,19 @@ Modify cmExprLexer.h:
 
 %%
 
-[0-9][0-9]* { yylvalp->Number = atoi(yytext); return exp_NUMBER; } 
+[0-9][0-9]* { yylvalp->Number = atoi(yytext); return exp_NUMBER; }
 
 "+" { return exp_PLUS; }
-"-" { return exp_MINUS; } 
-"*" { return exp_TIMES; } 
-"/" { return exp_DIVIDE; } 
-"%" { return exp_MOD; } 
-"\|" { return exp_OR; } 
-"&" { return exp_AND; } 
-"^" { return exp_XOR; } 
-"~" { return exp_NOT; } 
-"<<" { return exp_SHIFTLEFT; } 
-">>" { return exp_SHIFTRIGHT; } 
+"-" { return exp_MINUS; }
+"*" { return exp_TIMES; }
+"/" { return exp_DIVIDE; }
+"%" { return exp_MOD; }
+"\|" { return exp_OR; }
+"&" { return exp_AND; }
+"^" { return exp_XOR; }
+"~" { return exp_NOT; }
+"<<" { return exp_SHIFTLEFT; }
+">>" { return exp_SHIFTRIGHT; }
 "(" { return exp_OPENPARENT; }
 ")" { return exp_CLOSEPARENT; }
 

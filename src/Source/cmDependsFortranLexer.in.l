@@ -1,20 +1,15 @@
 %{
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmDependsFortranLexer.in.l,v $
-  Language:  C++
-  Date:      $Date: 2008-04-24 16:56:25 $
-  Version:   $Revision: 1.10.2.2 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 /*-------------------------------------------------------------------------
   Portions of this source have been derived from makedepf90 version 2.8.8,
 
@@ -35,8 +30,10 @@ Run flex like this:
 
 Modify cmDependsFortranLexer.cxx:
   - remove TABs
+  - remove use of the 'register' storage class specifier
   - remove "yyscanner" argument from these methods:
       yy_fatal_error, cmDependsFortran_yyalloc, cmDependsFortran_yyrealloc, cmDependsFortran_yyfree
+  - remove "yyscanner = NULL" from end of cmDependsFortran_yylex_destroy
   - remove all YY_BREAK lines occurring right after return statements
   - change while ( 1 ) to for(;;)
 
@@ -119,6 +116,11 @@ Modify cmDependsFortranLexer.h:
 !.*\n                   { return EOSTMT; } /* Treat comments like */
 <fixed_fmt>^[cC*dD].*\n { return EOSTMT; } /* empty lines */
 
+^[ \t]*#[ \t]*include[ \t]*<[^>]+> {
+  yytext[yyleng-1] = 0;
+  yylvalp->string = strdup(strchr(yytext, '<')+1);
+  return CPP_INCLUDE_ANGLE;
+}
 ^[ \t]*#[ \t]*include  { return CPP_INCLUDE; }
 \$[ \t]*include { return F90PPR_INCLUDE; }
 \?\?[ \t]*include { return COCO_INCLUDE; }

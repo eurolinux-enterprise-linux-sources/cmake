@@ -44,7 +44,7 @@ typedef uint32_t flex_uint32_t;
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
 typedef int flex_int32_t;
-typedef unsigned char flex_uint8_t; 
+typedef unsigned char flex_uint8_t;
 typedef unsigned short int flex_uint16_t;
 typedef unsigned int flex_uint32_t;
 #endif /* ! C99 */
@@ -165,7 +165,7 @@ typedef struct yy_buffer_state *YY_BUFFER_STATE;
 #define EOB_ACT_LAST_MATCH 2
 
     #define YY_LESS_LINENO(n)
-    
+
 /* Return all but the first "n" matched characters back to the input
    stream. */
 #define yyless(n) \
@@ -231,7 +231,7 @@ struct yy_buffer_state
 
     int yy_bs_lineno; /**< The line count. */
     int yy_bs_column; /**< The column count. */
-    
+
   /* Whether to try to fill the input buffer when we reach the
    * end of it.
    */
@@ -437,22 +437,17 @@ static yyconst flex_int16_t yy_chk[37] =
 #define YY_RESTORE_YY_MORE_OFFSET
 #line 1 "/home/andy/vtk/CMake/Source/cmExprLexer.in.l"
 #line 2 "/home/andy/vtk/CMake/Source/cmExprLexer.in.l"
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmExprLexer.cxx,v $
-  Language:  C++
-  Date:      $Date: 2007-09-24 15:16:13 $
-  Version:   $Revision: 1.7 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 /*
 
 This file must be translated to C and modified to build everywhere.
@@ -698,9 +693,9 @@ extern int cmExpr_yylex (yyscan_t yyscanner);
  */
 YY_DECL
 {
-  register yy_state_type yy_current_state;
-  register char *yy_cp, *yy_bp;
-  register int yy_act;
+  yy_state_type yy_current_state;
+  char *yy_cp, *yy_bp;
+  int yy_act;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
 #line 86 "/home/andy/vtk/CMake/Source/cmExprLexer.in.l"
@@ -750,7 +745,7 @@ YY_DECL
 yy_match:
     do
       {
-      register YY_CHAR yy_c = yy_ec[YY_SC_TO_UI(*yy_cp)];
+      YY_CHAR yy_c = yy_ec[YY_SC_TO_UI(*yy_cp)];
       if ( yy_accept[yy_current_state] )
         {
         yyg->yy_last_accepting_state = yy_current_state;
@@ -792,7 +787,7 @@ do_action:  /* This label is used only to access EOF actions. */
 case 1:
 YY_RULE_SETUP
 #line 88 "/home/andy/vtk/CMake/Source/cmExprLexer.in.l"
-{ yylvalp->Number = atoi(yytext); return exp_NUMBER; } 
+{ yylvalp->Number = atoi(yytext); return exp_NUMBER; }
 case 2:
 YY_RULE_SETUP
 #line 90 "/home/andy/vtk/CMake/Source/cmExprLexer.in.l"
@@ -800,43 +795,43 @@ YY_RULE_SETUP
 case 3:
 YY_RULE_SETUP
 #line 91 "/home/andy/vtk/CMake/Source/cmExprLexer.in.l"
-{ return exp_MINUS; } 
+{ return exp_MINUS; }
 case 4:
 YY_RULE_SETUP
 #line 92 "/home/andy/vtk/CMake/Source/cmExprLexer.in.l"
-{ return exp_TIMES; } 
+{ return exp_TIMES; }
 case 5:
 YY_RULE_SETUP
 #line 93 "/home/andy/vtk/CMake/Source/cmExprLexer.in.l"
-{ return exp_DIVIDE; } 
+{ return exp_DIVIDE; }
 case 6:
 YY_RULE_SETUP
 #line 94 "/home/andy/vtk/CMake/Source/cmExprLexer.in.l"
-{ return exp_MOD; } 
+{ return exp_MOD; }
 case 7:
 YY_RULE_SETUP
 #line 95 "/home/andy/vtk/CMake/Source/cmExprLexer.in.l"
-{ return exp_OR; } 
+{ return exp_OR; }
 case 8:
 YY_RULE_SETUP
 #line 96 "/home/andy/vtk/CMake/Source/cmExprLexer.in.l"
-{ return exp_AND; } 
+{ return exp_AND; }
 case 9:
 YY_RULE_SETUP
 #line 97 "/home/andy/vtk/CMake/Source/cmExprLexer.in.l"
-{ return exp_XOR; } 
+{ return exp_XOR; }
 case 10:
 YY_RULE_SETUP
 #line 98 "/home/andy/vtk/CMake/Source/cmExprLexer.in.l"
-{ return exp_NOT; } 
+{ return exp_NOT; }
 case 11:
 YY_RULE_SETUP
 #line 99 "/home/andy/vtk/CMake/Source/cmExprLexer.in.l"
-{ return exp_SHIFTLEFT; } 
+{ return exp_SHIFTLEFT; }
 case 12:
 YY_RULE_SETUP
 #line 100 "/home/andy/vtk/CMake/Source/cmExprLexer.in.l"
-{ return exp_SHIFTRIGHT; } 
+{ return exp_SHIFTRIGHT; }
 case 13:
 YY_RULE_SETUP
 #line 101 "/home/andy/vtk/CMake/Source/cmExprLexer.in.l"
@@ -994,9 +989,9 @@ return 0; /* this should not happen but it silences a warning*/
 static int yy_get_next_buffer (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-  register char *dest = YY_CURRENT_BUFFER_LVALUE->yy_ch_buf;
-  register char *source = yyg->yytext_ptr;
-  register int number_to_move, i;
+  char *dest = YY_CURRENT_BUFFER_LVALUE->yy_ch_buf;
+  char *source = yyg->yytext_ptr;
+  int number_to_move, i;
   int ret_val;
 
   if ( yyg->yy_c_buf_p > &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[yyg->yy_n_chars + 1] )
@@ -1121,15 +1116,15 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 
     static yy_state_type yy_get_previous_state (yyscan_t yyscanner)
 {
-  register yy_state_type yy_current_state;
-  register char *yy_cp;
+  yy_state_type yy_current_state;
+  char *yy_cp;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
   yy_current_state = yyg->yy_start;
 
   for ( yy_cp = yyg->yytext_ptr + YY_MORE_ADJ; yy_cp < yyg->yy_c_buf_p; ++yy_cp )
     {
-    register YY_CHAR yy_c = (*yy_cp ? yy_ec[YY_SC_TO_UI(*yy_cp)] : 1);
+    YY_CHAR yy_c = (*yy_cp ? yy_ec[YY_SC_TO_UI(*yy_cp)] : 1);
     if ( yy_accept[yy_current_state] )
       {
       yyg->yy_last_accepting_state = yy_current_state;
@@ -1154,11 +1149,11 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
  */
     static yy_state_type yy_try_NUL_trans  (yy_state_type yy_current_state , yyscan_t yyscanner)
 {
-  register int yy_is_jam;
+  int yy_is_jam;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-  register char *yy_cp = yyg->yy_c_buf_p;
+  char *yy_cp = yyg->yy_c_buf_p;
 
-  register YY_CHAR yy_c = 1;
+  YY_CHAR yy_c = 1;
   if ( yy_accept[yy_current_state] )
     {
     yyg->yy_last_accepting_state = yy_current_state;
@@ -1324,7 +1319,7 @@ static void cmExpr_yy_load_buffer_state  (yyscan_t yyscanner)
     YY_BUFFER_STATE cmExpr_yy_create_buffer  (FILE * file, int  size , yyscan_t yyscanner)
 {
   YY_BUFFER_STATE b;
-    
+
   b = (YY_BUFFER_STATE) cmExpr_yyalloc(sizeof( struct yy_buffer_state ) ,yyscanner );
   if ( ! b )
     YY_FATAL_ERROR( "out of dynamic memory in cmExpr_yy_create_buffer()" );
@@ -1368,7 +1363,7 @@ static void cmExpr_yy_load_buffer_state  (yyscan_t yyscanner)
 #ifndef __cplusplus
 extern int isatty (int );
 #endif /* __cplusplus */
-    
+
 /* Initializes or reinitializes a buffer.
  * This function is sometimes called more than once on the same buffer,
  * such as during a cmExpr_yyrestart() or at EOF.
@@ -1394,7 +1389,7 @@ extern int isatty (int );
     }
 
         b->yy_is_interactive = file ? (isatty( fileno(file) ) > 0) : 0;
-    
+
   errno = oerrno;
 }
 
@@ -1498,9 +1493,9 @@ static void cmExpr_yyensure_buffer_stack (yyscan_t yyscanner)
     yyg->yy_buffer_stack = (struct yy_buffer_state**)cmExpr_yyalloc
                 (nuto_alloc * sizeof(struct yy_buffer_state*)
                 , yyscanner);
-    
+
     memset(yyg->yy_buffer_stack, 0, nuto_alloc * sizeof(struct yy_buffer_state*));
-        
+
     yyg->yy_buffer_stack_max = nuto_alloc;
     yyg->yy_buffer_stack_top = 0;
     return;
@@ -1527,12 +1522,12 @@ static void cmExpr_yyensure_buffer_stack (yyscan_t yyscanner)
  * @param base the character buffer
  * @param size the size in bytes of the character buffer
  * @param yyscanner The scanner object.
- * @return the newly allocated buffer state object. 
+ * @return the newly allocated buffer state object.
  */
 YY_BUFFER_STATE cmExpr_yy_scan_buffer  (char * base, yy_size_t  size , yyscan_t yyscanner)
 {
   YY_BUFFER_STATE b;
-    
+
   if ( size < 2 ||
        base[size-2] != YY_END_OF_BUFFER_CHAR ||
        base[size-1] != YY_END_OF_BUFFER_CHAR )
@@ -1559,8 +1554,7 @@ YY_BUFFER_STATE cmExpr_yy_scan_buffer  (char * base, yy_size_t  size , yyscan_t 
 }
 
 /** Setup the input buffer state to scan a string. The next call to cmExpr_yylex() will
- * scan from a @e copy of @a str.
- * @param str a NUL-terminated string to scan
+ * scan from a @e copy of @a yy_str.
  * @param yy_str a NUL-terminated string to scan
  * @param yyscanner The scanner object.
  * @return the newly allocated buffer state object.
@@ -1569,7 +1563,7 @@ YY_BUFFER_STATE cmExpr_yy_scan_buffer  (char * base, yy_size_t  size , yyscan_t 
  */
 YY_BUFFER_STATE cmExpr_yy_scan_string (yyconst char * yy_str , yyscan_t yyscanner)
 {
-    
+
   return cmExpr_yy_scan_bytes(yy_str,strlen(yy_str) ,yyscanner);
 }
 
@@ -1586,7 +1580,7 @@ YY_BUFFER_STATE cmExpr_yy_scan_bytes  (yyconst char * bytes, int  len , yyscan_t
   char *buf;
   yy_size_t n;
   int i;
-    
+
   /* Get memory for full buffer, including space for trailing EOB's. */
   n = len + 2;
   buf = (char *) cmExpr_yyalloc(n ,yyscanner );
@@ -1654,10 +1648,10 @@ YY_EXTRA_TYPE cmExpr_yyget_extra  (yyscan_t yyscanner)
 int cmExpr_yyget_lineno  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-    
+
         if (! YY_CURRENT_BUFFER)
             return 0;
-    
+
     return yylineno;
 }
 
@@ -1667,10 +1661,10 @@ int cmExpr_yyget_lineno  (yyscan_t yyscanner)
 int cmExpr_yyget_column  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-    
+
         if (! YY_CURRENT_BUFFER)
             return 0;
-    
+
     return yycolumn;
 }
 
@@ -1731,13 +1725,13 @@ void cmExpr_yyset_lineno (int  line_number , yyscan_t yyscanner)
 
         /* lineno is only valid if an input buffer exists. */
         if (! YY_CURRENT_BUFFER )
-           yy_fatal_error( "cmExpr_yyset_lineno called with no buffer" , yyscanner); 
-    
+           yy_fatal_error( "cmExpr_yyset_lineno called with no buffer" , yyscanner);
+
     yylineno = line_number;
 }
 
 /** Set the current column.
- * @param line_number
+ * @param column_no
  * @param yyscanner The scanner object.
  */
 void cmExpr_yyset_column (int  column_no , yyscan_t yyscanner)
@@ -1746,8 +1740,8 @@ void cmExpr_yyset_column (int  column_no , yyscan_t yyscanner)
 
         /* column is only valid if an input buffer exists. */
         if (! YY_CURRENT_BUFFER )
-           yy_fatal_error( "cmExpr_yyset_column called with no buffer" , yyscanner); 
-    
+           yy_fatal_error( "cmExpr_yyset_column called with no buffer" , yyscanner);
+
     yycolumn = column_no;
 }
 
@@ -1873,7 +1867,7 @@ int cmExpr_yylex_destroy  (yyscan_t yyscanner)
 #ifndef yytext_ptr
 static void yy_flex_strncpy (char* s1, yyconst char * s2, int n , yyscan_t yyscanner)
 {
-  register int i;
+  int i;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
   for ( i = 0; i < n; ++i )
     s1[i] = s2[i];
@@ -1883,7 +1877,7 @@ static void yy_flex_strncpy (char* s1, yyconst char * s2, int n , yyscan_t yysca
 #ifdef YY_NEED_STRLEN
 static int yy_flex_strlen (yyconst char * s , yyscan_t yyscanner)
 {
-  register int n;
+  int n;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
   for ( n = 0; s[n]; ++n )
     ;

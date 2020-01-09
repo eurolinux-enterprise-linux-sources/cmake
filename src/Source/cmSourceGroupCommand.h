@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmSourceGroupCommand.h,v $
-  Language:  C++
-  Date:      $Date: 2008-01-23 15:27:59 $
-  Version:   $Revision: 1.16 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmSourceGroupCommand_h
 #define cmSourceGroupCommand_h
 
@@ -31,7 +26,7 @@ public:
   /**
    * This is a virtual constructor for the command.
    */
-  virtual cmCommand* Clone() 
+  virtual cmCommand* Clone()
     {
     return new cmSourceGroupCommand;
     }
@@ -42,24 +37,24 @@ public:
    */
   virtual bool InitialPass(std::vector<std::string> const& args,
                            cmExecutionStatus &status);
-  
+
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() {return "source_group";}
+  virtual const char* GetName() const {return "source_group";}
 
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation() 
+  virtual const char* GetTerseDocumentation() const
     {
     return "Define a grouping for sources in the makefile.";
     }
-  
+
   /**
    * More documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
     return
       "  source_group(name [REGULAR_EXPRESSION regex] "
@@ -73,11 +68,11 @@ public:
       "expression matches the file will be favored.\n"
       "The name of the group may contain backslashes to specify subgroups:\n"
       "  source_group(outer\\\\inner ...)\n"
-      "For backwards compatibility, this command is also supports the "
+      "For backwards compatibility, this command also supports the "
       "format:\n"
       "  source_group(name regex)";
     }
-  
+
   cmTypeMacro(cmSourceGroupCommand, cmCommand);
 };
 

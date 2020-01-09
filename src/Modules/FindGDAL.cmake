@@ -9,27 +9,41 @@
 #    GDAL_FOUND - True if libgdal is found
 #    GDAL_LIBRARY - A variable pointing to the GDAL library
 #    GDAL_INCLUDE_DIR - Where to find the headers
+
+#=============================================================================
+# Copyright 2007-2009 Kitware, Inc.
+#
+# Distributed under the OSI-approved BSD License (the "License");
+# see accompanying file Copyright.txt for details.
+#
+# This software is distributed WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the License for more information.
+#=============================================================================
+# (To distribute this file outside of CMake, substitute the full
+#  License text for the above reference.)
+
 #
 # $GDALDIR is an environment variable that would
 # correspond to the ./configure --prefix=$GDAL_DIR
 # used in building gdal.
 #
-# Created by Eric Wing. I'm not a gdal user, but OpenSceneGraph uses it 
+# Created by Eric Wing. I'm not a gdal user, but OpenSceneGraph uses it
 # for osgTerrain so I whipped this module together for completeness.
 # I actually don't know the conventions or where files are typically
 # placed in distros.
 # Any real gdal users are encouraged to correct this (but please don't
-# break the OS X framework stuff when doing so which is what usually seems 
+# break the OS X framework stuff when doing so which is what usually seems
 # to happen).
 
 # This makes the presumption that you are include gdal.h like
 #
 #include "gdal.h"
 
-FIND_PATH(GDAL_INCLUDE_DIR gdal.h
+find_path(GDAL_INCLUDE_DIR gdal.h
   HINTS
-    $ENV{GDAL_DIR}
-    $ENV{GDAL_ROOT}
+    ENV GDAL_DIR
+    ENV GDAL_ROOT
   PATH_SUFFIXES
      include/gdal
      include/GDAL
@@ -43,15 +57,15 @@ FIND_PATH(GDAL_INCLUDE_DIR gdal.h
       /opt
 )
 
-IF(UNIX)
+if(UNIX)
     # Use gdal-config to obtain the library version (this should hopefully
     # allow us to -lgdal1.x.y where x.y are correct version)
     # For some reason, libgdal development packages do not contain
     # libgdal.so...
-    FIND_PROGRAM(GDAL_CONFIG gdal-config
+    find_program(GDAL_CONFIG gdal-config
         HINTS
-          $ENV{GDAL_DIR}
-          $ENV{GDAL_ROOT}
+          ENV GDAL_DIR
+          ENV GDAL_ROOT
         PATH_SUFFIXES bin
         PATHS
             /sw # Fink
@@ -71,13 +85,13 @@ IF(UNIX)
     endif()
 endif()
 
-FIND_LIBRARY(GDAL_LIBRARY 
+find_library(GDAL_LIBRARY
   NAMES ${_gdal_lib} gdal gdal_i gdal1.5.0 gdal1.4.0 gdal1.3.2 GDAL
   HINTS
-     $ENV{GDAL_DIR}
-     $ENV{GDAL_ROOT}
+     ENV GDAL_DIR
+     ENV GDAL_ROOT
      ${_gdal_libpath}
-  PATH_SUFFIXES lib64 lib
+  PATH_SUFFIXES lib
   PATHS
     /sw
     /opt/local
@@ -86,7 +100,7 @@ FIND_LIBRARY(GDAL_LIBRARY
     /usr/freeware
 )
 
-include(FindPackageHandleStandardArgs)
+include(${CMAKE_CURRENT_LIST_DIR}/FindPackageHandleStandardArgs.cmake)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(GDAL DEFAULT_MSG GDAL_LIBRARY GDAL_INCLUDE_DIR)
 
 set(GDAL_LIBRARIES ${GDAL_LIBRARY})

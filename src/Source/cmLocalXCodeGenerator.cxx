@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmLocalXCodeGenerator.cxx,v $
-  Language:  C++
-  Date:      $Date: 2007-08-14 15:45:14 $
-  Version:   $Revision: 1.7 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmLocalXCodeGenerator.h"
 #include "cmGlobalXCodeGenerator.h"
 #include "cmSourceFile.h"
@@ -40,14 +35,10 @@ cmLocalXCodeGenerator::GetTargetDirectory(cmTarget const&) const
 }
 
 //----------------------------------------------------------------------------
-void cmLocalXCodeGenerator::
-GetTargetObjectFileDirectories(cmTarget* target,
-                               std::vector<std::string>& 
-                               dirs)
+void cmLocalXCodeGenerator::AppendFlagEscape(std::string& flags,
+                                             const char* rawFlag)
 {
-  cmGlobalXCodeGenerator* g = 
-    (cmGlobalXCodeGenerator*)this->GetGlobalGenerator();
-  g->SetCurrentLocalGenerator(this);
-  g->GetTargetObjectFileDirectories(target,
-                                    dirs);
+  cmGlobalXCodeGenerator* gg =
+    static_cast<cmGlobalXCodeGenerator*>(this->GlobalGenerator);
+  gg->AppendFlag(flags, rawFlag);
 }

@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmAddLibraryCommand.h,v $
-  Language:  C++
-  Date:      $Date: 2008-09-03 13:43:16 $
-  Version:   $Revision: 1.22.2.1 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmLibrarysCommand_h
 #define cmLibrarysCommand_h
 
@@ -31,7 +26,7 @@ public:
   /**
    * This is a virtual constructor for the command.
    */
-  virtual cmCommand* Clone() 
+  virtual cmCommand* Clone()
     {
     return new cmAddLibraryCommand;
     }
@@ -46,23 +41,24 @@ public:
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() { return "add_library";}
+  virtual const char* GetName() const { return "add_library";}
 
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation() 
+  virtual const char* GetTerseDocumentation() const
     {
     return "Add a library to the project using the specified source files.";
     }
-  
+
   /**
    * More documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
     return
-      "  add_library(<name> [STATIC | SHARED | MODULE] [EXCLUDE_FROM_ALL]\n"
+      "  add_library(<name> [STATIC | SHARED | MODULE]\n"
+      "              [EXCLUDE_FROM_ALL]\n"
       "              source1 source2 ... sourceN)\n"
       "Adds a library target called <name> to be built from the "
       "source files listed in the command invocation.  "
@@ -82,7 +78,9 @@ public:
       "functionality.  "
       "If no type is given explicitly the type is STATIC or SHARED based "
       "on whether the current value of the variable BUILD_SHARED_LIBS is "
-      "true."
+      "true.  "
+      "For SHARED and MODULE libraries the POSITION_INDEPENDENT_CODE "
+      "target property is set to TRUE automatically."
       "\n"
       "By default the library file will be created in the build tree "
       "directory corresponding to the source tree directory in which "
@@ -100,12 +98,13 @@ public:
       "\n"
       "The add_library command can also create IMPORTED library "
       "targets using this signature:\n"
-      "  add_library(<name> <SHARED|STATIC|MODULE|UNKNOWN> IMPORTED)\n"
+      "  add_library(<name> <SHARED|STATIC|MODULE|UNKNOWN> IMPORTED\n"
+      "              [GLOBAL])\n"
       "An IMPORTED library target references a library file located "
       "outside the project.  "
       "No rules are generated to build it.  "
       "The target name has scope in the directory in which it is created "
-      "and below.  "
+      "and below, but the GLOBAL option extends visibility.  "
       "It may be referenced like any target built within the project.  "
       "IMPORTED libraries are useful for convenient reference from "
       "commands like target_link_libraries.  "
@@ -115,9 +114,46 @@ public:
       "(and its per-configuration version IMPORTED_LOCATION_<CONFIG>) "
       "which specifies the location of the main library file on disk.  "
       "See documentation of the IMPORTED_* properties for more information."
+      "\n"
+      "The signature\n"
+      "  add_library(<name> OBJECT <src>...)\n"
+      "creates a special \"object library\" target.  "
+      "An object library compiles source files but does not archive or link "
+      "their object files into a library.  "
+      "Instead other targets created by add_library or add_executable may "
+      "reference the objects using an expression of the form "
+      "$<TARGET_OBJECTS:objlib> as a source, where \"objlib\" is the "
+      "object library name.  "
+      "For example:\n"
+      "  add_library(... $<TARGET_OBJECTS:objlib> ...)\n"
+      "  add_executable(... $<TARGET_OBJECTS:objlib> ...)\n"
+      "will include objlib's object files in a library and an executable "
+      "along with those compiled from their own sources.  "
+      "Object libraries may contain only sources (and headers) that compile "
+      "to object files.  "
+      "They may contain custom commands generating such sources, but not "
+      "PRE_BUILD, PRE_LINK, or POST_BUILD commands.  "
+      "Object libraries cannot be imported, exported, installed, or linked."
+      "  "
+      "Some native build systems may not like targets that have only "
+      "object files, so consider adding at least one real source file "
+      "to any target that references $<TARGET_OBJECTS:objlib>."
+      "\n"
+      "The signature\n"
+      "  add_library(<name> ALIAS <target>)\n"
+      "creates an alias, such that <name> can be used to refer to <target> "
+      "in subsequent commands.  The <name> does not appear in the generated "
+      "buildsystem as a make target.  The <target> may not be an IMPORTED "
+      "target or an ALIAS.  Alias targets can be used as linkable targets, "
+      "targets to read properties from.  They can also be tested for "
+      "existance with the "
+      "regular if(TARGET) subcommand.  The <name> may not be used to modify "
+      "properties of <target>, that is, it may not be used as the operand of "
+      "set_property, set_target_properties, target_link_libraries etc.  An "
+      "ALIAS target may not be installed of exported."
       ;
     }
-  
+
   cmTypeMacro(cmAddLibraryCommand, cmCommand);
 };
 

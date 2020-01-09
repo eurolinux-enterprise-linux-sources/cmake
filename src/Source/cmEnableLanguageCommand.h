@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmEnableLanguageCommand.h,v $
-  Language:  C++
-  Date:      $Date: 2008-01-23 15:27:59 $
-  Version:   $Revision: 1.8 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmEnableLanguageCommand_h
 #define cmEnableLanguageCommand_h
 
@@ -33,7 +28,7 @@ public:
   /**
    * This is a virtual constructor for the command.
    */
-  virtual cmCommand* Clone() 
+  virtual cmCommand* Clone()
     {
     return new cmEnableLanguageCommand;
     }
@@ -44,35 +39,43 @@ public:
    */
   virtual bool InitialPass(std::vector<std::string> const& args,
                            cmExecutionStatus &status);
-  
+
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() {return "enable_language";}
+  virtual const char* GetName() const {return "enable_language";}
 
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation() 
+  virtual const char* GetTerseDocumentation() const
     {
     return "Enable a language (CXX/C/Fortran/etc)";
     }
-  
+
   /**
    * More documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
     return
-      "  enable_language(languageName [OPTIONAL] )\n"
+      "  enable_language(<lang> [OPTIONAL] )\n"
       "This command enables support for the named language in CMake. "
       "This is the same as the project command but does not create "
       "any of the extra variables that are created by the project command. "
-      "Example languages are CXX, C, Fortran.\n"
-      "If OPTIONAL is used, use the CMAKE_<languageName>_COMPILER_WORKS "
-      "variable to check whether the language has been enabled successfully.";
+      "Example languages are CXX, C, Fortran. "
+      "\n"
+      "This command must be called in file scope, not in a function call.  "
+      "Furthermore, it must be called in the highest directory common to "
+      "all targets using the named language directly for compiling sources "
+      "or indirectly through link dependencies.  "
+      "It is simplest to enable all needed languages in the top-level "
+      "directory of a project."
+      "\n"
+      "The OPTIONAL keyword is a placeholder for future implementation "
+      "and does not currently work.";
     }
-  
+
   cmTypeMacro(cmEnableLanguageCommand, cmCommand);
 };
 

@@ -1,30 +1,18 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmVariableWatchCommand.h,v $
-  Language:  C++
-  Date:      $Date: 2008-01-23 15:27:59 $
-  Version:   $Revision: 1.4 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmVariableWatchCommand_h
 #define cmVariableWatchCommand_h
 
 #include "cmCommand.h"
-
-class cmVariableWatchCommandHandler
-{
-public:
-  typedef std::vector<std::string> VectorOfCommands;
-  VectorOfCommands Commands;
-};
 
 /** \class cmVariableWatchCommand
  * \brief Watch when the variable changes and invoke command
@@ -36,13 +24,16 @@ public:
   /**
    * This is a virtual constructor for the command.
    */
-  virtual cmCommand* Clone() 
+  virtual cmCommand* Clone()
     {
     return new cmVariableWatchCommand;
     }
 
   //! Default constructor
   cmVariableWatchCommand();
+
+  //! Destructor.
+  ~cmVariableWatchCommand();
 
   /**
    * This is called when the command is first encountered in
@@ -54,25 +45,29 @@ public:
   /**
    * This determines if the command is invoked when in script mode.
    */
-  virtual bool IsScriptable() { return true; }
+  virtual bool IsScriptable() const { return true; }
+
+  /** This command does not really have a final pass but it needs to
+      stay alive since it owns variable watch callback information. */
+  virtual bool HasFinalPass() const { return true; }
 
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() { return "variable_watch";}
+  virtual const char* GetName() const { return "variable_watch";}
 
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation() 
+  virtual const char* GetTerseDocumentation() const
     {
     return "Watch the CMake variable for change.";
     }
-  
+
   /**
    * More documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
     return
       "  variable_watch(<variable name> [<command to execute>])\n"
@@ -81,16 +76,11 @@ public:
       "will be executed. The command will receive the following arguments:"
       " COMMAND(<variable> <access> <value> <current list file> <stack>)";
     }
-  
+
   cmTypeMacro(cmVariableWatchCommand, cmCommand);
 
-  void VariableAccessed(const std::string& variable, int access_type,
-    const char* newValue, const cmMakefile* mf);
-
 protected:
-  std::map<std::string, cmVariableWatchCommandHandler> Handlers;
-
-  bool InCallback;
+  std::set<std::string> WatchedVariables;
 };
 
 

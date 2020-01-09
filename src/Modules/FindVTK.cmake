@@ -4,81 +4,98 @@
 #  VTK_FOUND         - Set to true when VTK is found.
 #  VTK_USE_FILE      - CMake file to use VTK.
 #  VTK_MAJOR_VERSION - The VTK major version number.
-#  VTK_MINOR_VERSION - The VTK minor version number 
+#  VTK_MINOR_VERSION - The VTK minor version number
 #                       (odd non-release).
-#  VTK_BUILD_VERSION - The VTK patch level 
+#  VTK_BUILD_VERSION - The VTK patch level
 #                       (meaningless for odd minor).
 #  VTK_INCLUDE_DIRS  - Include directories for VTK
 #  VTK_LIBRARY_DIRS  - Link directories for VTK libraries
-#  VTK_KITS          - List of VTK kits, in CAPS 
+#  VTK_KITS          - List of VTK kits, in CAPS
 #                      (COMMON,IO,) etc.
 #  VTK_LANGUAGES     - List of wrapped languages, in CAPS
 #                      (TCL, PYHTON,) etc.
 # The following cache entries must be set by the user to locate VTK:
-#  VTK_DIR  - The directory containing VTKConfig.cmake.  
+#  VTK_DIR  - The directory containing VTKConfig.cmake.
 #             This is either the root of the build tree,
-#             or the lib/vtk directory.  This is the 
+#             or the lib/vtk directory.  This is the
 #             only cache entry.
 # The following variables are set for backward compatibility and
 # should not be used in new code:
 #  USE_VTK_FILE - The full path to the UseVTK.cmake file.
-#                 This is provided for backward 
-#                 compatibility.  Use VTK_USE_FILE 
+#                 This is provided for backward
+#                 compatibility.  Use VTK_USE_FILE
 #                 instead.
 #
 
-# Construct consitent error messages for use below.
-SET(VTK_DIR_DESCRIPTION "directory containing VTKConfig.cmake.  This is either the root of the build tree, or PREFIX/lib/vtk for an installation.  For VTK 4.0, this is the location of UseVTK.cmake.  This is either the root of the build tree or PREFIX/include/vtk for an installation.")
-SET(VTK_DIR_MESSAGE "VTK not found.  Set the VTK_DIR cmake cache entry to the ${VTK_DIR_DESCRIPTION}")
+#=============================================================================
+# Copyright 2001-2009 Kitware, Inc.
+#
+# Distributed under the OSI-approved BSD License (the "License");
+# see accompanying file Copyright.txt for details.
+#
+# This software is distributed WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the License for more information.
+#=============================================================================
+# (To distribute this file outside of CMake, substitute the full
+#  License text for the above reference.)
 
-# Search only if the location is not already known.
-IF(NOT VTK_DIR)
-  # Get the system search path as a list.
-  IF(UNIX)
-    STRING(REGEX MATCHALL "[^:]+" VTK_DIR_SEARCH1 "$ENV{PATH}")
-  ELSE(UNIX)
-    STRING(REGEX REPLACE "\\\\" "/" VTK_DIR_SEARCH1 "$ENV{PATH}")
-  ENDIF(UNIX)
-  STRING(REGEX REPLACE "/;" ";" VTK_DIR_SEARCH2 "${VTK_DIR_SEARCH1}")
+# Assume not found.
+set(VTK_FOUND 0)
 
-  # Construct a set of paths relative to the system search path.
-  SET(VTK_DIR_SEARCH "")
-  FOREACH(dir ${VTK_DIR_SEARCH2})
-    SET(VTK_DIR_SEARCH ${VTK_DIR_SEARCH}
-      ${dir}/../lib/vtk-5.2
-      ${dir}/../lib/vtk-5.1
-      ${dir}/../lib/vtk-5.0
-      ${dir}/../lib/vtk
-      )
-  ENDFOREACH(dir)
+# VTK 4.0 did not provide VTKConfig.cmake.
+if("${VTK_FIND_VERSION}" VERSION_LESS 4.1)
+  set(_VTK_40_ALLOW 1)
+  if(VTK_FIND_VERSION)
+    set(_VTK_40_ONLY 1)
+  endif()
+endif()
 
+# Construct consistent error messages for use below.
+set(VTK_DIR_DESCRIPTION "directory containing VTKConfig.cmake.  This is either the root of the build tree, or PREFIX/lib/vtk for an installation.")
+if(_VTK_40_ALLOW)
+  set(VTK_DIR_DESCRIPTION "${VTK_DIR_DESCRIPTION}  For VTK 4.0, this is the location of UseVTK.cmake.  This is either the root of the build tree or PREFIX/include/vtk for an installation.")
+endif()
+set(VTK_DIR_MESSAGE "VTK not found.  Set the VTK_DIR cmake cache entry to the ${VTK_DIR_DESCRIPTION}")
+
+# Check whether VTK 4.0 has already been found.
+if(_VTK_40_ALLOW AND VTK_DIR)
+  if(EXISTS ${VTK_DIR}/UseVTK.cmake AND NOT EXISTS ${VTK_DIR}/VTKConfig.cmake)
+    set(VTK_FOUND 1)
+    include(${CMAKE_CURRENT_LIST_DIR}/UseVTKConfig40.cmake) # No VTKConfig; load VTK 4.0 settings.
+  endif()
+endif()
+
+# Use the Config mode of the find_package() command to find VTKConfig.
+# If this succeeds (possibly because VTK_DIR is already set), the
+# command will have already loaded VTKConfig.cmake and set VTK_FOUND.
+if(NOT _VTK_40_ONLY AND NOT VTK_FOUND)
+  find_package(VTK QUIET NO_MODULE)
+endif()
+
+# Special search for VTK 4.0.
+if(_VTK_40_ALLOW AND NOT VTK_DIR)
   # Old scripts may set these directories in the CMakeCache.txt file.
   # They can tell us where to find VTKConfig.cmake.
-  SET(VTK_DIR_SEARCH_LEGACY "")
-  IF(VTK_BINARY_PATH AND USE_BUILT_VTK)
-    SET(VTK_DIR_SEARCH_LEGACY ${VTK_DIR_SEARCH_LEGACY} ${VTK_BINARY_PATH})
-  ENDIF(VTK_BINARY_PATH AND USE_BUILT_VTK)
-  IF(VTK_INSTALL_PATH AND USE_INSTALLED_VTK)
-    SET(VTK_DIR_SEARCH_LEGACY ${VTK_DIR_SEARCH_LEGACY}
+  set(VTK_DIR_SEARCH_LEGACY "")
+  if(VTK_BINARY_PATH AND USE_BUILT_VTK)
+    set(VTK_DIR_SEARCH_LEGACY ${VTK_DIR_SEARCH_LEGACY} ${VTK_BINARY_PATH})
+  endif()
+  if(VTK_INSTALL_PATH AND USE_INSTALLED_VTK)
+    set(VTK_DIR_SEARCH_LEGACY ${VTK_DIR_SEARCH_LEGACY}
         ${VTK_INSTALL_PATH}/lib/vtk)
-  ENDIF(VTK_INSTALL_PATH AND USE_INSTALLED_VTK)
+  endif()
 
-  #
-  # Look for an installation or build tree.
-  #
-  FIND_PATH(VTK_DIR UseVTK.cmake
+  # Look for UseVTK.cmake in build trees or under <prefix>/include/vtk.
+  find_path(VTK_DIR
+    NAMES UseVTK.cmake
+    PATH_SUFFIXES vtk-4.0 vtk
+    HINTS ENV VTK_DIR
+
+    PATHS
+
     # Support legacy cache files.
     ${VTK_DIR_SEARCH_LEGACY}
-
-    # Look for an environment variable VTK_DIR.
-    $ENV{VTK_DIR}
-
-    # Look in places relative to the system executable search path.
-    ${VTK_DIR_SEARCH}
-
-    # Look in standard UNIX install locations.
-    /usr/local/lib/vtk
-    /usr/lib/vtk
 
     # Read from the CMakeSetup registry entries.  It is likely that
     # VTK will have been recently built.
@@ -95,46 +112,30 @@ IF(NOT VTK_DIR)
 
     # Help the user find it if we cannot.
     DOC "The ${VTK_DIR_DESCRIPTION}"
-  )
-ENDIF(NOT VTK_DIR)
+    )
 
-# If VTK was found, load the configuration file to get the rest of the
-# settings.
-IF(VTK_DIR)
-  # Make sure the VTKConfig.cmake file exists in the directory provided.
-  IF(EXISTS ${VTK_DIR}/VTKConfig.cmake)
-
-    # We found VTK.  Load the settings.
-    SET(VTK_FOUND 1)
-    INCLUDE(${VTK_DIR}/VTKConfig.cmake)
-
-  ELSE(EXISTS ${VTK_DIR}/VTKConfig.cmake)
-    IF(EXISTS ${VTK_DIR}/UseVTK.cmake)
-      # We found VTK 4.0 (UseVTK.cmake exists, but not VTKConfig.cmake).
-      SET(VTK_FOUND 1)
-      # Load settings for VTK 4.0.
-      INCLUDE(UseVTKConfig40)
-    ELSE(EXISTS ${VTK_DIR}/UseVTK.cmake)
-      # We did not find VTK.
-      SET(VTK_FOUND 0)
-    ENDIF(EXISTS ${VTK_DIR}/UseVTK.cmake)
-  ENDIF(EXISTS ${VTK_DIR}/VTKConfig.cmake)
-ELSE(VTK_DIR)
-  # We did not find VTK.
-  SET(VTK_FOUND 0)
-ENDIF(VTK_DIR)
+  if(VTK_DIR)
+    if(EXISTS ${VTK_DIR}/UseVTK.cmake AND NOT EXISTS ${VTK_DIR}/VTKConfig.cmake)
+      set(VTK_FOUND 1)
+      include(${CMAKE_CURRENT_LIST_DIR}/UseVTKConfig40.cmake) # No VTKConfig; load VTK 4.0 settings.
+    else()
+      # We found the wrong version.  Pretend we did not find it.
+      set(VTK_DIR "VTK_DIR-NOTFOUND" CACHE PATH "The ${VTK_DIR_DESCRIPTION}" FORCE)
+    endif()
+  endif()
+endif()
 
 #-----------------------------------------------------------------------------
-IF(VTK_FOUND)
-  # Set USE_VTK_FILE for backward-compatability.
-  SET(USE_VTK_FILE ${VTK_USE_FILE})
-ELSE(VTK_FOUND)
+if(VTK_FOUND)
+  # Set USE_VTK_FILE for backward-compatibility.
+  set(USE_VTK_FILE ${VTK_USE_FILE})
+else()
   # VTK not found, explain to the user how to specify its location.
-  IF(VTK_FIND_REQUIRED)
-    MESSAGE(FATAL_ERROR ${VTK_DIR_MESSAGE})
-  ELSE(VTK_FIND_REQUIRED)
-    IF(NOT VTK_FIND_QUIETLY)
-      MESSAGE(STATUS ${VTK_DIR_MESSAGE})
-    ENDIF(NOT VTK_FIND_QUIETLY)
-  ENDIF(VTK_FIND_REQUIRED)
-ENDIF(VTK_FOUND)
+  if(VTK_FIND_REQUIRED)
+    message(FATAL_ERROR ${VTK_DIR_MESSAGE})
+  else()
+    if(NOT VTK_FIND_QUIETLY)
+      message(STATUS ${VTK_DIR_MESSAGE})
+    endif()
+  endif()
+endif()

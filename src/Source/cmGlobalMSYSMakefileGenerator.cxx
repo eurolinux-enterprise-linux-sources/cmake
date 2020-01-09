@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmGlobalMSYSMakefileGenerator.cxx,v $
-  Language:  C++
-  Date:      $Date: 2008-12-31 15:14:29 $
-  Version:   $Revision: 1.14.2.1 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmGlobalMSYSMakefileGenerator.h"
 #include "cmLocalUnixMakefileGenerator3.h"
 #include "cmMakefile.h"
@@ -27,7 +22,7 @@ cmGlobalMSYSMakefileGenerator::cmGlobalMSYSMakefileGenerator()
   this->UseLinkScript = false;
 }
 
-std::string 
+std::string
 cmGlobalMSYSMakefileGenerator::FindMinGW(std::string const& makeloc)
 {
   std::string fstab = makeloc;
@@ -50,8 +45,8 @@ cmGlobalMSYSMakefileGenerator::FindMinGW(std::string const& makeloc)
 }
 
 void cmGlobalMSYSMakefileGenerator
-::EnableLanguage(std::vector<std::string>const& l, 
-                 cmMakefile *mf, 
+::EnableLanguage(std::vector<std::string>const& l,
+                 cmMakefile *mf,
                  bool optional)
 {
   this->FindMakeProgram(mf);
@@ -74,9 +69,16 @@ void cmGlobalMSYSMakefileGenerator
     {
     gxx = tgxx;
     }
+  std::string trc = cmSystemTools::FindProgram("windres", locations);
+  std::string rc = "windres.exe";
+  if(trc.size())
+    {
+    rc = trc;
+    }
   mf->AddDefinition("MSYS", "1");
   mf->AddDefinition("CMAKE_GENERATOR_CC", gcc.c_str());
   mf->AddDefinition("CMAKE_GENERATOR_CXX", gxx.c_str());
+  mf->AddDefinition("CMAKE_GENERATOR_RC", rc.c_str());
   this->cmGlobalUnixMakefileGenerator3::EnableLanguage(l, mf, optional);
 
   if(!mf->IsSet("CMAKE_AR") &&
@@ -104,9 +106,9 @@ cmLocalGenerator *cmGlobalMSYSMakefileGenerator::CreateLocalGenerator()
 
 //----------------------------------------------------------------------------
 void cmGlobalMSYSMakefileGenerator
-::GetDocumentation(cmDocumentationEntry& entry) const
+::GetDocumentation(cmDocumentationEntry& entry)
 {
-  entry.Name = this->GetName();
+  entry.Name = cmGlobalMSYSMakefileGenerator::GetActualName();
   entry.Brief = "Generates MSYS makefiles.";
   entry.Full = "The makefiles use /bin/sh as the shell.  "
     "They require msys to be installed on the machine.";

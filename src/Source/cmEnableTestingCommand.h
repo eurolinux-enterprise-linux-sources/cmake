@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmEnableTestingCommand.h,v $
-  Language:  C++
-  Date:      $Date: 2008-01-23 15:27:59 $
-  Version:   $Revision: 1.15 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmEnableTestingCommand_h
 #define cmEnableTestingCommand_h
 
@@ -29,7 +24,7 @@
  * within the valid control structures are replicated in Testfile
  * (i.e. SUBDIRS() and ADD_TEST() commands within IF() commands that are
  * not entered by CMake are not replicated in Testfile).
- * Note that CTest expects to find this file in the build directory root; 
+ * Note that CTest expects to find this file in the build directory root;
  * therefore, this command should be in the source directory root too.
  */
 class cmEnableTestingCommand : public cmCommand
@@ -38,7 +33,7 @@ public:
   /**
    * This is a virtual constructor for the command.
    */
-  virtual cmCommand* Clone() 
+  virtual cmCommand* Clone()
     {
     return new cmEnableTestingCommand;
     }
@@ -53,20 +48,20 @@ public:
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() { return "enable_testing";}
+  virtual const char* GetName() const { return "enable_testing";}
 
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation() 
+  virtual const char* GetTerseDocumentation() const
     {
     return "Enable testing for current directory and below.";
     }
-  
+
   /**
    * More documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
     return
       "  enable_testing()\n"
@@ -75,9 +70,9 @@ public:
       "a test file in the build directory root.  Therefore, this command "
       "should be in the source directory root.";
     }
-  
+
   cmTypeMacro(cmEnableTestingCommand, cmCommand);
-  
+
 };
 
 

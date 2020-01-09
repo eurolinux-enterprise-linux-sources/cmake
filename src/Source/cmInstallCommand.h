@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmInstallCommand.h,v $
-  Language:  C++
-  Date:      $Date: 2008-04-21 00:44:51 $
-  Version:   $Revision: 1.29.2.1 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmInstallCommand_h
 #define cmInstallCommand_h
 
@@ -46,12 +41,12 @@ public:
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() { return "install";}
+  virtual const char* GetName() const { return "install";}
 
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation()
+  virtual const char* GetTerseDocumentation() const
     {
     return "Specify rules to run at install time.";
     }
@@ -59,7 +54,7 @@ public:
   /**
    * More documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
     return
       "This command generates installation rules for a project.  "
@@ -75,7 +70,9 @@ public:
       "the directory on disk to which a file will be installed.  "
       "If a full path (with a leading slash or drive letter) is given it "
       "is used directly.  If a relative path is given it is interpreted "
-      "relative to the value of CMAKE_INSTALL_PREFIX.\n"
+      "relative to the value of CMAKE_INSTALL_PREFIX. The prefix can "
+      "be relocated at install time using DESTDIR mechanism explained in the "
+      "CMAKE_INSTALL_PREFIX variable documentation.\n"
       "PERMISSIONS arguments specify permissions for installed files.  "
       "Valid permissions are "
       "OWNER_READ, OWNER_WRITE, OWNER_EXECUTE, "
@@ -90,7 +87,10 @@ public:
       "with which the install rule is associated, such as \"runtime\" or "
       "\"development\".  During component-specific installation only "
       "install rules associated with the given component name will be "
-      "executed.  During a full installation all components are installed.\n"
+      "executed.  During a full installation all components are installed."
+      " If COMPONENT is not provided a default component \"Unspecified\" is"
+      " created. The default component name may be controlled with the "
+      "CMAKE_INSTALL_DEFAULT_COMPONENT_NAME variable.\n"
       "The RENAME argument specifies a name for an installed file that "
       "may be different from the original file.  Renaming is allowed only "
       "when a single file is installed by the command.\n"
@@ -102,6 +102,7 @@ public:
       "          [[ARCHIVE|LIBRARY|RUNTIME|FRAMEWORK|BUNDLE|\n"
       "            PRIVATE_HEADER|PUBLIC_HEADER|RESOURCE]\n"
       "           [DESTINATION <dir>]\n"
+      "           [INCLUDES DESTINATION [<dir> ...]]\n"
       "           [PERMISSIONS permissions...]\n"
       "           [CONFIGURATIONS [Debug|Release|...]]\n"
       "           [COMPONENT <component>]\n"
@@ -130,6 +131,10 @@ public:
       "all target types.  If only one is given then only targets of that "
       "type will be installed (which can be used to install just a DLL or "
       "just an import library)."
+      "The INCLUDES DESTINATION specifies a list of directories which will "
+      "be added to the INTERFACE_INCLUDE_DIRECTORIES of the <targets> when "
+      "exported by install(EXPORT).  If a relative path is specified, it is "
+      "treated as relative to the $<INSTALL_PREFIX>."
       "\n"
       "The PRIVATE_HEADER, PUBLIC_HEADER, and RESOURCE arguments cause "
       "subsequent properties to be applied to installing a FRAMEWORK "
@@ -173,13 +178,12 @@ public:
       "On non-DLL platforms mySharedLib will be installed to <prefix>/lib "
       "and /some/full/path.  On DLL platforms the mySharedLib DLL will be "
       "installed to <prefix>/bin and /some/full/path and its import library "
-      "will be installed to <prefix>/lib/static and /some/full/path. "
-      "On non-DLL platforms mySharedLib will be installed to <prefix>/lib "
-      "and /some/full/path."
+      "will be installed to <prefix>/lib/static and /some/full/path."
       "\n"
       "The EXPORT option associates the installed target files with an "
       "export called <export-name>.  "
       "It must appear before any RUNTIME, LIBRARY, or ARCHIVE options.  "
+      "To actually install the export file itself, call install(EXPORT).  "
       "See documentation of the install(EXPORT ...) signature below for "
       "details."
       "\n"
@@ -215,7 +219,7 @@ public:
       "  install(DIRECTORY dirs... DESTINATION <dir>\n"
       "          [FILE_PERMISSIONS permissions...]\n"
       "          [DIRECTORY_PERMISSIONS permissions...]\n"
-      "          [USE_SOURCE_PERMISSIONS]\n"
+      "          [USE_SOURCE_PERMISSIONS] [OPTIONAL]\n"
       "          [CONFIGURATIONS [Debug|Release|...]]\n"
       "          [COMPONENT <component>] [FILES_MATCHING]\n"
       "          [[PATTERN <pattern> | REGEX <regex>]\n"
@@ -292,6 +296,7 @@ public:
       "          [NAMESPACE <namespace>] [FILE <name>.cmake]\n"
       "          [PERMISSIONS permissions...]\n"
       "          [CONFIGURATIONS [Debug|Release|...]]\n"
+      "          [EXPORT_LINK_INTERFACE_LIBRARIES]\n"
       "          [COMPONENT <component>])\n"
       "The EXPORT form generates and installs a CMake file containing code "
       "to import targets from the installation tree into another project.  "
@@ -307,6 +312,10 @@ public:
       "installed when one of the named configurations is installed.  "
       "Additionally, the generated import file will reference only the "
       "matching target configurations.  "
+      "The EXPORT_LINK_INTERFACE_LIBRARIES keyword, if present, causes the "
+      "contents of the properties matching "
+      "(IMPORTED_)?LINK_INTERFACE_LIBRARIES(_<CONFIG>)? to be exported, when "
+      "policy CMP0022 is NEW.  "
       "If a COMPONENT option is specified that does not match that given "
       "to the targets associated with <export-name> the behavior is "
       "undefined.  "
@@ -343,10 +352,12 @@ private:
   bool HandleFilesMode(std::vector<std::string> const& args);
   bool HandleDirectoryMode(std::vector<std::string> const& args);
   bool HandleExportMode(std::vector<std::string> const& args);
-  bool MakeFilesFullPath(const char* modeName, 
+  bool MakeFilesFullPath(const char* modeName,
                          const std::vector<std::string>& relFiles,
                          std::vector<std::string>& absFiles);
   bool CheckCMP0006(bool& failure);
+
+  std::string DefaultComponentName;
 };
 
 

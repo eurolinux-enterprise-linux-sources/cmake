@@ -7,7 +7,7 @@
 # I guess more things could be added, like checking whether variables are
 # defined after running the modules (e.g. FOO_FOUND etc.).
 project(FindModulesExecuteAll)
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 2.7)
 
 file(GLOB all_modules "${CMAKE_CURRENT_SOURCE_DIR}/../../Modules/Find*cmake")
 
@@ -23,8 +23,8 @@ foreach(module ${all_modules})
 # disabled for now, since too many modules break:
 #  if(NOT DEFINED ${packageNameUpper}_FOUND)
 #    message(SEND_ERROR "${packageNameUpper}_FOUND not defined !")
-#  endif(NOT DEFINED ${packageNameUpper}_FOUND)
+#  endif()
 
-endforeach(module ${all_modules})
+endforeach()
 
 add_executable(FindModulesExecuteAll main.c)

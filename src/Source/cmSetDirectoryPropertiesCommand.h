@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmSetDirectoryPropertiesCommand.h,v $
-  Language:  C++
-  Date:      $Date: 2008-01-23 15:27:59 $
-  Version:   $Revision: 1.7 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmSetDirectoryPropertiesCommand_h
 #define cmSetDirectoryPropertiesCommand_h
 
@@ -22,7 +17,7 @@
 class cmSetDirectoryPropertiesCommand : public cmCommand
 {
 public:
-  virtual cmCommand* Clone() 
+  virtual cmCommand* Clone()
     {
       return new cmSetDirectoryPropertiesCommand;
     }
@@ -37,21 +32,21 @@ public:
   /**
    * This determines if the command is invoked when in script mode.
    */
-  virtual bool IsScriptable() { return true; }
+  virtual bool IsScriptable() const { return true; }
 
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() { return "set_directory_properties";}
+  virtual const char* GetName() const { return "set_directory_properties";}
 
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation() 
+  virtual const char* GetTerseDocumentation() const
     {
     return "Set a property of the directory.";
     }
-  
+
   /**
    * Static entry point for use by other commands
    */
@@ -63,18 +58,18 @@ public:
   /**
    * Longer documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
       return
         "  set_directory_properties(PROPERTIES prop1 value1 prop2 value2)\n"
         "Set a property for the current directory and subdirectories. If the "
         "property is not found, CMake will report an error. The properties "
         "include: INCLUDE_DIRECTORIES, LINK_DIRECTORIES, "
-        "INCLUDE_REGULAR_EXPRESSION, and ADDITIONAL_MAKE_CLEAN_FILES.\n"
+        "INCLUDE_REGULAR_EXPRESSION, and ADDITIONAL_MAKE_CLEAN_FILES. "
         "ADDITIONAL_MAKE_CLEAN_FILES is a list of files that will be cleaned "
         "as a part of \"make clean\" stage.";
     }
-  
+
   cmTypeMacro(cmSetDirectoryPropertiesCommand, cmCommand);
 };
 

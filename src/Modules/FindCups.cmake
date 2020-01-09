@@ -4,45 +4,66 @@
 #  CUPS_FOUND - system has Cups
 #  CUPS_INCLUDE_DIR - the Cups include directory
 #  CUPS_LIBRARIES - Libraries needed to use Cups
-#  Set CUPS_REQUIRE_IPP_DELETE_ATTRIBUTE to TRUE if you need a version which 
+#  CUPS_VERSION_STRING - version of Cups found (since CMake 2.8.8)
+#  Set CUPS_REQUIRE_IPP_DELETE_ATTRIBUTE to TRUE if you need a version which
 #  features this function (i.e. at least 1.1.19)
 
-# Copyright (c) 2006, Alexander Neundorf, <neundorf@kde.org>
+#=============================================================================
+# Copyright 2006-2009 Kitware, Inc.
+# Copyright 2006 Alexander Neundorf <neundorf@kde.org>
+# Copyright 2012 Rolf Eike Beer <eike@sf-mail.de>
 #
-# Redistribution and use is allowed according to the terms of the BSD license.
-# For details see the accompanying COPYING-CMAKE-SCRIPTS file.
+# Distributed under the OSI-approved BSD License (the "License");
+# see accompanying file Copyright.txt for details.
+#
+# This software is distributed WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the License for more information.
+#=============================================================================
+# (To distribute this file outside of CMake, substitute the full
+#  License text for the above reference.)
 
+find_path(CUPS_INCLUDE_DIR cups/cups.h )
 
-INCLUDE(CheckLibraryExists)
+find_library(CUPS_LIBRARIES NAMES cups )
 
-FIND_PATH(CUPS_INCLUDE_DIR cups/cups.h )
+if (CUPS_INCLUDE_DIR AND CUPS_LIBRARIES AND CUPS_REQUIRE_IPP_DELETE_ATTRIBUTE)
+    include(${CMAKE_CURRENT_LIST_DIR}/CheckLibraryExists.cmake)
 
-FIND_LIBRARY(CUPS_LIBRARIES NAMES cups )
+    # ippDeleteAttribute is new in cups-1.1.19 (and used by kdeprint)
+    CHECK_LIBRARY_EXISTS(cups ippDeleteAttribute "" CUPS_HAS_IPP_DELETE_ATTRIBUTE)
+endif ()
 
-IF (CUPS_INCLUDE_DIR AND CUPS_LIBRARIES)
-   SET(CUPS_FOUND TRUE)
+if (CUPS_INCLUDE_DIR AND EXISTS "${CUPS_INCLUDE_DIR}/cups/cups.h")
+    file(STRINGS "${CUPS_INCLUDE_DIR}/cups/cups.h" cups_version_str
+         REGEX "^#[\t ]*define[\t ]+CUPS_VERSION_(MAJOR|MINOR|PATCH)[\t ]+[0-9]+$")
 
-   # ippDeleteAttribute is new in cups-1.1.19 (and used by kdeprint)
-   CHECK_LIBRARY_EXISTS(cups ippDeleteAttribute "" CUPS_HAS_IPP_DELETE_ATTRIBUTE)
-   IF (CUPS_REQUIRE_IPP_DELETE_ATTRIBUTE AND NOT CUPS_HAS_IPP_DELETE_ATTRIBUTE)
-      SET(CUPS_FOUND FALSE)
-   ENDIF (CUPS_REQUIRE_IPP_DELETE_ATTRIBUTE AND NOT CUPS_HAS_IPP_DELETE_ATTRIBUTE)
+    unset(CUPS_VERSION_STRING)
+    foreach(VPART MAJOR MINOR PATCH)
+        foreach(VLINE ${cups_version_str})
+            if(VLINE MATCHES "^#[\t ]*define[\t ]+CUPS_VERSION_${VPART}")
+                string(REGEX REPLACE "^#[\t ]*define[\t ]+CUPS_VERSION_${VPART}[\t ]+([0-9]+)$" "\\1"
+                       CUPS_VERSION_PART "${VLINE}")
+                if(CUPS_VERSION_STRING)
+                    set(CUPS_VERSION_STRING "${CUPS_VERSION_STRING}.${CUPS_VERSION_PART}")
+                else()
+                    set(CUPS_VERSION_STRING "${CUPS_VERSION_PART}")
+                endif()
+            endif()
+        endforeach()
+    endforeach()
+endif ()
 
-ELSE  (CUPS_INCLUDE_DIR AND CUPS_LIBRARIES)
-   SET(CUPS_FOUND FALSE)
-ENDIF (CUPS_INCLUDE_DIR AND CUPS_LIBRARIES)
+include(${CMAKE_CURRENT_LIST_DIR}/FindPackageHandleStandardArgs.cmake)
 
-IF (CUPS_FOUND)
-   IF (NOT Cups_FIND_QUIETLY)
-      MESSAGE(STATUS "Found Cups: ${CUPS_LIBRARIES}")
-   ENDIF (NOT Cups_FIND_QUIETLY)
-ELSE (CUPS_FOUND)
-   SET(CUPS_LIBRARIES )
-   IF (Cups_FIND_REQUIRED)
-      MESSAGE(FATAL_ERROR "Could NOT find Cups")
-   ENDIF (Cups_FIND_REQUIRED)
-ENDIF (CUPS_FOUND)
-  
-  
-MARK_AS_ADVANCED(CUPS_INCLUDE_DIR CUPS_LIBRARIES)
-  
+if (CUPS_REQUIRE_IPP_DELETE_ATTRIBUTE)
+    FIND_PACKAGE_HANDLE_STANDARD_ARGS(Cups
+                                      REQUIRED_VARS CUPS_LIBRARIES CUPS_INCLUDE_DIR CUPS_HAS_IPP_DELETE_ATTRIBUTE
+                                      VERSION_VAR CUPS_VERSION_STRING)
+else ()
+    FIND_PACKAGE_HANDLE_STANDARD_ARGS(Cups
+                                      REQUIRED_VARS CUPS_LIBRARIES CUPS_INCLUDE_DIR
+                                      VERSION_VAR CUPS_VERSION_STRING)
+endif ()
+
+mark_as_advanced(CUPS_INCLUDE_DIR CUPS_LIBRARIES)

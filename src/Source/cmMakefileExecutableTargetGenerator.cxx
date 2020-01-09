@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmMakefileExecutableTargetGenerator.cxx,v $
-  Language:  C++
-  Date:      $Date: 2009-02-06 21:15:16 $
-  Version:   $Revision: 1.46.2.4 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmMakefileExecutableTargetGenerator.h"
 
 #include "cmGeneratedFileStream.h"
@@ -32,15 +27,18 @@ cmMakefileExecutableTargetGenerator
   this->CustomCommandDriver = OnDepends;
   this->Target->GetExecutableNames(
     this->TargetNameOut, this->TargetNameReal, this->TargetNameImport,
-    this->TargetNamePDB, this->LocalGenerator->ConfigurationName.c_str());
+    this->TargetNamePDB, this->ConfigName);
 
-  if(this->Target->IsAppBundleOnApple())
-    {
-    this->MacContentDirectory = this->Target->GetDirectory();
-    this->MacContentDirectory += "/";
-    this->MacContentDirectory += this->TargetNameOut;
-    this->MacContentDirectory += ".app/Contents/";
-    }
+  this->OSXBundleGenerator = new cmOSXBundleGenerator(this->Target,
+                                                      this->ConfigName);
+  this->OSXBundleGenerator->SetMacContentFolders(&this->MacContentFolders);
+}
+
+//----------------------------------------------------------------------------
+cmMakefileExecutableTargetGenerator
+::~cmMakefileExecutableTargetGenerator()
+{
+  delete this->OSXBundleGenerator;
 }
 
 //----------------------------------------------------------------------------
@@ -52,15 +50,15 @@ void cmMakefileExecutableTargetGenerator::WriteRuleFiles()
   // write rules used to help build object files
   this->WriteCommonCodeRules();
 
-  // write in rules for object files and custom commands
-  this->WriteTargetBuildRules();
-
   // write the per-target per-language flags
   this->WriteTargetLanguageFlags();
 
+  // write in rules for object files and custom commands
+  this->WriteTargetBuildRules();
+
   // write the link rules
   this->WriteExecutableRule(false);
-  if(this->Target->NeedRelinkBeforeInstall())
+  if(this->Target->NeedRelinkBeforeInstall(this->ConfigName))
     {
     // Write rules to link an installable version of the target.
     this->WriteExecutableRule(true);
@@ -87,34 +85,9 @@ void cmMakefileExecutableTargetGenerator::WriteExecutableRule(bool relink)
 {
   std::vector<std::string> commands;
 
-  std::string relPath = this->LocalGenerator->GetHomeRelativeOutputPath();
-  std::string objTarget;
-
   // Build list of dependencies.
   std::vector<std::string> depends;
-  for(std::vector<std::string>::const_iterator obj = this->Objects.begin();
-      obj != this->Objects.end(); ++obj)
-    {
-    objTarget = relPath;
-    objTarget += *obj;
-    depends.push_back(objTarget);
-    }
-
-  // Add dependencies on targets that must be built first.
-  this->AppendTargetDepends(depends);
-
-  // Add a dependency on the rule file itself.
-  this->LocalGenerator->AppendRuleDepend(depends,
-                                         this->BuildFileNameFull.c_str());
-
-  for(std::vector<std::string>::const_iterator obj =
-        this->ExternalObjects.begin();
-      obj != this->ExternalObjects.end(); ++obj)
-    {
-    depends.push_back(*obj);
-    }
-
-  // from here up is the same for exe or lib
+  this->AppendLinkDepends(depends);
 
   // Get the name of the executable to generate.
   std::string targetName;
@@ -123,15 +96,15 @@ void cmMakefileExecutableTargetGenerator::WriteExecutableRule(bool relink)
   std::string targetNamePDB;
   this->Target->GetExecutableNames
     (targetName, targetNameReal, targetNameImport, targetNamePDB,
-     this->LocalGenerator->ConfigurationName.c_str());
+     this->ConfigName);
 
   // Construct the full path version of the names.
-  std::string outpath = this->Target->GetDirectory();
-  outpath += "/";
+  std::string outpath = this->Target->GetDirectory(this->ConfigName);
   if(this->Target->IsAppBundleOnApple())
     {
-    this->CreateAppBundle(targetName, outpath);
+    this->OSXBundleGenerator->CreateAppBundle(targetName, outpath);
     }
+  outpath += "/";
   std::string outpathImp;
   if(relink)
     {
@@ -150,18 +123,23 @@ void cmMakefileExecutableTargetGenerator::WriteExecutableRule(bool relink)
     cmSystemTools::MakeDirectory(outpath.c_str());
     if(!targetNameImport.empty())
       {
-      outpathImp = this->Target->GetDirectory(0, true);
+      outpathImp = this->Target->GetDirectory(this->ConfigName, true);
       cmSystemTools::MakeDirectory(outpathImp.c_str());
       outpathImp += "/";
       }
     }
+
+  std::string pdbOutputPath = this->Target->GetPDBDirectory();
+  cmSystemTools::MakeDirectory(pdbOutputPath.c_str());
+  pdbOutputPath += "/";
+
   std::string targetFullPath = outpath + targetName;
   std::string targetFullPathReal = outpath + targetNameReal;
-  std::string targetFullPathPDB = outpath + targetNamePDB;
+  std::string targetFullPathPDB =  pdbOutputPath + targetNamePDB;
   std::string targetFullPathImport = outpathImp + targetNameImport;
-  std::string targetOutPathPDB = 
+  std::string targetOutPathPDB =
     this->Convert(targetFullPathPDB.c_str(),
-                  cmLocalGenerator::FULL,
+                  cmLocalGenerator::NONE,
                   cmLocalGenerator::SHELL);
   // Convert to the output path to use in constructing commands.
   std::string targetOutPath =
@@ -179,7 +157,7 @@ void cmMakefileExecutableTargetGenerator::WriteExecutableRule(bool relink)
 
   // Get the language to use for linking this executable.
   const char* linkLanguage =
-    this->Target->GetLinkerLanguage(this->GlobalGenerator);
+    this->Target->GetLinkerLanguage(this->ConfigName);
 
   // Make sure we have a link language.
   if(!linkLanguage)
@@ -189,27 +167,25 @@ void cmMakefileExecutableTargetGenerator::WriteExecutableRule(bool relink)
     return;
     }
 
-  // Add the link message.
-  std::string buildEcho = "Linking ";
-  buildEcho += linkLanguage;
-  buildEcho += " executable ";
-  buildEcho += targetOutPath;
-  this->LocalGenerator->AppendEcho(commands, buildEcho.c_str(),
-                                   cmLocalUnixMakefileGenerator3::EchoLink);
+  if(!this->NoRuleMessages)
+    {
+    // Add the link message.
+    std::string buildEcho = "Linking ";
+    buildEcho += linkLanguage;
+    buildEcho += " executable ";
+    buildEcho += targetOutPath;
+    this->LocalGenerator->AppendEcho(commands, buildEcho.c_str(),
+                                     cmLocalUnixMakefileGenerator3::EchoLink);
+    }
 
   // Build a list of compiler flags and linker flags.
   std::string flags;
   std::string linkFlags;
 
-  // Add flags to deal with shared libraries.  Any library being
-  // linked in might be shared, so always use shared flags for an
-  // executable.
-  this->LocalGenerator->AddSharedFlags(linkFlags, linkLanguage, true);
-
   // Add flags to create an executable.
   this->LocalGenerator->
     AddConfigVariableFlags(linkFlags, "CMAKE_EXE_LINKER_FLAGS",
-                           this->LocalGenerator->ConfigurationName.c_str());
+                           this->ConfigName);
 
 
   if(this->Target->GetPropertyAsBool("WIN32_EXECUTABLE"))
@@ -233,75 +209,72 @@ void cmMakefileExecutableTargetGenerator::WriteExecutableRule(bool relink)
       (linkFlags, this->Makefile->GetDefinition(export_flag_var.c_str()));
     }
 
-  // Add language-specific flags.
-  this->LocalGenerator
-    ->AddLanguageFlags(flags, linkLanguage,
-                       this->LocalGenerator->ConfigurationName.c_str());
+  // Add language feature flags.
+  this->AddFeatureFlags(flags, linkLanguage);
+
+  this->LocalGenerator->AddArchitectureFlags(flags, this->GeneratorTarget,
+                                             linkLanguage, this->ConfigName);
 
   // Add target-specific linker flags.
   this->LocalGenerator->AppendFlags
     (linkFlags, this->Target->GetProperty("LINK_FLAGS"));
   std::string linkFlagsConfig = "LINK_FLAGS_";
-  linkFlagsConfig += 
-    cmSystemTools::UpperCase(this->LocalGenerator->ConfigurationName.c_str());
+  linkFlagsConfig += cmSystemTools::UpperCase(this->ConfigName);
   this->LocalGenerator->AppendFlags
     (linkFlags, this->Target->GetProperty(linkFlagsConfig.c_str()));
+
+  this->AddModuleDefinitionFlag(linkFlags);
 
   // Construct a list of files associated with this executable that
   // may need to be cleaned.
   std::vector<std::string> exeCleanFiles;
-  {
-  std::string cleanName;
-  std::string cleanRealName;
-  std::string cleanImportName;
-  std::string cleanPDBName;
-  this->Target->GetExecutableCleanNames
-    (cleanName, cleanRealName, cleanImportName, cleanPDBName,
-     this->LocalGenerator->ConfigurationName.c_str());
-
-  std::string cleanFullName = outpath + cleanName;
-  std::string cleanFullRealName = outpath + cleanRealName;
-  std::string cleanFullPDBName = outpath + cleanPDBName;
-  std::string cleanFullImportName = outpathImp + cleanImportName;
-  exeCleanFiles.push_back(this->Convert(cleanFullName.c_str(),
+  exeCleanFiles.push_back(this->Convert(targetFullPath.c_str(),
                                         cmLocalGenerator::START_OUTPUT,
                                         cmLocalGenerator::UNCHANGED));
 #ifdef _WIN32
   // There may be a manifest file for this target.  Add it to the
   // clean set just in case.
-  exeCleanFiles.push_back(this->Convert((cleanFullName+".manifest").c_str(),
+  exeCleanFiles.push_back(this->Convert((targetFullPath+".manifest").c_str(),
                                         cmLocalGenerator::START_OUTPUT,
                                         cmLocalGenerator::UNCHANGED));
 #endif
-  if(cleanRealName != cleanName)
+  if(targetNameReal != targetName)
     {
-    exeCleanFiles.push_back(this->Convert(cleanFullRealName.c_str(),
+    exeCleanFiles.push_back(this->Convert(targetFullPathReal.c_str(),
                                           cmLocalGenerator::START_OUTPUT,
                                           cmLocalGenerator::UNCHANGED));
     }
-  if(!cleanImportName.empty())
+  if(!targetNameImport.empty())
     {
-    exeCleanFiles.push_back(this->Convert(cleanFullImportName.c_str(),
+    exeCleanFiles.push_back(this->Convert(targetFullPathImport.c_str(),
                                           cmLocalGenerator::START_OUTPUT,
                                           cmLocalGenerator::UNCHANGED));
+    std::string implib;
+    if(this->Target->GetImplibGNUtoMS(targetFullPathImport, implib))
+      {
+      exeCleanFiles.push_back(this->Convert(implib.c_str(),
+                                            cmLocalGenerator::START_OUTPUT,
+                                            cmLocalGenerator::UNCHANGED));
+      }
     }
 
   // List the PDB for cleaning only when the whole target is
   // cleaned.  We do not want to delete the .pdb file just before
   // linking the target.
   this->CleanFiles.push_back
-    (this->Convert(cleanFullPDBName.c_str(),
+    (this->Convert(targetFullPathPDB.c_str(),
                    cmLocalGenerator::START_OUTPUT,
                    cmLocalGenerator::UNCHANGED));
-  }
 
   // Add the pre-build and pre-link rules building but not when relinking.
   if(!relink)
     {
     this->LocalGenerator
-      ->AppendCustomCommands(commands, this->Target->GetPreBuildCommands());
+      ->AppendCustomCommands(commands, this->Target->GetPreBuildCommands(),
+                             this->Target);
     this->LocalGenerator
-      ->AppendCustomCommands(commands, this->Target->GetPreLinkCommands());
+      ->AppendCustomCommands(commands, this->Target->GetPreLinkCommands(),
+                             this->Target);
     }
 
   // Determine whether a link script will be used.
@@ -312,8 +285,7 @@ void cmMakefileExecutableTargetGenerator::WriteExecutableRule(bool relink)
   std::string linkRuleVar = "CMAKE_";
   linkRuleVar += linkLanguage;
   linkRuleVar += "_LINK_EXECUTABLE";
-  std::string linkRule =
-    this->Makefile->GetRequiredDefinition(linkRuleVar.c_str());
+  std::string linkRule = this->GetLinkRule(linkRuleVar.c_str());
   std::vector<std::string> commands1;
   cmSystemTools::ExpandListArgument(linkRule, real_link_commands);
   if(this->Target->IsExecutableWithExports())
@@ -348,9 +320,13 @@ void cmMakefileExecutableTargetGenerator::WriteExecutableRule(bool relink)
   this->LocalGenerator->SetLinkScriptShell(useLinkScript);
 
   // Collect up flags to link in needed libraries.
-  cmOStringStream linklibs;
-  this->LocalGenerator->OutputLinkLibraries(linklibs, *this->Target, relink);
-
+  std::string linkLibs;
+  std::string frameworkPath;
+  std::string linkPath;
+  this->LocalGenerator->OutputLinkLibraries(linkLibs, frameworkPath, linkPath,
+                                            *this->GeneratorTarget,
+                                            relink);
+  linkLibs = frameworkPath + linkPath + linkLibs;
   // Construct object file lists that may be needed to expand the
   // rule.
   std::string buildObjs;
@@ -358,8 +334,15 @@ void cmMakefileExecutableTargetGenerator::WriteExecutableRule(bool relink)
                           buildObjs, depends);
 
   cmLocalGenerator::RuleVariables vars;
+  vars.RuleLauncher = "RULE_LAUNCH_LINK";
+  vars.CMTarget = this->Target;
   vars.Language = linkLanguage;
   vars.Objects = buildObjs.c_str();
+  std::string objectDir = this->Target->GetSupportDirectory();
+  objectDir = this->Convert(objectDir.c_str(),
+                            cmLocalGenerator::START_OUTPUT,
+                            cmLocalGenerator::SHELL);
+  vars.ObjectDir = objectDir.c_str();
   vars.Target = targetOutPathReal.c_str();
   vars.TargetPDB = targetOutPathPDB.c_str();
 
@@ -380,8 +363,7 @@ void cmMakefileExecutableTargetGenerator::WriteExecutableRule(bool relink)
   vars.TargetVersionMajor = targetVersionMajor.c_str();
   vars.TargetVersionMinor = targetVersionMinor.c_str();
 
-  std::string linkString = linklibs.str();
-  vars.LinkLibraries = linkString.c_str();
+  vars.LinkLibraries = linkLibs.c_str();
   vars.Flags = flags.c_str();
   vars.LinkFlags = linkFlags.c_str();
   // Expand placeholders in the commands.
@@ -436,7 +418,8 @@ void cmMakefileExecutableTargetGenerator::WriteExecutableRule(bool relink)
   if(!relink)
     {
     this->LocalGenerator->
-      AppendCustomCommands(commands, this->Target->GetPostBuildCommands());
+      AppendCustomCommands(commands, this->Target->GetPostBuildCommands(),
+                           this->Target);
     }
 
   // Write the build rule.
@@ -465,25 +448,4 @@ void cmMakefileExecutableTargetGenerator::WriteExecutableRule(bool relink)
   this->CleanFiles.insert(this->CleanFiles.end(),
                           exeCleanFiles.begin(),
                           exeCleanFiles.end());
-}
-
-//----------------------------------------------------------------------------
-void
-cmMakefileExecutableTargetGenerator::CreateAppBundle(std::string& targetName,
-                                                     std::string& outpath)
-{
-  // Compute bundle directory names.
-  outpath = this->MacContentDirectory;
-  outpath += "MacOS";
-  cmSystemTools::MakeDirectory(outpath.c_str());
-  this->Makefile->AddCMakeOutputFile(outpath.c_str());
-  outpath += "/";
-
-  // Configure the Info.plist file.  Note that it needs the executable name
-  // to be set.
-  std::string plist = this->MacContentDirectory + "Info.plist";
-  this->LocalGenerator->GenerateAppleInfoPList(this->Target,
-                                               targetName.c_str(),
-                                               plist.c_str());
-  this->Makefile->AddCMakeOutputFile(plist.c_str());
 }

@@ -1,50 +1,36 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmFunctionCommand.h,v $
-  Language:  C++
-  Date:      $Date: 2009-02-04 16:44:17 $
-  Version:   $Revision: 1.3.2.1 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmFunctionCommand_h
 #define cmFunctionCommand_h
 
 #include "cmCommand.h"
 #include "cmFunctionBlocker.h"
 
-/** \class cmFunctionFunctionBlocker
- * \brief subclass of function blocker
- *
- *
- */
 class cmFunctionFunctionBlocker : public cmFunctionBlocker
 {
 public:
   cmFunctionFunctionBlocker() {this->Depth=0;}
   virtual ~cmFunctionFunctionBlocker() {}
-  virtual bool IsFunctionBlocked(const cmListFileFunction&, 
+  virtual bool IsFunctionBlocked(const cmListFileFunction&,
                                  cmMakefile &mf,
                                  cmExecutionStatus &);
   virtual bool ShouldRemove(const cmListFileFunction&, cmMakefile &mf);
-  
+
   std::vector<std::string> Args;
   std::vector<cmListFileFunction> Functions;
   int Depth;
 };
 
-/** \class cmFunctionCommand
- * \brief starts an if block
- *
- * cmFunctionCommand starts an if block
- */
+/// Starts function() ... endfunction() block
 class cmFunctionCommand : public cmCommand
 {
 public:
@@ -66,17 +52,17 @@ public:
   /**
    * This determines if the command is invoked when in script mode.
    */
-  virtual bool IsScriptable() { return true; }
+  virtual bool IsScriptable() const { return true; }
 
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() { return "function";}
+  virtual const char* GetName() const { return "function";}
 
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation()
+  virtual const char* GetTerseDocumentation() const
     {
     return "Start recording a function for later invocation as a command.";
     }
@@ -84,7 +70,7 @@ public:
   /**
    * More documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
     return
       "  function(<name> [arg1 [arg2 [arg3 ...]]])\n"
@@ -104,7 +90,9 @@ public:
       "will have the actual values of the arguments passed in. This "
       "facilitates creating functions with optional arguments. Additionally "
       "ARGV holds the list of all arguments given to the function and ARGN "
-      "holds the list of argument pass the last expected argument."
+      "holds the list of arguments past the last expected argument."
+      "\n"
+      "A function opens a new scope: see set(var PARENT_SCOPE) for details."
       "\n"
       "See the cmake_policy() command documentation for the behavior of "
       "policies inside functions."

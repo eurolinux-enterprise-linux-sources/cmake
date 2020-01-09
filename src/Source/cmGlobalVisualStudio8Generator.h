@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmGlobalVisualStudio8Generator.h,v $
-  Language:  C++
-  Date:      $Date: 2008-02-15 16:49:58 $
-  Version:   $Revision: 1.13 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmGlobalVisualStudio8Generator_h
 #define cmGlobalVisualStudio8Generator_h
 
@@ -28,20 +23,20 @@
 class cmGlobalVisualStudio8Generator : public cmGlobalVisualStudio71Generator
 {
 public:
-  cmGlobalVisualStudio8Generator();
-  static cmGlobalGenerator* New() { 
-    return new cmGlobalVisualStudio8Generator; }
-  
+  cmGlobalVisualStudio8Generator(const char* name,
+    const char* platformName, const char* additionalPlatformDefinition);
+  static cmGlobalGeneratorFactory* NewFactory();
+
   ///! Get the name for the generator.
-  virtual const char* GetName() const {
-    return cmGlobalVisualStudio8Generator::GetActualName();}
-  static const char* GetActualName() {return "Visual Studio 8 2005";}
+  virtual const char* GetName() const {return this->Name.c_str();}
 
   /** Get the documentation entry for this generator.  */
-  virtual void GetDocumentation(cmDocumentationEntry& entry) const;
-  
+  static void GetDocumentation(cmDocumentationEntry& entry);
+
   ///! Create a local generator appropriate to this Global Generator
   virtual cmLocalGenerator *CreateLocalGenerator();
+
+  virtual void AddPlatformDefinitions(cmMakefile* mf);
 
   /**
    * Override Configure and Generate to add the build-system check
@@ -63,19 +58,37 @@ public:
    */
   virtual std::string GetUserMacrosRegKeyBase();
 
+  /** Return true if the target project file should have the option
+      LinkLibraryDependencies and link to .sln dependencies. */
+  virtual bool NeedLinkLibraryDependencies(cmTarget& target);
+
+  /** Return true if building for Windows CE */
+  virtual bool TargetsWindowsCE() const {
+    return !this->WindowsCEVersion.empty(); }
+
 protected:
+  virtual const char* GetIDEVersion() { return "8.0"; }
 
   virtual bool VSLinksDependencies() const { return false; }
 
-  static cmVS7FlagTable const* GetExtraFlagTableVS8();
-  virtual void AddPlatformDefinitions(cmMakefile* mf);
-  virtual void WriteSLNFile(std::ostream& fout, cmLocalGenerator* root,
-                            std::vector<cmLocalGenerator*>& generators);
+  void AddCheckTarget();
+
+  static cmIDEFlagTable const* GetExtraFlagTableVS8();
   virtual void WriteSLNHeader(std::ostream& fout);
   virtual void WriteSolutionConfigurations(std::ostream& fout);
-  virtual void WriteProjectConfigurations(std::ostream& fout,
-                                          const char* name,
-                                          bool partOfDefaultBuild);
-  std::string PlatformName; // Win32 or x64 
+  virtual void WriteProjectConfigurations(
+    std::ostream& fout, const char* name, cmTarget::TargetType type,
+    const std::set<std::string>& configsPartOfDefaultBuild,
+    const char* platformMapping = NULL);
+  virtual bool ComputeTargetDepends();
+  virtual void WriteProjectDepends(std::ostream& fout, const char* name,
+                                   const char* path, cmTarget &t);
+
+  std::string Name;
+  std::string WindowsCEVersion;
+
+private:
+  class Factory;
+  friend class Factory;
 };
 #endif

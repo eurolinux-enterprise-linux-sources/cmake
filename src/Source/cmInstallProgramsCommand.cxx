@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmInstallProgramsCommand.cxx,v $
-  Language:  C++
-  Date:      $Date: 2009-02-04 22:04:49 $
-  Version:   $Revision: 1.22.2.2 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmInstallProgramsCommand.h"
 #include "cmInstallFilesGenerator.h"
 // cmExecutableCommand
@@ -36,26 +31,27 @@ bool cmInstallProgramsCommand
   for (++s;s != args.end(); ++s)
     {
     this->FinalArgs.push_back(*s);
-    }  
-  
+    }
+
   this->Makefile->GetLocalGenerator()->GetGlobalGenerator()
-                       ->AddInstallComponent("Unspecified");
+                       ->AddInstallComponent(this->Makefile->GetSafeDefinition(
+                                      "CMAKE_INSTALL_DEFAULT_COMPONENT_NAME"));
 
   return true;
 }
 
-void cmInstallProgramsCommand::FinalPass() 
+void cmInstallProgramsCommand::FinalPass()
 {
   bool files_mode = false;
   if(!this->FinalArgs.empty() && this->FinalArgs[0] == "FILES")
     {
     files_mode = true;
     }
-  
+
   // two different options
   if (this->FinalArgs.size() > 1 || files_mode)
     {
-    // for each argument, get the programs 
+    // for each argument, get the programs
     std::vector<std::string>::iterator s = this->FinalArgs.begin();
     if(files_mode)
       {
@@ -73,9 +69,9 @@ void cmInstallProgramsCommand::FinalPass()
     std::vector<std::string> programs;
     cmSystemTools::Glob(this->Makefile->GetCurrentDirectory(),
                         this->FinalArgs[0].c_str(), programs);
-    
+
     std::vector<std::string>::iterator s = programs.begin();
-    // for each argument, get the programs 
+    // for each argument, get the programs
     for (;s != programs.end(); ++s)
       {
       this->Files.push_back(this->FindInstallSource(s->c_str()));
@@ -94,13 +90,14 @@ void cmInstallProgramsCommand::FinalPass()
   // Use a file install generator.
   const char* no_permissions = "";
   const char* no_rename = "";
-  const char* no_component = "Unspecified";
+  std::string no_component = this->Makefile->GetSafeDefinition(
+                                       "CMAKE_INSTALL_DEFAULT_COMPONENT_NAME");
   std::vector<std::string> no_configurations;
   this->Makefile->AddInstallGenerator(
     new cmInstallFilesGenerator(this->Files,
                                 destination.c_str(), true,
                                 no_permissions, no_configurations,
-                                no_component, no_rename));
+                                no_component.c_str(), no_rename));
 }
 
 /**
@@ -117,7 +114,7 @@ std::string cmInstallProgramsCommand
     // This is a full path.
     return name;
     }
-  
+
   // This is a relative path.
   std::string tb = this->Makefile->GetCurrentOutputDirectory();
   tb += "/";
@@ -125,7 +122,7 @@ std::string cmInstallProgramsCommand
   std::string ts = this->Makefile->GetCurrentDirectory();
   ts += "/";
   ts += name;
-  
+
   if(cmSystemTools::FileExists(tb.c_str()))
     {
     // The file exists in the binary tree.  Use it.

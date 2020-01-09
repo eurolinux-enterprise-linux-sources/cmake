@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmSourceFile.cxx,v $
-  Language:  C++
-  Date:      $Date: 2009-03-27 15:56:47 $
-  Version:   $Revision: 1.47.2.6 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmSourceFile.h"
 
 #include "cmGlobalGenerator.h"
@@ -21,6 +16,7 @@
 #include "cmMakefile.h"
 #include "cmSystemTools.h"
 #include "cmake.h"
+#include "cmDocumentCompileDefinitions.h"
 
 //----------------------------------------------------------------------------
 cmSourceFile::cmSourceFile(cmMakefile* mf, const char* name):
@@ -106,11 +102,11 @@ cmSourceFileLocation const& cmSourceFile::GetLocation() const
 }
 
 //----------------------------------------------------------------------------
-std::string const& cmSourceFile::GetFullPath()
+std::string const& cmSourceFile::GetFullPath(std::string* error)
 {
   if(this->FullPath.empty())
     {
-    if(this->FindFullPath())
+    if(this->FindFullPath(error))
       {
       this->CheckExtension();
       }
@@ -125,7 +121,7 @@ std::string const& cmSourceFile::GetFullPath() const
 }
 
 //----------------------------------------------------------------------------
-bool cmSourceFile::FindFullPath()
+bool cmSourceFile::FindFullPath(std::string* error)
 {
   // If thie method has already failed once do not try again.
   if(this->FindFullPathFailed)
@@ -192,8 +188,13 @@ bool cmSourceFile::FindFullPath()
     }
 
   cmOStringStream e;
-  e << "Cannot find source file \"" << this->Location.GetName() << "\"";
-  e << ".  Tried extensions";
+  std::string missing = this->Location.GetDirectory();
+  if(!missing.empty())
+    {
+    missing += "/";
+    }
+  missing += this->Location.GetName();
+  e << "Cannot find source file:\n  " << missing << "\nTried extensions";
   for(std::vector<std::string>::const_iterator ext = srcExts.begin();
       ext != srcExts.end(); ++ext)
     {
@@ -204,7 +205,14 @@ bool cmSourceFile::FindFullPath()
     {
     e << " ." << *ext;
     }
-  this->Location.GetMakefile()->IssueMessage(cmake::FATAL_ERROR, e.str());
+  if(error)
+    {
+    *error = e.str();
+    }
+  else
+    {
+    this->Location.GetMakefile()->IssueMessage(cmake::FATAL_ERROR, e.str());
+    }
   this->FindFullPathFailed = true;
   return false;
 }
@@ -283,13 +291,15 @@ void cmSourceFile::SetProperty(const char* prop, const char* value)
 }
 
 //----------------------------------------------------------------------------
-void cmSourceFile::AppendProperty(const char* prop, const char* value)
+void cmSourceFile::AppendProperty(const char* prop, const char* value,
+                                  bool asString)
 {
   if (!prop)
     {
     return;
     }
-  this->Properties.AppendProperty(prop, value, cmProperty::SOURCE_FILE);
+  this->Properties.AppendProperty(prop, value, cmProperty::SOURCE_FILE,
+                                  asString);
 }
 
 //----------------------------------------------------------------------------
@@ -336,7 +346,7 @@ const char* cmSourceFile::GetProperty(const char* prop) const
     }
 
   bool chain = false;
-  const char *retVal = 
+  const char *retVal =
     this->Properties.GetPropertyValue(prop, cmProperty::SOURCE_FILE, chain);
   if (chain)
     {
@@ -344,7 +354,7 @@ const char* cmSourceFile::GetProperty(const char* prop) const
     return mf->GetProperty(prop,cmProperty::SOURCE_FILE);
     }
 
-  return retVal;    
+  return retVal;
 }
 
 //----------------------------------------------------------------------------
@@ -378,7 +388,7 @@ void cmSourceFile::DefineProperties(cmake *cm)
 {
   // define properties
   cm->DefineProperty
-    ("ABSTRACT", cmProperty::SOURCE_FILE, 
+    ("ABSTRACT", cmProperty::SOURCE_FILE,
      "Is this source file an abstract class.",
      "A property on a source file that indicates if the source file "
      "represents a class that is abstract. This only makes sense for "
@@ -386,7 +396,7 @@ void cmSourceFile::DefineProperties(cmake *cm)
      "only used by some tools that wrap classes into other languages.");
 
   cm->DefineProperty
-    ("COMPILE_FLAGS", cmProperty::SOURCE_FILE, 
+    ("COMPILE_FLAGS", cmProperty::SOURCE_FILE,
      "Additional flags to be added when compiling this source file.",
      "These flags will be added to the list of compile flags when "
      "this source file builds.  Use COMPILE_DEFINITIONS to pass additional "
@@ -395,7 +405,8 @@ void cmSourceFile::DefineProperties(cmake *cm)
   cm->DefineProperty
     ("COMPILE_DEFINITIONS", cmProperty::SOURCE_FILE,
      "Preprocessor definitions for compiling a source file.",
-     "The COMPILE_DEFINITIONS property may be set to a list of preprocessor "
+     "The COMPILE_DEFINITIONS property may be set to a "
+     "semicolon-separated list of preprocessor "
      "definitions using the syntax VAR or VAR=value.  Function-style "
      "definitions are not supported.  CMake will automatically escape "
      "the value correctly for the native build system (note that CMake "
@@ -408,15 +419,7 @@ void cmSourceFile::DefineProperties(cmake *cm)
      "The VS6 IDE does not support definition values with spaces "
      "(but NMake does).  Xcode does not support per-configuration "
      "definitions on source files.\n"
-     "Dislaimer: Most native build tools have poor support for escaping "
-     "certain values.  CMake has work-arounds for many cases but some "
-     "values may just not be possible to pass correctly.  If a value "
-     "does not seem to be escaped correctly, do not attempt to "
-     "work-around the problem by adding escape sequences to the value.  "
-     "Your work-around may break in a future version of CMake that "
-     "has improved escape support.  Instead consider defining the macro "
-     "in a (configured) header file.  Then report the limitation.");
-
+     CM_DOCUMENT_COMPILE_DEFINITIONS_DISCLAIMER);
 
   cm->DefineProperty
     ("COMPILE_DEFINITIONS_<CONFIG>", cmProperty::SOURCE_FILE,
@@ -427,30 +430,39 @@ void cmSourceFile::DefineProperties(cmake *cm)
      "be ignored by the Xcode generator.");
 
   cm->DefineProperty
-    ("EXTERNAL_OBJECT", cmProperty::SOURCE_FILE, 
+    ("EXTERNAL_OBJECT", cmProperty::SOURCE_FILE,
      "If set to true then this is an object file.",
      "If this property is set to true then the source file "
      "is really an object file and should not be compiled.  "
      "It will still be linked into the target though.");
 
   cm->DefineProperty
-    ("GENERATED", cmProperty::SOURCE_FILE, 
+    ("Fortran_FORMAT", cmProperty::SOURCE_FILE,
+     "Set to FIXED or FREE to indicate the Fortran source layout.",
+     "This property tells CMake whether a given Fortran source file "
+     "uses fixed-format or free-format.  "
+     "CMake will pass the corresponding format flag to the compiler.  "
+     "Consider using the target-wide Fortran_FORMAT property if all "
+     "source files in a target share the same format.");
+
+  cm->DefineProperty
+    ("GENERATED", cmProperty::SOURCE_FILE,
      "Is this source file generated as part of the build process.",
      "If a source file is generated by the build process CMake will "
-     "handle it differently in temrs of dependency checking etc. "
+     "handle it differently in terms of dependency checking etc. "
      "Otherwise having a non-existent source file could create problems.");
 
   cm->DefineProperty
-    ("HEADER_FILE_ONLY", cmProperty::SOURCE_FILE, 
+    ("HEADER_FILE_ONLY", cmProperty::SOURCE_FILE,
      "Is this source file only a header file.",
      "A property on a source file that indicates if the source file "
      "is a header file with no associated implementation. This is "
      "set automatically based on the file extension and is used by "
-     "CMake to determine is certain dependency information should be "
+     "CMake to determine if certain dependency information should be "
      "computed.");
 
   cm->DefineProperty
-    ("KEEP_EXTENSION", cmProperty::SOURCE_FILE, 
+    ("KEEP_EXTENSION", cmProperty::SOURCE_FILE,
      "Make the output file have the same extension as the source file.",
      "If this property is set then the file extension of the output "
      "file will be the same as that of the source file. Normally "
@@ -458,33 +470,46 @@ void cmSourceFile::DefineProperties(cmake *cm)
      "of the source file, for example .cxx will go to a .o extension.");
 
   cm->DefineProperty
-    ("LANGUAGE", cmProperty::SOURCE_FILE, 
+    ("LABELS", cmProperty::SOURCE_FILE,
+     "Specify a list of text labels associated with a source file.",
+     "This property has meaning only when the source file is listed in "
+     "a target whose LABELS property is also set.  "
+     "No other semantics are currently specified.");
+
+  cm->DefineProperty
+    ("LANGUAGE", cmProperty::SOURCE_FILE,
      "What programming language is the file.",
      "A property that can be set to indicate what programming language "
      "the source file is. If it is not set the language is determined "
-     "based on the file extension. Typical values are CXX C etc.");
+     "based on the file extension. Typical values are CXX C etc. Setting "
+     "this property for a file means this file will be compiled. "
+     "Do not set this for headers or files that should not be compiled.");
 
   cm->DefineProperty
-    ("LOCATION", cmProperty::SOURCE_FILE, 
+    ("LOCATION", cmProperty::SOURCE_FILE,
      "The full path to a source file.",
      "A read only property on a SOURCE FILE that contains the full path "
      "to the source file.");
 
   cm->DefineProperty
-    ("MACOSX_PACKAGE_LOCATION", cmProperty::SOURCE_FILE, 
-     "Place a source file inside a Mac OS X bundle or framework.",
+    ("MACOSX_PACKAGE_LOCATION", cmProperty::SOURCE_FILE,
+     "Place a source file inside a Mac OS X bundle, CFBundle, or framework.",
      "Executable targets with the MACOSX_BUNDLE property set are built "
      "as Mac OS X application bundles on Apple platforms.  "
      "Shared library targets with the FRAMEWORK property set are built "
      "as Mac OS X frameworks on Apple platforms.  "
+     "Module library targets with the BUNDLE property set are built "
+     "as Mac OS X CFBundle bundles on Apple platforms.  "
      "Source files listed in the target with this property set will "
      "be copied to a directory inside the bundle or framework content "
      "folder specified by the property value.  "
      "For bundles the content folder is \"<name>.app/Contents\".  "
      "For frameworks the content folder is "
      "\"<name>.framework/Versions/<version>\".  "
+     "For cfbundles the content folder is "
+     "\"<name>.bundle/Contents\" (unless the extension is changed).  "
      "See the PUBLIC_HEADER, PRIVATE_HEADER, and RESOURCE target "
-     "properties for specifying files meant for Headers, PrivateHeadres, "
+     "properties for specifying files meant for Headers, PrivateHeaders, "
      "or Resources directories.");
 
   cm->DefineProperty
@@ -506,7 +531,7 @@ void cmSourceFile::DefineProperties(cmake *cm)
      "command (if one does not already exist due to linking relationships).");
 
   cm->DefineProperty
-    ("OBJECT_OUTPUTS", cmProperty::SOURCE_FILE, 
+    ("OBJECT_OUTPUTS", cmProperty::SOURCE_FILE,
      "Additional outputs for a Makefile rule.",
      "Additional outputs created by compilation of this source file. "
      "If any of these outputs is missing the object will be recompiled. "
@@ -514,19 +539,19 @@ void cmSourceFile::DefineProperties(cmake *cm)
      "on other generators.");
 
   cm->DefineProperty
-    ("SYMBOLIC", cmProperty::SOURCE_FILE, 
+    ("SYMBOLIC", cmProperty::SOURCE_FILE,
      "Is this just a name for a rule.",
      "If SYMBOLIC (boolean) is set to true the build system will be "
      "informed that the source file is not actually created on disk but "
      "instead used as a symbolic name for a build rule.");
-  
+
   cm->DefineProperty
-    ("WRAP_EXCLUDE", cmProperty::SOURCE_FILE, 
+    ("WRAP_EXCLUDE", cmProperty::SOURCE_FILE,
      "Exclude this source file from any code wrapping techniques.",
      "Some packages can wrap source files into alternate languages "
      "to provide additional functionality. For example, C++ code "
      "can be wrapped into Java or Python etc using SWIG etc. "
-     "If WRAP_EXCLUDE is set to true (1 etc) that indicates then "
+     "If WRAP_EXCLUDE is set to true (1 etc) that indicates that "
      "this source file should not be wrapped.");
 }
 

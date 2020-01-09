@@ -1,28 +1,26 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmSetPropertyCommand.cxx,v $
-  Language:  C++
-  Date:      $Date: 2008-09-03 13:43:18 $
-  Version:   $Revision: 1.6.2.2 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmSetPropertyCommand.h"
 #include "cmSetTargetPropertiesCommand.h"
 #include "cmSetTestsPropertiesCommand.h"
 #include "cmSetSourceFilesPropertiesCommand.h"
 
+#include "cmCacheManager.h"
+
 //----------------------------------------------------------------------------
 cmSetPropertyCommand::cmSetPropertyCommand()
 {
   this->AppendMode = false;
+  this->AppendAsString = false;
   this->Remove = true;
 }
 
@@ -59,11 +57,15 @@ bool cmSetPropertyCommand
     {
     scope = cmProperty::TEST;
     }
+  else if(*arg == "CACHE")
+    {
+    scope = cmProperty::CACHE;
+    }
   else
     {
     cmOStringStream e;
     e << "given invalid scope " << *arg << ".  "
-      << "Valid scopes are GLOBAL, DIRECTORY, TARGET, SOURCE, TEST.";
+      << "Valid scopes are GLOBAL, DIRECTORY, TARGET, SOURCE, TEST, CACHE.";
     this->SetError(e.str().c_str());
     return false;
     }
@@ -82,6 +84,15 @@ bool cmSetPropertyCommand
       {
       doing = DoingNone;
       this->AppendMode = true;
+      this->Remove = false;
+      this->AppendAsString = false;
+      }
+    else if(*arg == "APPEND_STRING")
+      {
+      doing = DoingNone;
+      this->AppendMode = true;
+      this->Remove = false;
+      this->AppendAsString = true;
       }
     else if(doing == DoingNames)
       {
@@ -123,6 +134,7 @@ bool cmSetPropertyCommand
     case cmProperty::TARGET:      return this->HandleTargetMode();
     case cmProperty::SOURCE_FILE: return this->HandleSourceMode();
     case cmProperty::TEST:        return this->HandleTestMode();
+    case cmProperty::CACHE:       return this->HandleCacheMode();
 
     case cmProperty::VARIABLE:
     case cmProperty::CACHED_VARIABLE:
@@ -150,7 +162,7 @@ bool cmSetPropertyCommand::HandleGlobalMode()
     }
   if(this->AppendMode)
     {
-    cm->AppendProperty(name, value);
+    cm->AppendProperty(name, value ? value : "", this->AppendAsString);
     }
   else
     {
@@ -216,7 +228,7 @@ bool cmSetPropertyCommand::HandleDirectoryMode()
     }
   if(this->AppendMode)
     {
-    mf->AppendProperty(name, value);
+    mf->AppendProperty(name, value ? value : "", this->AppendAsString);
     }
   else
     {
@@ -232,6 +244,11 @@ bool cmSetPropertyCommand::HandleTargetMode()
   for(std::set<cmStdString>::const_iterator ni = this->Names.begin();
       ni != this->Names.end(); ++ni)
     {
+    if (this->Makefile->IsAlias(ni->c_str()))
+      {
+      this->SetError("can not be used on an ALIAS target.");
+      return false;
+      }
     if(cmTarget* target = this->Makefile->FindTargetToUse(ni->c_str()))
       {
       // Handle the current target.
@@ -264,7 +281,7 @@ bool cmSetPropertyCommand::HandleTarget(cmTarget* target)
     }
   if(this->AppendMode)
     {
-    target->AppendProperty(name, value);
+    target->AppendProperty(name, value, this->AppendAsString);
     }
   else
     {
@@ -315,7 +332,7 @@ bool cmSetPropertyCommand::HandleSource(cmSourceFile* sf)
 
   if(this->AppendMode)
     {
-    sf->AppendProperty(name, value);
+    sf->AppendProperty(name, value, this->AppendAsString);
     }
   else
     {
@@ -327,15 +344,14 @@ bool cmSetPropertyCommand::HandleSource(cmSourceFile* sf)
 //----------------------------------------------------------------------------
 bool cmSetPropertyCommand::HandleTestMode()
 {
-  // Loop over all tests looking for matching names.
-  std::vector<cmTest*> const& tests = *this->Makefile->GetTests();
-  for(std::vector<cmTest*>::const_iterator ti = tests.begin();
-      ti != tests.end(); ++ti)
+  // Look for tests with all names given.
+  std::set<cmStdString>::iterator next;
+  for(std::set<cmStdString>::iterator ni = this->Names.begin();
+      ni != this->Names.end(); ni = next)
     {
-    cmTest* test = *ti;
-    std::set<cmStdString>::iterator ni =
-      this->Names.find(test->GetName());
-    if(ni != this->Names.end())
+    next = ni;
+    ++next;
+    if(cmTest* test = this->Makefile->GetTest(ni->c_str()))
       {
       if(this->HandleTest(test))
         {
@@ -376,11 +392,98 @@ bool cmSetPropertyCommand::HandleTest(cmTest* test)
     }
   if(this->AppendMode)
     {
-    test->AppendProperty(name, value);
+    test->AppendProperty(name, value, this->AppendAsString);
     }
   else
     {
     test->SetProperty(name, value);
+    }
+
+  return true;
+}
+
+//----------------------------------------------------------------------------
+bool cmSetPropertyCommand::HandleCacheMode()
+{
+  if(this->PropertyName == "ADVANCED")
+    {
+    if(!this->Remove &&
+       !cmSystemTools::IsOn(this->PropertyValue.c_str()) &&
+       !cmSystemTools::IsOff(this->PropertyValue.c_str()))
+      {
+      cmOStringStream e;
+      e << "given non-boolean value \"" << this->PropertyValue
+        << "\" for CACHE property \"ADVANCED\".  ";
+      this->SetError(e.str().c_str());
+      return false;
+      }
+    }
+  else if(this->PropertyName == "TYPE")
+    {
+    if(!cmCacheManager::IsType(this->PropertyValue.c_str()))
+      {
+      cmOStringStream e;
+      e << "given invalid CACHE entry TYPE \"" << this->PropertyValue << "\"";
+      this->SetError(e.str().c_str());
+      return false;
+      }
+    }
+  else if(this->PropertyName != "HELPSTRING" &&
+          this->PropertyName != "STRINGS" &&
+          this->PropertyName != "VALUE")
+    {
+    cmOStringStream e;
+    e << "given invalid CACHE property " << this->PropertyName << ".  "
+      << "Settable CACHE properties are: "
+      << "ADVANCED, HELPSTRING, STRINGS, TYPE, and VALUE.";
+    this->SetError(e.str().c_str());
+    return false;
+    }
+
+  for(std::set<cmStdString>::const_iterator ni = this->Names.begin();
+      ni != this->Names.end(); ++ni)
+    {
+    // Get the source file.
+    cmMakefile* mf = this->GetMakefile();
+    cmake* cm = mf->GetCMakeInstance();
+    cmCacheManager::CacheIterator it =
+      cm->GetCacheManager()->GetCacheIterator(ni->c_str());
+    if(!it.IsAtEnd())
+      {
+      if(!this->HandleCacheEntry(it))
+        {
+        return false;
+        }
+      }
+    else
+      {
+      cmOStringStream e;
+      e << "could not find CACHE variable " << *ni
+        << ".  Perhaps it has not yet been created.";
+      this->SetError(e.str().c_str());
+      return false;
+      }
+    }
+  return true;
+}
+
+//----------------------------------------------------------------------------
+bool cmSetPropertyCommand::HandleCacheEntry(cmCacheManager::CacheIterator& it)
+{
+  // Set or append the property.
+  const char* name = this->PropertyName.c_str();
+  const char* value = this->PropertyValue.c_str();
+  if (this->Remove)
+    {
+    value = 0;
+    }
+  if(this->AppendMode)
+    {
+    it.AppendProperty(name, value, this->AppendAsString);
+    }
+  else
+    {
+    it.SetProperty(name, value);
     }
 
   return true;

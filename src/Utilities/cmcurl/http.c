@@ -18,7 +18,7 @@
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
  *
- * $Id: http.c,v 1.2 2007-03-15 19:22:13 andy Exp $
+ * $Id$
  ***************************************************************************/
 
 #include "setup.h"
@@ -178,7 +178,7 @@ static bool pickoneauth(struct auth *pick)
   picked = TRUE;
 
   /* The order of these checks is highly relevant, as this will be the order
-     of preference in case of the existance of multiple accepted types. */
+     of preference in case of the existence of multiple accepted types. */
   if(avail & CURLAUTH_GSSNEGOTIATE)
     pick->picked = CURLAUTH_GSSNEGOTIATE;
   else if(avail & CURLAUTH_DIGEST)

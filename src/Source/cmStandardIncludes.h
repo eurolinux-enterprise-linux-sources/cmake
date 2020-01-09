@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmStandardIncludes.h,v $
-  Language:  C++
-  Date:      $Date: 2008-02-24 19:05:11 $
-  Version:   $Revision: 1.72 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 /**
  * Include header files as a function of the build process, compiler,
  * and operating system.
@@ -21,25 +16,10 @@
 #ifndef cmStandardIncludes_h
 #define cmStandardIncludes_h
 
-#define CMAKE_TO_STRING(x) CMAKE_TO_STRING0(x)
-#define CMAKE_TO_STRING0(x) #x
-
 // include configure generated  header to define CMAKE_NO_ANSI_STREAM_HEADERS,
 // CMAKE_NO_STD_NAMESPACE, and other macros.
-#include "cmConfigure.h"
+#include <cmConfigure.h>
 #include <cmsys/Configure.hxx>
-
-#define CMake_VERSION \
-  CMAKE_TO_STRING(CMake_VERSION_MAJOR) "." \
-  CMAKE_TO_STRING(CMake_VERSION_MINOR)
-
-#define CMake_VERSION_FULL \
-  CMAKE_TO_STRING(CMake_VERSION_MAJOR) "." \
-  CMAKE_TO_STRING(CMake_VERSION_MINOR) "." \
-  CMAKE_TO_STRING(CMake_VERSION_PATCH)
-
-#define CMake_VERSION_ENCODE(major, minor, patch) \
-  ((major)*0x10000u + (minor)*0x100u + (patch))
 
 #ifdef _MSC_VER
 #pragma warning ( disable : 4786 )
@@ -49,11 +29,15 @@
 #endif
 
 #ifdef __BORLANDC__
-#pragma warn -8030 /* Temporary used for parameter */
+# pragma warn -8030 /* Temporary used for parameter */
+# pragma warn -8027 /* 'for' not inlined.  */
+# pragma warn -8026 /* 'exception' not inlined.  */
+# pragma warn -8004 /* value never used */
 #endif
 
 #ifdef __ICL
 #pragma warning ( disable : 985 )
+#pragma warning ( disable : 1572 ) /* floating-point equality test */
 #endif
 
 #include <stdarg.h> // Work-around for SGI MIPSpro 7.4.2m header bug
@@ -61,6 +45,7 @@
 // This is a hack to prevent warnings about these functions being
 // declared but not referenced.
 #if defined(__sgi) && !defined(__GNUC__)
+# pragma set woff 3970 /* conversion from pointer to same-sized */
 # include <sys/termios.h>
 class cmStandardIncludesHack
 {
@@ -89,6 +74,10 @@ public:
 // Avoid warnings in system headers.
 #if defined(_MSC_VER)
 # pragma warning (push,1)
+#endif
+#if defined(__BORLANDC__)
+# pragma warn -8008 /* condition is always false (RESET BELOW!) */
+# pragma warn -8066 /* unreachable code (RESET BELOW!) */
 #endif
 
 #ifndef CMAKE_NO_ANSI_STREAM_HEADERS
@@ -120,6 +109,10 @@ public:
 #include <set>
 #include <deque>
 
+#if defined(__BORLANDC__)
+# pragma warn .8008 /* condition is always false (disabled above) */
+# pragma warn .8066 /* unreachable code (disabled above) */
+#endif
 #if defined(_MSC_VER)
 # pragma warning(pop)
 #endif
@@ -159,13 +152,18 @@ extern int putenv (char *__string) __THROW;
 
 // if std:: is not supported, then just #define it away
 #ifdef CMAKE_NO_STD_NAMESPACE
-#define std 
+#define std
 #endif
 
-// if the compiler does not support ansi for scoping of vars use a 
+// if the compiler does not support ansi for scoping of vars use a
 // #define hack
 #ifdef CMAKE_NO_ANSI_FOR_SCOPE
 #define for if(false) {} else for
+#endif
+
+// Provide std::ios_base on ancient GCC 2.9x
+#if defined(__GNUC__) && __GNUC__ < 3
+namespace std { typedef ios ios_base; }
 #endif
 
 // check for the 720 compiler on the SGI
@@ -180,7 +178,7 @@ extern int putenv (char *__string) __THROW;
 #endif
 
 #ifdef __DECCXX_VER
-# if __DECCXX_VER <= 60390008 
+# if __DECCXX_VER <= 60390008
 #  define CM_HAS_STD_BUT_NOT_FOR_IOSTREAM
 # endif
 #endif
@@ -202,7 +200,7 @@ using ::cerr;
 using ::cin;
 using ::ifstream;
 using ::ofstream;
-  
+
 #if !defined(CMAKE_NO_ANSI_STRING_STREAM)
   using ::ostringstream;
   using ::istringstream;
@@ -210,7 +208,7 @@ using ::ofstream;
   using ::ostrstream;
   using ::istrstream;
 #endif
-  
+
 using ::endl;
 using ::ends;
 using ::flush;
@@ -248,7 +246,8 @@ typedef cmsys::String cmStdString;
 class cmOStringStream: public std::ostringstream
 {
 public:
-  cmOStringStream() {}
+  cmOStringStream();
+  ~cmOStringStream();
 private:
   cmOStringStream(const cmOStringStream&);
   void operator=(const cmOStringStream&);
@@ -325,8 +324,8 @@ struct cmDocumentationEntry
   std::string Full;
   cmDocumentationEntry(){};
   cmDocumentationEntry(const char *doc[3])
-  { if (doc[0]) this->Name = doc[0]; 
-  if (doc[1]) this->Brief = doc[1]; 
+  { if (doc[0]) this->Name = doc[0];
+  if (doc[1]) this->Brief = doc[1];
   if (doc[2]) this->Full = doc[2]; };
   cmDocumentationEntry(const char *n, const char *b, const char *f)
   { if (n) this->Name = n; if (b) this->Brief = b; if (f) this->Full = f; };
@@ -354,7 +353,7 @@ public:
 # pragma reset woff 1375 /* base class destructor not virtual */
 #endif
 
-// All subclasses of cmCommand or cmCTestGenericHandler should 
+// All subclasses of cmCommand or cmCTestGenericHandler should
 // invoke this macro.
 #define cmTypeMacro(thisClass,superclass) \
 virtual const char* GetNameOfClass() { return #thisClass; } \

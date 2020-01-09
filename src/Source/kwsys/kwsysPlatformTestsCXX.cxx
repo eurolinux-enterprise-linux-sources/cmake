@@ -1,3 +1,14 @@
+/*============================================================================
+  KWSys - Kitware System Library
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
+
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
+
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 // Setup for tests that use result of stl namespace test.
 #if defined(KWSYS_STL_HAVE_STD)
 # if KWSYS_STL_HAVE_STD
@@ -91,10 +102,33 @@ bool f(const kwsys_stl::string& s) { return s != ""; }
 int main() { return 0; }
 #endif
 
+#ifdef TEST_KWSYS_CXX_HAS_CSTDIO
+#include <cstdio>
+int main() { return 0; }
+#endif
+
 #ifdef TEST_KWSYS_CXX_HAS_CSTDDEF
 #include <cstddef>
 void f(size_t) {}
 int main() { return 0; }
+#endif
+
+#ifdef TEST_KWSYS_CXX_HAS_LONG_LONG
+long long f(long long n) { return n; }
+int main()
+{
+  long long n = 0;
+  return static_cast<int>(f(n));
+}
+#endif
+
+#ifdef TEST_KWSYS_CXX_HAS___INT64
+__int64 f(__int64 n) { return n; }
+int main()
+{
+  __int64 n = 0;
+  return static_cast<int>(f(n));
+}
 #endif
 
 #ifdef TEST_KWSYS_CXX_HAS_NULL_TEMPLATE_ARGS
@@ -289,6 +323,17 @@ int main()
 }
 #endif
 
+#ifdef TEST_KWSYS_IOS_HAVE_BINARY
+int test_binary(int, ...)
+{
+  return 0;
+}
+int main()
+{
+  return test_binary(1, kwsys_ios::ios::binary);
+}
+#endif
+
 #ifdef TEST_KWSYS_IOS_HAS_ISTREAM_LONG_LONG
 int test_istream(kwsys_ios::istream& is, long long& x)
 {
@@ -313,6 +358,30 @@ int main()
 }
 #endif
 
+#ifdef TEST_KWSYS_IOS_HAS_ISTREAM___INT64
+int test_istream(kwsys_ios::istream& is, __int64& x)
+{
+  return (is >> x)? 1:0;
+}
+int main()
+{
+  __int64 x = 0;
+  return test_istream(kwsys_ios::cin, x);
+}
+#endif
+
+#ifdef TEST_KWSYS_IOS_HAS_OSTREAM___INT64
+int test_ostream(kwsys_ios::ostream& os, __int64 x)
+{
+  return (os << x)? 1:0;
+}
+int main()
+{
+  __int64 x = 0;
+  return test_ostream(kwsys_ios::cout, x);
+}
+#endif
+
 #ifdef TEST_KWSYS_CHAR_IS_SIGNED
 /* Return 0 for char signed and 1 for char unsigned.  */
 int main()
@@ -331,6 +400,9 @@ int main()
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <assert.h>
+#if KWSYS_CXX_HAS_CSTDIO
+# include <cstdio>
+#endif
 #include <stdio.h>
 
 int main(int, char **argv)
@@ -351,6 +423,141 @@ int main(int, char **argv)
   fseek( file, offset, SEEK_CUR );
   fclose( file );
   return 0;
+}
+#endif
+
+#ifdef TEST_KWSYS_CXX_HAS_SETENV
+#include <stdlib.h>
+int main()
+{
+  return setenv("A", "B", 1);
+}
+#endif
+
+#ifdef TEST_KWSYS_CXX_HAS_UNSETENV
+#include <stdlib.h>
+int main()
+{
+  unsetenv("A");
+  return 0;
+}
+#endif
+
+#ifdef TEST_KWSYS_CXX_HAS_ENVIRON_IN_STDLIB_H
+#include <stdlib.h>
+int main()
+{
+  char* e = environ[0];
+  return e? 0:1;
+}
+#endif
+
+#ifdef TEST_KWSYS_CXX_HAS_RLIMIT64
+# if defined(KWSYS_HAS_LFS)
+#  define _LARGEFILE_SOURCE
+#  define _LARGEFILE64_SOURCE
+#  define _LARGE_FILES
+#  define _FILE_OFFSET_BITS 64
+# endif
+# include <sys/resource.h>
+int main()
+{
+  struct rlimit64 rlim;
+  return getrlimit64(0,&rlim);
+}
+#endif
+
+#ifdef TEST_KWSYS_CXX_HAS_ATOLL
+#include <stdlib.h>
+int main()
+{
+  const char *str="1024";
+  return static_cast<int>(atoll(str));
+}
+#endif
+
+#ifdef TEST_KWSYS_CXX_HAS_ATOL
+#include <stdlib.h>
+int main()
+{
+  const char *str="1024";
+  return static_cast<int>(atol(str));
+}
+#endif
+
+#ifdef TEST_KWSYS_CXX_HAS__ATOI64
+#include <stdlib.h>
+int main()
+{
+  const char *str="1024";
+  return static_cast<int>(_atoi64(str));
+}
+#endif
+
+#ifdef TEST_KWSYS_CXX_HAS_UTIMES
+#include <sys/time.h>
+int main()
+{
+  struct timeval* current_time = 0;
+  return utimes("/example", current_time);
+}
+#endif
+
+#ifdef TEST_KWSYS_CXX_HAS_UTIMENSAT
+#include <fcntl.h>
+#include <sys/stat.h>
+int main()
+{
+  struct timespec times[2] = {{0,UTIME_OMIT},{0,UTIME_NOW}};
+  return utimensat(AT_FDCWD, "/example", times, AT_SYMLINK_NOFOLLOW);
+}
+#endif
+
+#ifdef TEST_KWSYS_CXX_HAS_BACKTRACE
+#if defined(__PATHSCALE__) || defined(__PATHCC__) \
+  || (defined(__LSB_VERSION__) && (__LSB_VERSION__ < 41))
+backtrace doesnt work with this compiler or os
+#endif
+#if (defined(__GNUC__) || defined(__PGI)) && !defined(_GNU_SOURCE)
+# define _GNU_SOURCE
+#endif
+#include <execinfo.h>
+int main()
+{
+  void *stackSymbols[256];
+  backtrace(stackSymbols,256);
+  backtrace_symbols(&stackSymbols[0],1);
+  return 0;
+}
+#endif
+
+#ifdef TEST_KWSYS_CXX_HAS_DLADDR
+#if (defined(__GNUC__) || defined(__PGI)) && !defined(_GNU_SOURCE)
+# define _GNU_SOURCE
+#endif
+#include <dlfcn.h>
+int main()
+{
+  Dl_info info;
+  int ierr=dladdr((void*)main,&info);
+  return 0;
+}
+#endif
+
+#ifdef TEST_KWSYS_CXX_HAS_CXXABI
+#if (defined(__GNUC__) || defined(__PGI)) && !defined(_GNU_SOURCE)
+# define _GNU_SOURCE
+#endif
+#include <cxxabi.h>
+int main()
+{
+  int status = 0;
+  size_t bufferLen = 512;
+  char buffer[512] = {'\0'};
+  const char *function="_ZN5kwsys17SystemInformation15GetProgramStackEii";
+  char *demangledFunction =
+    abi::__cxa_demangle(function, buffer, &bufferLen, &status);
+  return status;
 }
 #endif
 
@@ -438,5 +645,32 @@ int main()
             fname);
     return 1;
     }
+}
+#endif
+
+#ifdef TEST_KWSYS_CXX_HAS_BORLAND_ASM
+int main()
+{
+  int a = 1;
+  __asm {
+    xor EBX, EBX;
+    mov a, EBX;
+  }
+
+  return a;
+}
+#endif
+
+#ifdef TEST_KWSYS_CXX_HAS_BORLAND_ASM_CPUID
+int main()
+{
+  int a = 0;
+  __asm {
+    xor EAX, EAX;
+    cpuid;
+    mov a, EAX;
+  }
+
+  return a;
 }
 #endif

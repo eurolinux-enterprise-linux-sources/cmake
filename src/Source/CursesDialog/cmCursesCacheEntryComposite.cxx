@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmCursesCacheEntryComposite.cxx,v $
-  Language:  C++
-  Date:      $Date: 2008-03-07 21:32:09 $
-  Version:   $Revision: 1.9 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmCursesCacheEntryComposite.h"
 #include "cmCursesStringWidget.h"
 #include "cmCursesLabelWidget.h"
@@ -24,19 +19,19 @@
 #include "../cmSystemTools.h"
 
 cmCursesCacheEntryComposite::cmCursesCacheEntryComposite(const char* key,
-                                                         int labelwidth, 
+                                                         int labelwidth,
                                                          int entrywidth) :
   Key(key), LabelWidth(labelwidth), EntryWidth(entrywidth)
 {
   this->Label = new cmCursesLabelWidget(this->LabelWidth, 1, 1, 1, key);
   this->IsNewLabel = new cmCursesLabelWidget(1, 1, 1, 1, " ");
-  this->Entry = 0; 
+  this->Entry = 0;
   this->Entry = new cmCursesStringWidget(this->EntryWidth, 1, 1, 1);
 }
 
 cmCursesCacheEntryComposite::cmCursesCacheEntryComposite(
-  const char* key, const cmCacheManager::CacheIterator& it, bool isNew, 
-  int labelwidth, int entrywidth) 
+  const char* key, const cmCacheManager::CacheIterator& it, bool isNew,
+  int labelwidth, int entrywidth)
   : Key(key), LabelWidth(labelwidth), EntryWidth(entrywidth)
 {
   this->Label = new cmCursesLabelWidget(this->LabelWidth, 1, 1, 1, key);
@@ -79,7 +74,7 @@ cmCursesCacheEntryComposite::cmCursesCacheEntryComposite(
         it.GetValue());
       break;
     case cmCacheManager::UNINITIALIZED:
-      cmSystemTools::Error("Found an undefined variable: ", it.GetName());      
+      cmSystemTools::Error("Found an undefined variable: ", it.GetName());
       break;
     default:
       // TODO : put warning message here

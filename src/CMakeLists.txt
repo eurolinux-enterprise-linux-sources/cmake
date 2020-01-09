@@ -1,500 +1,656 @@
-PROJECT(CMake)
-CMAKE_MINIMUM_REQUIRED(VERSION 2.4 FATAL_ERROR) 
-IF(COMMAND CMAKE_POLICY)
-  CMAKE_POLICY(SET CMP0003 NEW)
-ENDIF(COMMAND CMAKE_POLICY)
+#=============================================================================
+# CMake - Cross Platform Makefile Generator
+# Copyright 2000-2012 Kitware, Inc., Insight Software Consortium
+#
+# Distributed under the OSI-approved BSD License (the "License");
+# see accompanying file Copyright.txt for details.
+#
+# This software is distributed WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the License for more information.
+#=============================================================================
+cmake_minimum_required(VERSION 2.8.2 FATAL_ERROR)
+set(CMAKE_LEGACY_CYGWIN_WIN32 0) # Remove when CMake >= 2.8.4 is required
+project(CMake)
 
-MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
+if(CMAKE_BOOTSTRAP)
+  # Running from bootstrap script.  Set local variable and remove from cache.
+  set(CMAKE_BOOTSTRAP 1)
+  unset(CMAKE_BOOTSTRAP CACHE)
+endif()
 
+set(CMake_BIN_DIR ${CMake_BINARY_DIR}/bin)
 
+if("${CMake_SOURCE_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
+  # Disallow architecture-specific try_run.  It may not run on the host.
+  macro(TRY_RUN)
+    if(CMAKE_TRY_COMPILE_OSX_ARCHITECTURES)
+      message(FATAL_ERROR "TRY_RUN not allowed with CMAKE_TRY_COMPILE_OSX_ARCHITECTURES=[${CMAKE_TRY_COMPILE_OSX_ARCHITECTURES}]")
+    else()
+      _TRY_RUN(${ARGV})
+    endif()
+  endmacro()
+endif()
 
 #-----------------------------------------------------------------------
 # a macro to deal with system libraries, implemented as a macro
 # simply to improve readability of the main script
 #-----------------------------------------------------------------------
-MACRO(CMAKE_HANDLE_SYSTEM_LIBRARIES)
-  # Third party libraries must be something that can be found.
-  IF(EXISTS ${CMAKE_ROOT}/Modules/FindXMLRPC.cmake)
-    SET(CMAKE_ALLOW_SYSTEM_LIBRARIES 1)
-  ELSE(EXISTS ${CMAKE_ROOT}/Modules/FindXMLRPC.cmake)
-    SET(CMAKE_ALLOW_SYSTEM_LIBRARIES 0)
-  ENDIF(EXISTS ${CMAKE_ROOT}/Modules/FindXMLRPC.cmake)
-  
-  IF(CMAKE_ALLOW_SYSTEM_LIBRARIES)
-    # Options have dependencies.
-    INCLUDE(CMakeDependentOption)
-    
-    # Allow the user to enable/disable all system utility library options
-    # by setting CMAKE_USE_SYSTEM_LIBRARIES on the command line.
-    IF(DEFINED CMAKE_USE_SYSTEM_LIBRARIES)
-      SET(CMAKE_USE_SYSTEM_LIBRARIES_USER 1)
-    ENDIF(DEFINED CMAKE_USE_SYSTEM_LIBRARIES)
-    IF(CMAKE_USE_SYSTEM_LIBRARIES)
-      SET(CMAKE_USE_SYSTEM_LIBRARIES ON)
-    ELSE(CMAKE_USE_SYSTEM_LIBRARIES)
-      SET(CMAKE_USE_SYSTEM_LIBRARIES OFF)
-    ENDIF(CMAKE_USE_SYSTEM_LIBRARIES)
-    IF(CMAKE_USE_SYSTEM_LIBRARIES_USER)
-      SET(CMAKE_USE_SYSTEM_CURL "${CMAKE_USE_SYSTEM_LIBRARIES}" 
-        CACHE BOOL "Use system-installed curl" FORCE)
-      SET(CMAKE_USE_SYSTEM_EXPAT "${CMAKE_USE_SYSTEM_LIBRARIES}" 
-        CACHE BOOL "Use system-installed expat" FORCE)
-      SET(CMAKE_USE_SYSTEM_XMLRPC "${CMAKE_USE_SYSTEM_LIBRARIES}" 
-        CACHE BOOL "Use system-installed xmlrpc" FORCE)
-      SET(CMAKE_USE_SYSTEM_ZLIB "${CMAKE_USE_SYSTEM_LIBRARIES}" 
-        CACHE BOOL "Use system-installed zlib" FORCE)
-    ENDIF(CMAKE_USE_SYSTEM_LIBRARIES_USER)
-    
-    # Optionally use system utility libraries.
-    OPTION(CMAKE_USE_SYSTEM_CURL   "Use system-installed curl" 
-      ${CMAKE_USE_SYSTEM_LIBRARIES})
-    OPTION(CMAKE_USE_SYSTEM_XMLRPC "Use system-installed xmlrpc" 
-      ${CMAKE_USE_SYSTEM_LIBRARIES})
-    CMAKE_DEPENDENT_OPTION(CMAKE_USE_SYSTEM_EXPAT "Use system-installed expat"
-      ${CMAKE_USE_SYSTEM_LIBRARIES} "NOT CMAKE_USE_SYSTEM_XMLRPC" ON)
-    CMAKE_DEPENDENT_OPTION(CMAKE_USE_SYSTEM_ZLIB "Use system-installed zlib"
-      ${CMAKE_USE_SYSTEM_LIBRARIES} "NOT CMAKE_USE_SYSTEM_CURL" ON)
-    
-    # There is currently no option for system tar because the upstream
-    # libtar does not have our modifications to allow reentrant
-    # object-oriented use of the library.
-    # OPTION(CMAKE_USE_SYSTEM_TAR    "Use system-installed tar"   OFF)
-  ELSE(CMAKE_ALLOW_SYSTEM_LIBRARIES)
-    SET(CMAKE_USE_SYSTEM_CURL 0)
-    SET(CMAKE_USE_SYSTEM_EXPAT 0)
-    SET(CMAKE_USE_SYSTEM_XMLRPC 0)
-    SET(CMAKE_USE_SYSTEM_ZLIB 0)
-  ENDIF(CMAKE_ALLOW_SYSTEM_LIBRARIES)
+macro(CMAKE_HANDLE_SYSTEM_LIBRARIES)
+  # Options have dependencies.
+  include(CMakeDependentOption)
 
+  # Optionally use system xmlrpc.  We no longer build or use it by default.
+  option(CTEST_USE_XMLRPC "Enable xmlrpc submission method in CTest." OFF)
+  mark_as_advanced(CTEST_USE_XMLRPC)
+
+  # Allow the user to enable/disable all system utility library options by
+  # defining CMAKE_USE_SYSTEM_LIBRARIES or CMAKE_USE_SYSTEM_LIBRARY_${util}.
+  set(UTILITIES BZIP2 CURL EXPAT LIBARCHIVE ZLIB)
+  foreach(util ${UTILITIES})
+    if(NOT DEFINED CMAKE_USE_SYSTEM_LIBRARY_${util}
+        AND DEFINED CMAKE_USE_SYSTEM_LIBRARIES)
+      set(CMAKE_USE_SYSTEM_LIBRARY_${util} "${CMAKE_USE_SYSTEM_LIBRARIES}")
+    endif()
+    if(DEFINED CMAKE_USE_SYSTEM_LIBRARY_${util})
+      if(CMAKE_USE_SYSTEM_LIBRARY_${util})
+        set(CMAKE_USE_SYSTEM_LIBRARY_${util} ON)
+      else()
+        set(CMAKE_USE_SYSTEM_LIBRARY_${util} OFF)
+      endif()
+      if(CMAKE_BOOTSTRAP)
+        unset(CMAKE_USE_SYSTEM_LIBRARY_${util} CACHE)
+      endif()
+      string(TOLOWER "${util}" lutil)
+      set(CMAKE_USE_SYSTEM_${util} "${CMAKE_USE_SYSTEM_LIBRARY_${util}}"
+        CACHE BOOL "Use system-installed ${lutil}" FORCE)
+    else()
+      set(CMAKE_USE_SYSTEM_LIBRARY_${util} OFF)
+    endif()
+  endforeach()
+  if(CMAKE_BOOTSTRAP)
+    unset(CMAKE_USE_SYSTEM_LIBRARIES CACHE)
+  endif()
+
+  # Optionally use system utility libraries.
+  option(CMAKE_USE_SYSTEM_LIBARCHIVE "Use system-installed libarchive" "${CMAKE_USE_SYSTEM_LIBRARY_LIBARCHIVE}")
+  CMAKE_DEPENDENT_OPTION(CMAKE_USE_SYSTEM_CURL "Use system-installed curl"
+    "${CMAKE_USE_SYSTEM_LIBRARY_CURL}" "NOT CTEST_USE_XMLRPC" ON)
+  CMAKE_DEPENDENT_OPTION(CMAKE_USE_SYSTEM_EXPAT "Use system-installed expat"
+    "${CMAKE_USE_SYSTEM_LIBRARY_EXPAT}" "NOT CTEST_USE_XMLRPC" ON)
+  CMAKE_DEPENDENT_OPTION(CMAKE_USE_SYSTEM_ZLIB "Use system-installed zlib"
+    "${CMAKE_USE_SYSTEM_LIBRARY_ZLIB}" "NOT CMAKE_USE_SYSTEM_LIBARCHIVE;NOT CMAKE_USE_SYSTEM_CURL" ON)
+  CMAKE_DEPENDENT_OPTION(CMAKE_USE_SYSTEM_BZIP2 "Use system-installed bzip2"
+    "${CMAKE_USE_SYSTEM_LIBRARY_BZIP2}" "NOT CMAKE_USE_SYSTEM_LIBARCHIVE" ON)
 
   # Mention to the user what system libraries are being used.
-  FOREACH(util CURL EXPAT XMLRPC ZLIB)
-    IF(CMAKE_USE_SYSTEM_${util})
-      MESSAGE(STATUS "Using system-installed ${util}")
-    ENDIF(CMAKE_USE_SYSTEM_${util})
-  ENDFOREACH(util)
+  foreach(util ${UTILITIES})
+    if(CMAKE_USE_SYSTEM_${util})
+      message(STATUS "Using system-installed ${util}")
+    endif()
+  endforeach()
 
   # Inform utility library header wrappers whether to use system versions.
-  CONFIGURE_FILE(${CMake_SOURCE_DIR}/Utilities/cmThirdParty.h.in
+  configure_file(${CMake_SOURCE_DIR}/Utilities/cmThirdParty.h.in
     ${CMake_BINARY_DIR}/Utilities/cmThirdParty.h
     @ONLY)
 
-ENDMACRO(CMAKE_HANDLE_SYSTEM_LIBRARIES)
+endmacro()
 
 
 
-#-----------------------------------------------------------------------
-# a macro to check for MFC and setup to build the MFC Dialog
-# simply to improve readability of the main script
-#-----------------------------------------------------------------------
-MACRO(CMAKE_TEST_FOR_MFC)
-  SET(CMAKE_BUILD_ON_VISUAL_STUDIO 0)
-  IF(WIN32 AND NOT UNIX AND NOT BORLAND AND NOT MINGW )
-    SET(CMAKE_BUILD_ON_VISUAL_STUDIO 1)
-  ENDIF(WIN32 AND NOT UNIX AND NOT BORLAND AND NOT MINGW )
-  
-  IF(CMAKE_BUILD_ON_VISUAL_STUDIO)
-    IF("CMake_HAVE_MFC" MATCHES "^CMake_HAVE_MFC$")
-      SET(CHECK_INCLUDE_FILE_VAR "afxwin.h")
-      CONFIGURE_FILE(${CMAKE_ROOT}/Modules/CheckIncludeFile.cxx.in
-        ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/CheckIncludeFile.cxx)
-      MESSAGE(STATUS "Looking for MFC")
-      TRY_COMPILE(CMake_HAVE_MFC
-        ${CMAKE_BINARY_DIR}
-        ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/CheckIncludeFile.cxx
-        CMAKE_FLAGS
-        -DCMAKE_MFC_FLAG:STRING=2
-        -DCOMPILE_DEFINITIONS:STRING=-D_AFXDLL
-        OUTPUT_VARIABLE OUTPUT)
-      IF(CMake_HAVE_MFC)
-        MESSAGE(STATUS "Looking for MFC - found")
-        SET(CMake_HAVE_MFC 1 CACHE INTERNAL "Have MFC?")
-        FILE(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeOutput.log
-          "Determining if MFC exists passed with the following output:\n"
-          "${OUTPUT}\n\n")
-      ELSE(CMake_HAVE_MFC)
-        MESSAGE(STATUS "Looking for MFC - not found")
-        SET(CMake_HAVE_MFC 0 CACHE INTERNAL "Have MFC?")
-        FILE(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
-          "Determining if MFC exists failed with the following output:\n"
-          "${OUTPUT}\n\n")
-      ENDIF(CMake_HAVE_MFC)
-    ENDIF("CMake_HAVE_MFC" MATCHES "^CMake_HAVE_MFC$")
-    
-    IF(CMake_HAVE_MFC)
-      OPTION(BUILD_MFCDialog "Whether to build the CMakeSetup MFC dialog." ON)
-    ELSE(CMake_HAVE_MFC)
-      SET(BUILD_MFCDialog 0)
-    ENDIF(CMake_HAVE_MFC)
-  ELSE(CMAKE_BUILD_ON_VISUAL_STUDIO)
-    SET(BUILD_MFCDialog 0)
-  ENDIF(CMAKE_BUILD_ON_VISUAL_STUDIO)
-ENDMACRO(CMAKE_TEST_FOR_MFC)
 
+set(CMAKE_BUILD_ON_VISUAL_STUDIO 0)
+if(WIN32 AND NOT UNIX AND NOT BORLAND AND NOT MINGW )
+  set(CMAKE_BUILD_ON_VISUAL_STUDIO 1)
+endif()
 
 
 #-----------------------------------------------------------------------
 # a macro to determine the generator and ctest executable to use
 # for testing. Simply to improve readability of the main script.
 #-----------------------------------------------------------------------
-MACRO(CMAKE_SETUP_TESTING)
-  IF (NOT DART_ROOT)
-    SET(MAKEPROGRAM ${CMAKE_MAKE_PROGRAM})
-  ENDIF (NOT DART_ROOT)
-  
-  IF(BUILD_TESTING)
-    SET(CMAKE_TEST_GENERATOR "" CACHE STRING 
+macro(CMAKE_SETUP_TESTING)
+  if (NOT DART_ROOT)
+    set(MAKEPROGRAM ${CMAKE_MAKE_PROGRAM})
+  endif ()
+
+  if(BUILD_TESTING)
+    set(CMAKE_TEST_GENERATOR "" CACHE STRING
       "Generator used when running tests")
-    SET(CMAKE_TEST_MAKEPROGRAM "" CACHE FILEPATH 
+    set(CMAKE_TEST_MAKEPROGRAM "" CACHE FILEPATH
       "Generator used when running tests")
-    IF(NOT CMAKE_TEST_GENERATOR)
-      SET(CMAKE_TEST_GENERATOR "${CMAKE_GENERATOR}")
-      SET(CMAKE_TEST_MAKEPROGRAM "${MAKEPROGRAM}")
-    ELSE(NOT CMAKE_TEST_GENERATOR)
-      SET(CMAKE_TEST_DIFFERENT_GENERATOR TRUE)
-    ENDIF(NOT CMAKE_TEST_GENERATOR)
-    
+    if(NOT CMAKE_TEST_GENERATOR)
+      set(CMAKE_TEST_GENERATOR "${CMAKE_GENERATOR}")
+      set(CMAKE_TEST_GENERATOR_TOOLSET "${CMAKE_GENERATOR_TOOLSET}")
+      set(CMAKE_TEST_MAKEPROGRAM "${MAKEPROGRAM}")
+    else()
+      set(CMAKE_TEST_DIFFERENT_GENERATOR TRUE)
+      set(CMAKE_TEST_GENERATOR_TOOLSET "")
+    endif()
+
     # Are we testing with the MSVC compiler?
-    SET(CMAKE_TEST_MSVC 0)
-    IF(MSVC AND NOT CMAKE_TEST_DIFFERENT_GENERATOR)
-      SET(CMAKE_TEST_MSVC 1)
-    ELSE(MSVC AND NOT CMAKE_TEST_DIFFERENT_GENERATOR)
-      IF("${CMAKE_TEST_GENERATOR}" MATCHES "NMake" OR
+    set(CMAKE_TEST_MSVC 0)
+    if(MSVC AND NOT CMAKE_TEST_DIFFERENT_GENERATOR)
+      set(CMAKE_TEST_MSVC 1)
+    else()
+      if("${CMAKE_TEST_GENERATOR}" MATCHES "NMake" OR
           "${CMAKE_TEST_GENERATOR}" MATCHES "Visual Studio")
-        SET(CMAKE_TEST_MSVC 1)
-      ENDIF("${CMAKE_TEST_GENERATOR}" MATCHES "NMake" OR
-        "${CMAKE_TEST_GENERATOR}" MATCHES "Visual Studio")
-    ENDIF(MSVC AND NOT CMAKE_TEST_DIFFERENT_GENERATOR)
-    
-    SET(CMAKE_TEST_SYSTEM_LIBRARIES 0)
-    FOREACH(util CURL EXPAT XMLRPC ZLIB)
-      IF(CMAKE_USE_SYSTEM_${util})
-        SET(CMAKE_TEST_SYSTEM_LIBRARIES 1)
-      ENDIF(CMAKE_USE_SYSTEM_${util})
-    ENDFOREACH(util)
-    
+        set(CMAKE_TEST_MSVC 1)
+      endif()
+    endif()
+
+    set(CMAKE_TEST_SYSTEM_LIBRARIES 0)
+    foreach(util CURL EXPAT XMLRPC ZLIB)
+      if(CMAKE_USE_SYSTEM_${util})
+        set(CMAKE_TEST_SYSTEM_LIBRARIES 1)
+      endif()
+    endforeach()
+
     # This variable is set by cmake, however to
     # test cmake we want to make sure that
     # the ctest from this cmake is used for testing
     # and not the ctest from the cmake building and testing
     # cmake.
-    SET(CMAKE_CTEST_COMMAND "${EXECUTABLE_OUTPUT_PATH}/ctest")
-    SET(CMAKE_CMAKE_COMMAND "${EXECUTABLE_OUTPUT_PATH}/cmake")
-  ENDIF(BUILD_TESTING)
+    set(CMAKE_CTEST_COMMAND "${CMake_BIN_DIR}/ctest")
+    set(CMAKE_CMAKE_COMMAND "${CMake_BIN_DIR}/cmake")
+    set(CMAKE_CPACK_COMMAND "${CMake_BIN_DIR}/cpack")
+  endif()
 
   # configure some files for testing
-  CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/Templates/CTestScript.cmake.in"
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/Templates/CTestScript.cmake.in"
     "${CMAKE_CURRENT_BINARY_DIR}/CTestScript.cmake"
-    @ONLY)  
-  CONFIGURE_FILE(${CMake_SOURCE_DIR}/Tests/.NoDartCoverage
+    @ONLY)
+  configure_file(${CMake_SOURCE_DIR}/Tests/.NoDartCoverage
     ${CMake_BINARY_DIR}/Tests/.NoDartCoverage)
-  CONFIGURE_FILE(${CMake_SOURCE_DIR}/Tests/.NoDartCoverage
+  configure_file(${CMake_SOURCE_DIR}/Tests/.NoDartCoverage
     ${CMake_BINARY_DIR}/Modules/.NoDartCoverage)
-  CONFIGURE_FILE(${CMake_SOURCE_DIR}/CTestCustom.cmake.in
+  configure_file(${CMake_SOURCE_DIR}/CTestCustom.cmake.in
     ${CMake_BINARY_DIR}/CTestCustom.cmake @ONLY)
-  CONFIGURE_FILE(${CMake_SOURCE_DIR}/CTestCustom.ctest.in
+  configure_file(${CMake_SOURCE_DIR}/CTestCustom.ctest.in
     ${CMake_BINARY_DIR}/CTestCustom.ctest @ONLY)
-  IF(BUILD_TESTING AND DART_ROOT)
-    CONFIGURE_FILE(${CMake_SOURCE_DIR}/CMakeLogo.gif 
+  if(BUILD_TESTING AND DART_ROOT)
+    configure_file(${CMake_SOURCE_DIR}/CMakeLogo.gif
       ${CMake_BINARY_DIR}/Testing/HTML/TestingResults/Icons/Logo.gif COPYONLY)
-  ENDIF(BUILD_TESTING AND DART_ROOT)
-  MARK_AS_ADVANCED(DART_ROOT)
-  MARK_AS_ADVANCED(CURL_TESTING)
-ENDMACRO(CMAKE_SETUP_TESTING)
+  endif()
+  mark_as_advanced(DART_ROOT)
+  mark_as_advanced(CURL_TESTING)
+endmacro()
 
+
+# Provide a way for Visual Studio Express users to turn OFF the new FOLDER
+# organization feature. Default to ON for non-Express users. Express users must
+# explicitly turn off this option to build CMake in the Express IDE...
+#
+option(CMAKE_USE_FOLDERS "Enable folder grouping of projects in IDEs." ON)
+mark_as_advanced(CMAKE_USE_FOLDERS)
+
+
+#-----------------------------------------------------------------------
+# a macro that only sets the FOLDER target property if it's
+# "appropriate"
+#-----------------------------------------------------------------------
+macro(CMAKE_SET_TARGET_FOLDER tgt folder)
+  if(CMAKE_USE_FOLDERS)
+    set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
+    # Really, I just want this to be an "if(TARGET ${tgt})" ...
+    # but I'm not sure that our min req'd., CMake 2.4.5 can handle
+    # that... so I'm just activating this for now, with a version
+    # compare, and only for MSVC builds.
+    if(MSVC)
+      if(NOT ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} LESS 2.8)
+        set_property(TARGET "${tgt}" PROPERTY FOLDER "${folder}")
+      endif()
+    endif()
+  else()
+    set_property(GLOBAL PROPERTY USE_FOLDERS OFF)
+  endif()
+endmacro()
 
 
 #-----------------------------------------------------------------------
 # a macro to build the utilities used by CMake
 # Simply to improve readability of the main script.
 #-----------------------------------------------------------------------
-MACRO (CMAKE_BUILD_UTILITIES)
+macro (CMAKE_BUILD_UTILITIES)
+  #---------------------------------------------------------------------
+  # Create the KWIML library for CMake.
+  set(KWIML cmIML)
+  set(KWIML_HEADER_ROOT ${CMake_BINARY_DIR}/Utilities)
+  add_subdirectory(Utilities/KWIML)
+
   #---------------------------------------------------------------------
   # Create the kwsys library for CMake.
-  SET(KWSYS_NAMESPACE cmsys)
-  SET(KWSYS_USE_SystemTools 1)
-  SET(KWSYS_USE_Directory 1)
-  SET(KWSYS_USE_RegularExpression 1)
-  SET(KWSYS_USE_Base64 1)
-  SET(KWSYS_USE_MD5 1)
-  SET(KWSYS_USE_Process 1)
-  SET(KWSYS_USE_CommandLineArguments 1)
-  SET(KWSYS_HEADER_ROOT ${CMake_BINARY_DIR}/Source)
-  SUBDIRS(Source/kwsys)
-  
+  set(KWSYS_NAMESPACE cmsys)
+  set(KWSYS_USE_SystemTools 1)
+  set(KWSYS_USE_Directory 1)
+  set(KWSYS_USE_RegularExpression 1)
+  set(KWSYS_USE_Base64 1)
+  set(KWSYS_USE_MD5 1)
+  set(KWSYS_USE_Process 1)
+  set(KWSYS_USE_CommandLineArguments 1)
+  set(KWSYS_HEADER_ROOT ${CMake_BINARY_DIR}/Source)
+  set(KWSYS_INSTALL_DOC_DIR "${CMAKE_DOC_DIR}")
+  add_subdirectory(Source/kwsys)
+  set(kwsys_folder "Utilities/KWSys")
+  CMAKE_SET_TARGET_FOLDER(${KWSYS_NAMESPACE} "${kwsys_folder}")
+  CMAKE_SET_TARGET_FOLDER(${KWSYS_NAMESPACE}_c "${kwsys_folder}")
+  if(BUILD_TESTING)
+    CMAKE_SET_TARGET_FOLDER(${KWSYS_NAMESPACE}TestDynload "${kwsys_folder}")
+    CMAKE_SET_TARGET_FOLDER(${KWSYS_NAMESPACE}TestProcess "${kwsys_folder}")
+    CMAKE_SET_TARGET_FOLDER(${KWSYS_NAMESPACE}TestsC "${kwsys_folder}")
+    CMAKE_SET_TARGET_FOLDER(${KWSYS_NAMESPACE}TestsCxx "${kwsys_folder}")
+    CMAKE_SET_TARGET_FOLDER(${KWSYS_NAMESPACE}TestSharedForward "${kwsys_folder}")
+  endif()
+
   #---------------------------------------------------------------------
   # Setup third-party libraries.
   # Everything in the tree should be able to include files from the
   # Utilities directory.
-  INCLUDE_DIRECTORIES(
-    ${CMake_SOURCE_DIR}/Utilities
+  include_directories(
     ${CMake_BINARY_DIR}/Utilities
+    ${CMake_SOURCE_DIR}/Utilities
     )
-  
+
   # check for the use of system libraries versus builtin ones
   # (a macro defined in this file)
   CMAKE_HANDLE_SYSTEM_LIBRARIES()
-  
+
   #---------------------------------------------------------------------
   # Build zlib library for Curl, CMake, and CTest.
-  SET(CMAKE_ZLIB_HEADER "cm_zlib.h")
-  IF(CMAKE_USE_SYSTEM_ZLIB)
-    FIND_PACKAGE(ZLIB)
-    IF(NOT ZLIB_FOUND)
-      MESSAGE(FATAL_ERROR 
+  set(CMAKE_ZLIB_HEADER "cm_zlib.h")
+  if(CMAKE_USE_SYSTEM_ZLIB)
+    find_package(ZLIB)
+    if(NOT ZLIB_FOUND)
+      message(FATAL_ERROR
         "CMAKE_USE_SYSTEM_ZLIB is ON but a zlib is not found!")
-    ENDIF(NOT ZLIB_FOUND)
-    SET(CMAKE_ZLIB_INCLUDES ${ZLIB_INCLUDE_DIR})
-    SET(CMAKE_ZLIB_LIBRARIES ${ZLIB_LIBRARIES})
-  ELSE(CMAKE_USE_SYSTEM_ZLIB)
-    SET(CMAKE_ZLIB_INCLUDES)
-    SET(CMAKE_ZLIB_LIBRARIES cmzlib)
-    SUBDIRS(Utilities/cmzlib)
-  ENDIF(CMAKE_USE_SYSTEM_ZLIB)
-  
+    endif()
+    set(CMAKE_ZLIB_INCLUDES ${ZLIB_INCLUDE_DIR})
+    set(CMAKE_ZLIB_LIBRARIES ${ZLIB_LIBRARIES})
+  else()
+    set(CMAKE_ZLIB_INCLUDES ${CMake_SOURCE_DIR}/Utilities)
+    set(CMAKE_ZLIB_LIBRARIES cmzlib)
+    add_subdirectory(Utilities/cmzlib)
+    CMAKE_SET_TARGET_FOLDER(cmzlib "Utilities/3rdParty")
+  endif()
+
   #---------------------------------------------------------------------
   # Build Curl library for CTest.
-  IF(CMAKE_USE_SYSTEM_CURL)
-    FIND_PACKAGE(CURL)
-    IF(NOT CURL_FOUND)
-      MESSAGE(FATAL_ERROR 
+  if(CMAKE_USE_SYSTEM_CURL)
+    find_package(CURL)
+    if(NOT CURL_FOUND)
+      message(FATAL_ERROR
         "CMAKE_USE_SYSTEM_CURL is ON but a curl is not found!")
-    ENDIF(NOT CURL_FOUND)
-    SET(CMAKE_CURL_INCLUDES ${CURL_INCLUDE_DIRS})
-    SET(CMAKE_CURL_LIBRARIES ${CURL_LIBRARIES})
-  ELSE(CMAKE_USE_SYSTEM_CURL)
-    SET(CURL_SPECIAL_ZLIB_H ${CMAKE_ZLIB_HEADER})
-    SET(CURL_SPECIAL_LIBZ_INCLUDES ${CMAKE_ZLIB_INCLUDES})
-    SET(CURL_SPECIAL_LIBZ ${CMAKE_ZLIB_LIBRARIES})
-    ADD_DEFINITIONS(-DCURL_STATICLIB)
-    SET(CMAKE_CURL_INCLUDES)
-    SET(CMAKE_CURL_LIBRARIES cmcurl)
-    SUBDIRS(Utilities/cmcurl)
-  ENDIF(CMAKE_USE_SYSTEM_CURL)
+    endif()
+    set(CMAKE_CURL_INCLUDES ${CURL_INCLUDE_DIRS})
+    set(CMAKE_CURL_LIBRARIES ${CURL_LIBRARIES})
+  else()
+    set(CURL_SPECIAL_ZLIB_H ${CMAKE_ZLIB_HEADER})
+    set(CURL_SPECIAL_LIBZ_INCLUDES ${CMAKE_ZLIB_INCLUDES})
+    set(CURL_SPECIAL_LIBZ ${CMAKE_ZLIB_LIBRARIES})
+    option(CMAKE_BUILD_CURL_SHARED "Should curl be built shared" FALSE)
+    if(NOT CMAKE_BUILD_CURL_SHARED)
+      add_definitions(-DCURL_STATICLIB)
+    endif()
+    set(CMAKE_CURL_INCLUDES)
+    set(CMAKE_CURL_LIBRARIES cmcurl)
+    if(CMAKE_TESTS_CDASH_SERVER)
+      set(CMAKE_CURL_TEST_URL "${CMAKE_TESTS_CDASH_SERVER}/user.php")
+    endif()
+    add_subdirectory(Utilities/cmcurl)
+    CMAKE_SET_TARGET_FOLDER(cmcurl "Utilities/3rdParty")
+    CMAKE_SET_TARGET_FOLDER(LIBCURL "Utilities/3rdParty")
+  endif()
 
-  #---------------------------------------------------------------------
-  # Build Tar library for CTest.
-  SET(CMTAR_ZLIB_HEADER ${CMAKE_ZLIB_HEADER})
-  SET(CMTAR_ZLIB_LIBRARIES ${CMAKE_ZLIB_LIBRARIES})
-  SET(CMTAR_ZLIB_INCLUDE_DIRS ${CMAKE_ZLIB_INCLUDES})
-  SET(CMAKE_TAR_INCLUDES ${CMAKE_CURRENT_BINARY_DIR}/Utilities/cmtar)
-  SET(CMAKE_TAR_LIBRARIES cmtar)
-  SUBDIRS(Utilities/cmtar)
-  
   #---------------------------------------------------------------------
   # Build Compress library for CTest.
-  SET(CMAKE_COMPRESS_INCLUDES 
+  set(CMAKE_COMPRESS_INCLUDES
     "${CMAKE_CURRENT_BINARY_DIR}/Utilities/cmcompress")
-  SET(CMAKE_COMPRESS_LIBRARIES "cmcompress")
-  SUBDIRS(Utilities/cmcompress)
-  
+  set(CMAKE_COMPRESS_LIBRARIES "cmcompress")
+  add_subdirectory(Utilities/cmcompress)
+  CMAKE_SET_TARGET_FOLDER(cmcompress "Utilities/3rdParty")
+  if(CMAKE_USE_SYSTEM_BZIP2)
+    find_package(BZip2)
+  else()
+    set(BZIP2_INCLUDE_DIR
+      "${CMAKE_CURRENT_SOURCE_DIR}/Utilities/cmbzip2")
+    set(BZIP2_LIBRARIES cmbzip2)
+    add_subdirectory(Utilities/cmbzip2)
+    CMAKE_SET_TARGET_FOLDER(cmbzip2 "Utilities/3rdParty")
+  endif()
+
+  #---------------------------------------------------------------------
+  # Build or use system libarchive for CMake and CTest.
+  if(CMAKE_USE_SYSTEM_LIBARCHIVE)
+    if(EXISTS ${CMAKE_ROOT}/Modules/FindLibArchive.cmake) # added in 2.8.3
+      find_package(LibArchive)
+    else()
+      include(${CMake_SOURCE_DIR}/Modules/FindLibArchive.cmake)
+    endif()
+    if(NOT LibArchive_FOUND)
+      message(FATAL_ERROR "CMAKE_USE_SYSTEM_LIBARCHIVE is ON but LibArchive is not found!")
+    endif()
+    set(CMAKE_TAR_INCLUDES ${LibArchive_INCLUDE_DIRS})
+    set(CMAKE_TAR_LIBRARIES ${LibArchive_LIBRARIES})
+  else()
+    set(ZLIB_INCLUDE_DIR ${CMAKE_ZLIB_INCLUDES})
+    set(ZLIB_LIBRARY ${CMAKE_ZLIB_LIBRARIES})
+    add_definitions(-DLIBARCHIVE_STATIC)
+    set(ENABLE_NETTLE OFF CACHE INTERNAL "Enable use of Nettle")
+    set(ENABLE_OPENSSL ${CMAKE_USE_OPENSSL} CACHE INTERNAL "Enable use of OpenSSL")
+    set(ENABLE_XATTR OFF CACHE INTERNAL "Enable extended attribute support")
+    set(ENABLE_ACL OFF CACHE INTERNAL "Enable ACL support")
+    set(ENABLE_ICONV OFF CACHE INTERNAL "Enable iconv support")
+    add_subdirectory(Utilities/cmlibarchive)
+    CMAKE_SET_TARGET_FOLDER(cmlibarchive "Utilities/3rdParty")
+    set(CMAKE_TAR_LIBRARIES cmlibarchive ${BZIP2_LIBRARIES})
+  endif()
+
   #---------------------------------------------------------------------
   # Build expat library for CMake and CTest.
-  IF(CMAKE_USE_SYSTEM_EXPAT)
-    FIND_PACKAGE(EXPAT)
-    IF(NOT EXPAT_FOUND)
-      MESSAGE(FATAL_ERROR
+  if(CMAKE_USE_SYSTEM_EXPAT)
+    find_package(EXPAT)
+    if(NOT EXPAT_FOUND)
+      message(FATAL_ERROR
         "CMAKE_USE_SYSTEM_EXPAT is ON but a expat is not found!")
-    ENDIF(NOT EXPAT_FOUND)
-    SET(CMAKE_EXPAT_INCLUDES ${EXPAT_INCLUDE_DIRS})
-    SET(CMAKE_EXPAT_LIBRARIES ${EXPAT_LIBRARIES})
-  ELSE(CMAKE_USE_SYSTEM_EXPAT)
-    SET(CMAKE_EXPAT_INCLUDES)
-    SET(CMAKE_EXPAT_LIBRARIES cmexpat)
-    SUBDIRS(Utilities/cmexpat)
-  ENDIF(CMAKE_USE_SYSTEM_EXPAT)
-  
+    endif()
+    set(CMAKE_EXPAT_INCLUDES ${EXPAT_INCLUDE_DIRS})
+    set(CMAKE_EXPAT_LIBRARIES ${EXPAT_LIBRARIES})
+  else()
+    set(CMAKE_EXPAT_INCLUDES)
+    set(CMAKE_EXPAT_LIBRARIES cmexpat)
+    add_subdirectory(Utilities/cmexpat)
+    CMAKE_SET_TARGET_FOLDER(cmexpat "Utilities/3rdParty")
+  endif()
+
   #---------------------------------------------------------------------
   # Build XMLRPC library for CMake and CTest.
-  IF(CMAKE_USE_SYSTEM_XMLRPC)
-    FIND_PACKAGE(XMLRPC QUIET REQUIRED libwww-client)
-    IF(NOT XMLRPC_FOUND)
-      MESSAGE(FATAL_ERROR
-        "CMAKE_USE_SYSTEM_XMLRPC is ON but a xmlrpc is not found!")
-    ENDIF(NOT XMLRPC_FOUND)
-    SET(CMAKE_XMLRPC_INCLUDES ${XMLRPC_INCLUDE_DIRS})
-    SET(CMAKE_XMLRPC_LIBRARIES ${XMLRPC_LIBRARIES})
-  ELSE(CMAKE_USE_SYSTEM_XMLRPC)
-    SET(CMAKE_XMLRPC_INCLUDES)
-    SET(CMAKE_XMLRPC_LIBRARIES cmXMLRPC)
-    SUBDIRS(Utilities/cmxmlrpc)
-  ENDIF(CMAKE_USE_SYSTEM_XMLRPC)
-  
+  if(CTEST_USE_XMLRPC)
+    find_package(XMLRPC QUIET REQUIRED libwww-client)
+    if(NOT XMLRPC_FOUND)
+      message(FATAL_ERROR
+        "CTEST_USE_XMLRPC is ON but xmlrpc is not found!")
+    endif()
+    set(CMAKE_XMLRPC_INCLUDES ${XMLRPC_INCLUDE_DIRS})
+    set(CMAKE_XMLRPC_LIBRARIES ${XMLRPC_LIBRARIES})
+  endif()
+
   #---------------------------------------------------------------------
   # Use curses?
-  IF (UNIX)
+  if (UNIX)
     # there is a bug in the Syllable libraries which makes linking ccmake fail, Alex
-    IF(NOT "${CMAKE_SYSTEM_NAME}" MATCHES syllable)
-      SET(CURSES_NEED_NCURSES TRUE)
-      FIND_PACKAGE(Curses QUIET)
-      IF (CURSES_LIBRARY)
-        OPTION(BUILD_CursesDialog "Build the CMake Curses Dialog ccmake" ON)
-      ELSE (CURSES_LIBRARY)
-        MESSAGE("Curses libraries were not found. Curses GUI for CMake will not be built.")
-        SET(BUILD_CursesDialog 0)
-      ENDIF (CURSES_LIBRARY)
-    ELSE(NOT "${CMAKE_SYSTEM_NAME}" MATCHES syllable)
-      SET(BUILD_CursesDialog 0)
-    ENDIF(NOT "${CMAKE_SYSTEM_NAME}" MATCHES syllable)
-  ELSE (UNIX)
-    SET(BUILD_CursesDialog 0)
-  ENDIF (UNIX)
-  IF(BUILD_CursesDialog)
-    SUBDIRS(Source/CursesDialog/form)
-  ENDIF(BUILD_CursesDialog)
-ENDMACRO (CMAKE_BUILD_UTILITIES)
+    if(NOT "${CMAKE_SYSTEM_NAME}" MATCHES syllable)
+      set(CURSES_NEED_NCURSES TRUE)
+      find_package(Curses QUIET)
+      if (CURSES_LIBRARY)
+        option(BUILD_CursesDialog "Build the CMake Curses Dialog ccmake" ON)
+      else ()
+        message("Curses libraries were not found. Curses GUI for CMake will not be built.")
+        set(BUILD_CursesDialog 0)
+      endif ()
+    else()
+      set(BUILD_CursesDialog 0)
+    endif()
+  else ()
+    set(BUILD_CursesDialog 0)
+  endif ()
+  if(BUILD_CursesDialog)
+    add_subdirectory(Source/CursesDialog/form)
+  endif()
+endmacro ()
 
-
+#-----------------------------------------------------------------------
+if(CMAKE_CXX_PLATFORM_ID MATCHES "OpenBSD")
+  execute_process(COMMAND ${CMAKE_CXX_COMPILER}
+    ${CMAKE_CXX_COMPILER_ARG1} -dumpversion
+    OUTPUT_VARIABLE _GXX_VERSION
+  )
+  string(REGEX REPLACE "([0-9])\\.([0-9])(\\.[0-9])?" "\\1\\2"
+    _GXX_VERSION_SHORT ${_GXX_VERSION})
+  if(_GXX_VERSION_SHORT EQUAL 33)
+    message(FATAL_ERROR
+      "GXX 3.3 on OpenBSD is known to cause CPack to Crash.\n"
+      "Please use GXX 4.2 or greater to build CMake on OpenBSD\n"
+      "${CMAKE_CXX_COMPILER} version is: ${_GXX_VERSION}")
+  endif()
+endif()
 
 #-----------------------------------------------------------------------
 # The main section of the CMakeLists file
 #
 #-----------------------------------------------------------------------
-# The CMake version number.
-SET(CMake_VERSION_MAJOR 2)
-SET(CMake_VERSION_MINOR 6)
-SET(CMake_VERSION_PATCH 4)
-#SET(CMake_VERSION_RC 6)
-# CVS versions are odd, if this is an odd minor version
-# then set the CMake_VERSION_DATE variable
-IF("${CMake_VERSION_MINOR}" MATCHES "[13579]$")
-  INCLUDE(${CMake_SOURCE_DIR}/Source/kwsys/kwsysDateStamp.cmake)
-  SET(CMake_VERSION_DATE
-    "${KWSYS_DATE_STAMP_YEAR}${KWSYS_DATE_STAMP_MONTH}${KWSYS_DATE_STAMP_DAY}"
-    )
-ENDIF("${CMake_VERSION_MINOR}" MATCHES "[13579]$")
+include(Source/CMakeVersion.cmake)
+# Releases define a small tweak level.
+if("${CMake_VERSION_TWEAK}" VERSION_LESS 20000000)
+  set(CMake_VERSION_IS_RELEASE 1)
+  set(CMake_VERSION_SOURCE "")
+else()
+  set(CMake_VERSION_IS_RELEASE 0)
+  include(${CMake_SOURCE_DIR}/Source/CMakeVersionSource.cmake)
+endif()
 
-SET(CMake_VERSION "${CMake_VERSION_MAJOR}.${CMake_VERSION_MINOR}")
-SET(CMake_VERSION_FULL "${CMake_VERSION}.${CMake_VERSION_PATCH}")
+# Compute the full version string.
+set(CMake_VERSION ${CMake_VERSION_MAJOR}.${CMake_VERSION_MINOR}.${CMake_VERSION_PATCH})
+if(${CMake_VERSION_TWEAK} GREATER 0)
+  set(CMake_VERSION ${CMake_VERSION}.${CMake_VERSION_TWEAK})
+endif()
+if(CMake_VERSION_RC)
+  set(CMake_VERSION ${CMake_VERSION}-rc${CMake_VERSION_RC})
+endif()
+if(CMake_VERSION_SOURCE)
+  set(CMake_VERSION ${CMake_VERSION}-${CMake_VERSION_SOURCE})
+endif()
 
 # Include the standard Dart testing module
-ENABLE_TESTING()
-INCLUDE (${CMAKE_ROOT}/Modules/Dart.cmake)
+enable_testing()
+include (${CMAKE_ROOT}/Modules/Dart.cmake)
+
+# Set up test-time configuration.
+set_directory_properties(PROPERTIES
+  TEST_INCLUDE_FILE "${CMake_BINARY_DIR}/Tests/EnforceConfig.cmake")
 
 # where to write the resulting executables and libraries
-SET(BUILD_SHARED_LIBS OFF)
-SET(EXECUTABLE_OUTPUT_PATH ${CMake_BINARY_DIR}/bin CACHE INTERNAL 
-  "Where to put the executables for CMake")
-SET(LIBRARY_OUTPUT_PATH "" CACHE INTERNAL 
+set(BUILD_SHARED_LIBS OFF)
+set(EXECUTABLE_OUTPUT_PATH "" CACHE INTERNAL "No configurable exe dir.")
+set(LIBRARY_OUTPUT_PATH "" CACHE INTERNAL
   "Where to put the libraries for CMake")
-INCLUDE_REGULAR_EXPRESSION("^.*$")
 
 # The CMake executables usually do not need any rpath to run in the build or
 # install tree.
-SET(CMAKE_SKIP_RPATH ON CACHE INTERNAL "CMake does not need RPATHs.")
+set(CMAKE_SKIP_RPATH ON CACHE INTERNAL "CMake does not need RPATHs.")
 
-SET(CMAKE_DATA_DIR "/share/cmake-${CMake_VERSION}" CACHE STRING
+set(CMAKE_DATA_DIR "share/cmake-${CMake_VERSION_MAJOR}.${CMake_VERSION_MINOR}" CACHE STRING
   "Install location for data (relative to prefix).")
-SET(CMAKE_DOC_DIR "/doc/cmake-${CMake_VERSION}" CACHE STRING
+set(CMAKE_DOC_DIR "doc/cmake-${CMake_VERSION_MAJOR}.${CMake_VERSION_MINOR}" CACHE STRING
   "Install location for documentation (relative to prefix).")
-SET(CMAKE_MAN_DIR "/man" CACHE STRING
+set(CMAKE_MAN_DIR "man" CACHE STRING
   "Install location for man pages (relative to prefix).")
-MARK_AS_ADVANCED(CMAKE_DATA_DIR CMAKE_DOC_DIR CMAKE_MAN_DIR)
+mark_as_advanced(CMAKE_DATA_DIR CMAKE_DOC_DIR CMAKE_MAN_DIR)
+if(CYGWIN AND EXISTS "${CMAKE_ROOT}/Modules/CPack.cmake")
+  # Force doc, data and man dirs to conform to cygwin layout.
+  set(CMAKE_DOC_DIR  "share/doc/cmake-${CMake_VERSION}")
+  set(CMAKE_DATA_DIR "share/cmake-${CMake_VERSION}")
+  set(CMAKE_MAN_DIR  "share/man")
+  # let the user know we just forced these values
+  message(STATUS "Setup for Cygwin packaging")
+  message(STATUS "Override cache CMAKE_DOC_DIR = ${CMAKE_DOC_DIR}")
+  message(STATUS "Override cache CMAKE_DATA_DIR = ${CMAKE_DATA_DIR}")
+  message(STATUS "Override cache CMAKE_MAN_DIR = ${CMAKE_MAN_DIR}")
+endif()
+string(REGEX REPLACE "^/" "" CMAKE_DATA_DIR "${CMAKE_DATA_DIR}")
+string(REGEX REPLACE "^/" "" CMAKE_DOC_DIR "${CMAKE_DOC_DIR}")
+string(REGEX REPLACE "^/" "" CMAKE_MAN_DIR "${CMAKE_MAN_DIR}")
+
+if(BUILD_TESTING)
+  include(${CMake_SOURCE_DIR}/Tests/CMakeInstall.cmake)
+endif()
 
 # include special compile flags for some compilers
-INCLUDE(CompileFlags.cmake)
+include(CompileFlags.cmake)
 
 # no clue why we are testing for this here
-INCLUDE(CheckSymbolExists)
+include(CheckSymbolExists)
 CHECK_SYMBOL_EXISTS(unsetenv "stdlib.h" HAVE_UNSETENV)
 CHECK_SYMBOL_EXISTS(environ "stdlib.h" HAVE_ENVIRON_NOT_REQUIRE_PROTOTYPE)
 
-# build the utilities (a macro defined in this file) 
+# CMAKE_TESTS_CDASH_SERVER: CDash server used by CMake/Tests.
+#
+# If not defined or "", this variable defaults to the server at
+# http://www.cdash.org/CDash.
+#
+# If set explicitly to "NOTFOUND", curl tests and ctest tests that use
+# the network are skipped.
+#
+# If set to something starting with "http://localhost/", the CDash is
+# expected to be an instance of CDash used for CDash testing, pointing
+# to a cdash4simpletest database. In these cases, the CDash dashboards
+# should be run first.
+#
+if("x${CMAKE_TESTS_CDASH_SERVER}" STREQUAL "x")
+  set(CMAKE_TESTS_CDASH_SERVER "http://www.cdash.org/CDash")
+endif()
+
+# build the utilities (a macro defined in this file)
 CMAKE_BUILD_UTILITIES()
 
 # On NetBSD ncurses is required, since curses doesn't have the wsyncup()
 # function. ncurses is installed via pkgsrc, so the library is in /usr/pkg/lib,
-# which isn't in the default linker search path. So without RPATH ccmake 
+# which isn't in the default linker search path. So without RPATH ccmake
 # doesn't run and the build doesn't succeed since ccmake is executed for
 # generating the documentation.
-IF(BUILD_CursesDialog)
-  GET_FILENAME_COMPONENT(_CURSES_DIR "${CURSES_LIBRARY}" PATH)
-  SET(CURSES_NEED_RPATH FALSE)
-  IF(NOT "${_CURSES_DIR}" STREQUAL "/lib" AND NOT "${_CURSES_DIR}" STREQUAL "/usr/lib" AND NOT "${_CURSES_DIR}" STREQUAL "/lib64" AND NOT "${_CURSES_DIR}" STREQUAL "/usr/lib64")
-    SET(CURSES_NEED_RPATH TRUE)
-  ENDIF(NOT "${_CURSES_DIR}" STREQUAL "/lib" AND NOT "${_CURSES_DIR}" STREQUAL "/usr/lib" AND NOT "${_CURSES_DIR}" STREQUAL "/lib64" AND NOT "${_CURSES_DIR}" STREQUAL "/usr/lib64")
-ENDIF(BUILD_CursesDialog)
+if(BUILD_CursesDialog)
+  get_filename_component(_CURSES_DIR "${CURSES_LIBRARY}" PATH)
+  set(CURSES_NEED_RPATH FALSE)
+  if(NOT "${_CURSES_DIR}" STREQUAL "/lib" AND NOT "${_CURSES_DIR}" STREQUAL "/usr/lib" AND NOT "${_CURSES_DIR}" STREQUAL "/lib64" AND NOT "${_CURSES_DIR}" STREQUAL "/usr/lib64")
+    set(CURSES_NEED_RPATH TRUE)
+  endif()
+endif()
 
-IF(BUILD_QtDialog)
-  IF(APPLE)
-    SET(CMAKE_BUNDLE_NAME
+if(BUILD_QtDialog)
+  if(APPLE)
+    set(CMAKE_BUNDLE_NAME
       "CMake ${CMake_VERSION_MAJOR}.${CMake_VERSION_MINOR}-${CMake_VERSION_PATCH}")
-    IF(CMake_VERSION_DATE)
-      SET(CMAKE_BUNDLE_NAME
-        "CMake ${CMake_VERSION_MAJOR}.${CMake_VERSION_MINOR}-${CMake_VERSION_DATE}")
-    ENDIF(CMake_VERSION_DATE)
-    SET(CMAKE_BUNDLE_LOCATION "${CMAKE_INSTALL_PREFIX}")
+    set(CMAKE_BUNDLE_LOCATION "${CMAKE_INSTALL_PREFIX}")
     # make sure CMAKE_INSTALL_PREFIX ends in /
-    STRING(LENGTH "${CMAKE_INSTALL_PREFIX}" LEN)
-    MATH(EXPR LEN "${LEN} -1" )
-    STRING(SUBSTRING "${CMAKE_INSTALL_PREFIX}" ${LEN} 1 ENDCH)
-    IF(NOT "${ENDCH}" STREQUAL "/")
-      SET(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/")
-    ENDIF(NOT "${ENDCH}" STREQUAL "/")
-    SET(CMAKE_INSTALL_PREFIX 
+    string(LENGTH "${CMAKE_INSTALL_PREFIX}" LEN)
+    math(EXPR LEN "${LEN} -1" )
+    string(SUBSTRING "${CMAKE_INSTALL_PREFIX}" ${LEN} 1 ENDCH)
+    if(NOT "${ENDCH}" STREQUAL "/")
+      set(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/")
+    endif()
+    set(CMAKE_INSTALL_PREFIX
       "${CMAKE_INSTALL_PREFIX}${CMAKE_BUNDLE_NAME}.app/Contents")
-  ENDIF(APPLE)
-  
-  SET(QT_NEED_RPATH FALSE)
-  IF(NOT "${QT_LIBRARY_DIR}" STREQUAL "/lib" AND NOT "${QT_LIBRARY_DIR}" STREQUAL "/usr/lib" AND NOT "${QT_LIBRARY_DIR}" STREQUAL "/lib64" AND NOT "${QT_LIBRARY_DIR}" STREQUAL "/usr/lib64")
-    SET(QT_NEED_RPATH TRUE)
-  ENDIF(NOT "${QT_LIBRARY_DIR}" STREQUAL "/lib" AND NOT "${QT_LIBRARY_DIR}" STREQUAL "/usr/lib" AND NOT "${QT_LIBRARY_DIR}" STREQUAL "/lib64" AND NOT "${QT_LIBRARY_DIR}" STREQUAL "/usr/lib64")
-ENDIF(BUILD_QtDialog)
+  endif()
+
+  set(QT_NEED_RPATH FALSE)
+  if(NOT "${QT_LIBRARY_DIR}" STREQUAL "/lib" AND NOT "${QT_LIBRARY_DIR}" STREQUAL "/usr/lib" AND NOT "${QT_LIBRARY_DIR}" STREQUAL "/lib64" AND NOT "${QT_LIBRARY_DIR}" STREQUAL "/usr/lib64")
+    set(QT_NEED_RPATH TRUE)
+  endif()
+endif()
 
 
-# The same might be true on other systems for other libraries if 
-# CMAKE_USE_SYSTEM_XMLRPC or other variables like this are enabled.
-# Then only enable RPATH if we have are building at least with cmake 2.4, 
+# The same might be true on other systems for other libraries.
+# Then only enable RPATH if we have are building at least with cmake 2.4,
 # since this one has much better RPATH features than cmake 2.2.
 # The executables are then built with the RPATH for the libraries outside
 # the build tree, which is both the build and the install RPATH.
-IF (UNIX)
-  IF(   CMAKE_USE_SYSTEM_CURL   OR  CMAKE_USE_SYSTEM_ZLIB
-        OR  CMAKE_USE_SYSTEM_EXPAT  OR  CMAKE_USE_SYSTEM_XMLRPC  OR  CURSES_NEED_RPATH  OR  QT_NEED_RPATH)
-    SET(CMAKE_SKIP_RPATH OFF CACHE INTERNAL "CMake built with RPATH.")
-    SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-    SET(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-  ENDIF(CMAKE_USE_SYSTEM_CURL   OR  CMAKE_USE_SYSTEM_ZLIB
-        OR  CMAKE_USE_SYSTEM_EXPAT  OR  CMAKE_USE_SYSTEM_XMLRPC  OR  CURSES_NEED_RPATH  OR  QT_NEED_RPATH)
-ENDIF (UNIX)
+if (UNIX)
+  if(   CMAKE_USE_SYSTEM_CURL   OR  CMAKE_USE_SYSTEM_ZLIB
+        OR  CMAKE_USE_SYSTEM_EXPAT  OR  CTEST_USE_XMLRPC  OR  CURSES_NEED_RPATH  OR  QT_NEED_RPATH)
+    set(CMAKE_SKIP_RPATH OFF CACHE INTERNAL "CMake built with RPATH.")
+    set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+    set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+  endif()
+endif ()
 
-
-# should we build the MFC dialog? (a macro defined in this file)
-CMAKE_TEST_FOR_MFC()
 
 # add the uninstall support
-CONFIGURE_FILE(
+configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/cmake_uninstall.cmake.in"
   "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
   @ONLY)
-ADD_CUSTOM_TARGET(uninstall
+add_custom_target(uninstall
   "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
 
-INCLUDE (CMakeCPack.cmake)
+include (CMakeCPack.cmake)
 
 # setup some Testing support (a macro defined in this file)
 CMAKE_SETUP_TESTING()
-CONFIGURE_FILE(
+configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/DartLocal.conf.in"
   "${CMAKE_CURRENT_BINARY_DIR}/DartLocal.conf"
   COPYONLY)
 
-OPTION(CMAKE_STRICT   
+option(CMAKE_STRICT
   "Perform strict testing to record property and variable access. Can be used to report any undefined properties or variables" OFF)
-MARK_AS_ADVANCED(CMAKE_STRICT)
+mark_as_advanced(CMAKE_STRICT)
 
+if(NOT CMake_VERSION_IS_RELEASE)
+  if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" AND
+      NOT "${CMAKE_C_COMPILER_VERSION}" VERSION_LESS 4.2)
+    set(C_FLAGS_LIST -Wcast-align -Werror-implicit-function-declaration -Wchar-subscripts
+                     -Wall -W -Wpointer-arith -Wwrite-strings -Wformat-security
+                     -Wmissing-format-attribute -fno-common -Wundef
+    )
+    set(CXX_FLAGS_LIST -Wnon-virtual-dtor -Wcast-align -Wchar-subscripts -Wall -W
+                       -Wshadow -Wpointer-arith -Wformat-security -Wundef
+    )
+
+    foreach(FLAG_LANG  C CXX)
+      foreach(FLAG ${${FLAG_LANG}_FLAGS_LIST})
+        if(NOT " ${CMAKE_${FLAG_LANG}_FLAGS} " MATCHES " ${FLAG} ")
+          set(CMAKE_${FLAG_LANG}_FLAGS "${CMAKE_${FLAG_LANG}_FLAGS} ${FLAG}")
+        endif()
+      endforeach()
+    endforeach()
+
+    unset(C_FLAGS_LIST)
+    unset(CXX_FLAGS_LIST)
+  endif()
+endif()
 
 # build the remaining subdirectories
-SUBDIRS(Source)
-SUBDIRS(Modules)
-SUBDIRS(Templates)
-SUBDIRS(Utilities)
-SUBDIRS(Tests)
+add_subdirectory(Source)
+add_subdirectory(Utilities)
+add_subdirectory(Tests)
+
+if(BUILD_TESTING)
+  CMAKE_SET_TARGET_FOLDER(CMakeLibTests "Tests")
+endif()
+CMAKE_SET_TARGET_FOLDER(cmw9xcom "Utilities/Win9xCompat")
+CMAKE_SET_TARGET_FOLDER(documentation "Documentation")
 
 # add a test
-ADD_TEST(SystemInformationNew "${CMAKE_CMAKE_COMMAND}" 
+add_test(SystemInformationNew "${CMAKE_CMAKE_COMMAND}"
   --system-information  -G "${CMAKE_TEST_GENERATOR}" )
+
+# Install license file as it requires.
+install(FILES Copyright.txt DESTINATION ${CMAKE_DOC_DIR})
+
+# Install script directories.
+install(
+  DIRECTORY Modules Templates
+  DESTINATION ${CMAKE_DATA_DIR}
+  FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+  DIRECTORY_PERMISSIONS OWNER_READ OWNER_EXECUTE OWNER_WRITE
+                        GROUP_READ GROUP_EXECUTE
+                        WORLD_READ WORLD_EXECUTE
+  PATTERN "*.sh*" PERMISSIONS OWNER_READ OWNER_EXECUTE OWNER_WRITE
+                              GROUP_READ GROUP_EXECUTE
+                              WORLD_READ WORLD_EXECUTE
+  )
+
+# process docs related install
+add_subdirectory(Docs)
 
 #-----------------------------------------------------------------------
 # End of the main section of the CMakeLists file
 #-----------------------------------------------------------------------
+
+# As a special case when building CMake itself, CMake 2.8.0 and below
+# look up EXECUTABLE_OUTPUT_PATH in the top-level CMakeLists.txt file
+# to compute the location of the "cmake" executable.  We set it here
+# so that those CMake versions can find it.  We wait until after all
+# the add_subdirectory() calls to avoid affecting the subdirectories.
+set(EXECUTABLE_OUTPUT_PATH ${CMake_BIN_DIR})

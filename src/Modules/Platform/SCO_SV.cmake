@@ -1,5 +1,2 @@
-SET(CMAKE_SHARED_LIBRARY_C_FLAGS "-Kpic -belf")
-SET(CMAKE_SHARED_LIBRARY_CXX_FLAGS "-Kpic -belf")
-SET(CMAKE_DL_LIBS "")
-SET(CMAKE_SHARED_LIBRARY_CREATE_C_FLAGS "-belf -Wl,-Bexport")  
-INCLUDE(Platform/UnixPaths)
+set(CMAKE_DL_LIBS "")
+include(Platform/UnixPaths)

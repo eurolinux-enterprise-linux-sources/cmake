@@ -20,7 +20,7 @@
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
  *
- * $Id: curl.h,v 1.3.12.1 2008-11-04 20:16:45 hoffman Exp $
+ * $Id$
  ***************************************************************************/
 
 /* If you have problems, all libcurl docs and details are found here:
@@ -312,7 +312,7 @@ typedef enum {
   CURLE_UNSUPPORTED_PROTOCOL,    /* 1 */
   CURLE_FAILED_INIT,             /* 2 */
   CURLE_URL_MALFORMAT,           /* 3 */
-  CURLE_URL_MALFORMAT_USER,      /* 4 - NOT USED */
+  CURLE_NOT_BUILT_IN,            /* 4 */
   CURLE_COULDNT_RESOLVE_PROXY,   /* 5 */
   CURLE_COULDNT_RESOLVE_HOST,    /* 6 */
   CURLE_COULDNT_CONNECT,         /* 7 */

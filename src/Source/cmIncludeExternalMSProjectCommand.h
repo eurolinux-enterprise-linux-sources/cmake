@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmIncludeExternalMSProjectCommand.h,v $
-  Language:  C++
-  Date:      $Date: 2008-12-02 12:07:37 $
-  Version:   $Revision: 1.8.2.1 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmIncludeExternalMSProjectCommand_h
 #define cmIncludeExternalMSProjectCommand_h
 
@@ -32,7 +27,7 @@ public:
   /**
    * This is a virtual constructor for the command.
    */
-  virtual cmCommand* Clone() 
+  virtual cmCommand* Clone()
     {
     return new cmIncludeExternalMSProjectCommand;
     }
@@ -43,35 +38,44 @@ public:
    */
   virtual bool InitialPass(std::vector<std::string> const& args,
                            cmExecutionStatus &status);
-  
+
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() {return "include_external_msproject";}
+  virtual const char* GetName() const {return "include_external_msproject";}
 
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation() 
+  virtual const char* GetTerseDocumentation() const
     {
     return "Include an external Microsoft project file in a workspace.";
     }
-  
+
   /**
    * More documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
     return
       "  include_external_msproject(projectname location\n"
+      "                             [TYPE projectTypeGUID]\n"
+      "                             [GUID projectGUID]\n"
+      "                             [PLATFORM platformName]\n"
       "                             dep1 dep2 ...)\n"
       "Includes an external Microsoft project in the generated workspace "
       "file.  Currently does nothing on UNIX. This will create a "
-      "target named INCLUDE_EXTERNAL_MSPROJECT_[projectname].  This can "
-      "be used in the add_dependencies command to make things depend "
-      "on the external project.";
+      "target named [projectname].  This can be used in the add_dependencies "
+      "command to make things depend on the external project."
+      "\n"
+      "TYPE, GUID and PLATFORM are optional parameters that allow one "
+      "to specify the type of project, id (GUID) of the project and "
+      "the name of the target platform.  "
+      "This is useful for projects requiring values other than the default "
+      "(e.g. WIX projects). "
+      "These options are not supported by the Visual Studio 6 generator.";
     }
-  
+
   cmTypeMacro(cmIncludeExternalMSProjectCommand, cmCommand);
 };
 

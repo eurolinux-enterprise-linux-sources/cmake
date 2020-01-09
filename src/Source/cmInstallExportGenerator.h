@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmInstallExportGenerator.h,v $
-  Language:  C++
-  Date:      $Date: 2009-01-13 18:03:52 $
-  Version:   $Revision: 1.5.2.1 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmInstallExportGenerator_h
 #define cmInstallExportGenerator_h
 
@@ -22,8 +17,7 @@
 class cmExportInstallFileGenerator;
 class cmInstallFilesGenerator;
 class cmInstallTargetGenerator;
-class cmTarget;
-class cmTargetExport;
+class cmExportSet;
 class cmMakefile;
 
 /** \class cmInstallExportGenerator
@@ -32,27 +26,33 @@ class cmMakefile;
 class cmInstallExportGenerator: public cmInstallGenerator
 {
 public:
-  cmInstallExportGenerator(const char* name,
+  cmInstallExportGenerator(cmExportSet* exportSet,
                            const char* dest, const char* file_permissions,
                            const std::vector<std::string>& configurations,
                            const char* component,
                            const char* filename, const char* name_space,
-                           cmMakefile* mf);
+                           bool exportOld, cmMakefile* mf);
   ~cmInstallExportGenerator();
-protected:
-  typedef std::vector<cmTargetExport*> ExportSet;
 
+  cmExportSet* GetExportSet() {return this->ExportSet;}
+
+  cmMakefile* GetMakefile() const { return this->Makefile; }
+
+  const std::string& GetNamespace() const { return this->Namespace; }
+
+protected:
   virtual void GenerateScript(std::ostream& os);
   virtual void GenerateScriptConfigs(std::ostream& os, Indent const& indent);
   virtual void GenerateScriptActions(std::ostream& os, Indent const& indent);
-  void GenerateImportFile(ExportSet const* exportSet);
-  void GenerateImportFile(const char* config, ExportSet const* exportSet);
+  void GenerateImportFile(cmExportSet const* exportSet);
+  void GenerateImportFile(const char* config, cmExportSet const* exportSet);
   void ComputeTempDir();
 
-  std::string Name;
+  cmExportSet* ExportSet;
   std::string FilePermissions;
   std::string FileName;
   std::string Namespace;
+  bool ExportOld;
   cmMakefile* Makefile;
 
   std::string TempDir;

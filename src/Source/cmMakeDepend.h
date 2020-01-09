@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmMakeDepend.h,v $
-  Language:  C++
-  Date:      $Date: 2009-03-23 17:58:48 $
-  Version:   $Revision: 1.24.10.1 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmMakeDepend_h
 #define cmMakeDepend_h
 
@@ -53,26 +48,26 @@ public:
    * to it.
    */
   const cmSourceFile *SourceFile;
-  
+
   /**
    * Full path to this file.
    */
   std::string FullPath;
-  
+
   /**
    * Full path not including file name.
    */
   std::string PathOnly;
-  
+
   /**
    * Name used to #include this file.
    */
   std::string IncludeName;
-  
+
   /**
    * This method adds the dependencies of another file to this one.
    */
-  void AddDependencies(cmDependInformation*);  
+  void AddDependencies(cmDependInformation*);
 };
 
 
@@ -90,11 +85,11 @@ public:
    * Destructor.
    */
   virtual ~cmMakeDepend();
-  
-  /** 
+
+  /**
    * Set the makefile that is used as a source of classes.
    */
-  virtual void SetMakefile(cmMakefile* makefile); 
+  virtual void SetMakefile(cmMakefile* makefile);
 
   /**
    * Add a directory to the search path for include files.
@@ -112,26 +107,26 @@ protected:
    * Compute the depend information for this class.
    */
   virtual void DependWalk(cmDependInformation* info);
-  
+
   /**
    * Add a dependency.  Possibly walk it for more dependencies.
    */
   virtual void AddDependency(cmDependInformation* info, const char* file);
-  
+
   /**
    * Fill in the given object with dependency information.  If the
    * information is already complete, nothing is done.
    */
   void GenerateDependInformation(cmDependInformation* info);
-  
+
   /**
    * Get an instance of cmDependInformation corresponding to the given file
    * name.
    */
-  cmDependInformation* GetDependInformation(const char* file, 
-                                            const char *extraPath);  
-  
-  /** 
+  cmDependInformation* GetDependInformation(const char* file,
+                                            const char *extraPath);
+
+  /**
    * Find the full path name for the given file name.
    * This uses the include directories.
    * TODO: Cache path conversions to reduce FileExists calls.
@@ -144,9 +139,9 @@ protected:
   cmsys::RegularExpression ComplainFileRegularExpression;
   std::vector<std::string> IncludeDirectories;
   typedef std::map<cmStdString, cmStdString> FileToPathMapType;
-  typedef std::map<cmStdString, FileToPathMapType> 
+  typedef std::map<cmStdString, FileToPathMapType>
   DirectoryToFileToPathMapType;
-  typedef std::map<cmStdString, cmDependInformation*> 
+  typedef std::map<cmStdString, cmDependInformation*>
   DependInformationMapType;
   DependInformationMapType DependInformationMap;
   DirectoryToFileToPathMapType DirectoryToFileToPathMap;

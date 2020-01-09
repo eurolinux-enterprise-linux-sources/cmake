@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmComputeLinkInformation.h,v $
-  Language:  C++
-  Date:      $Date: 2008-10-24 15:18:45 $
-  Version:   $Revision: 1.15.2.4 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmComputeLinkInformation_h
 #define cmComputeLinkInformation_h
 
@@ -34,7 +29,8 @@ class cmOrderDirectories;
 class cmComputeLinkInformation
 {
 public:
-  cmComputeLinkInformation(cmTarget* target, const char* config);
+  cmComputeLinkInformation(cmTarget* target, const char* config,
+                           cmTarget* headTarget);
   ~cmComputeLinkInformation();
   bool Compute();
 
@@ -79,6 +75,7 @@ private:
 
   // Context information.
   cmTarget* Target;
+  cmTarget* HeadTarget;
   cmMakefile* Makefile;
   cmLocalGenerator* LocalGenerator;
   cmGlobalGenerator* GlobalGenerator;
@@ -87,6 +84,7 @@ private:
   // Configuration information.
   const char* Config;
   const char* LinkLanguage;
+  bool LinkDependsNoShared;
 
   // Modes for dealing with dependent shared libraries.
   enum SharedDepMode
@@ -133,9 +131,11 @@ private:
   cmsys::RegularExpression ExtractSharedLibraryName;
   cmsys::RegularExpression ExtractAnyLibraryName;
   std::string SharedRegexString;
+  bool OpenBSD;
   void AddLinkPrefix(const char* p);
   void AddLinkExtension(const char* e, LinkType type);
-  std::string CreateExtensionRegex(std::vector<std::string> const& exts);
+  std::string CreateExtensionRegex(std::vector<std::string> const& exts,
+                                   LinkType type);
   std::string NoCaseExpression(const char* str);
 
   // Handling of link items.
@@ -160,7 +160,16 @@ private:
   cmOrderDirectories* OrderLinkerSearchPath;
   bool FinishLinkerSearchDirectories();
   void PrintLinkPolicyDiagnosis(std::ostream&);
+
+  // Implicit link libraries and directories for linker language.
+  void LoadImplicitLinkInfo();
+  void AddImplicitLinkInfo();
+  void AddImplicitLinkInfo(std::string const& lang);
   std::set<cmStdString> ImplicitLinkDirs;
+  std::set<cmStdString> ImplicitLinkLibs;
+
+  // Additional paths configured by the runtime linker
+  std::vector<std::string> RuntimeLinkDirs;
 
   // Linker search path compatibility mode.
   std::set<cmStdString> OldLinkDirMask;

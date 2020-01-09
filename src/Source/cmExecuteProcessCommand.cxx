@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmExecuteProcessCommand.cxx,v $
-  Language:  C++
-  Date:      $Date: 2008-01-23 15:27:59 $
-  Version:   $Revision: 1.10 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmExecuteProcessCommand.h"
 #include "cmSystemTools.h"
 
@@ -271,12 +266,12 @@ bool cmExecuteProcessCommand
     }
   if(!output_file.empty())
     {
-    cmsysProcess_SetPipeFile(cp, cmsysProcess_Pipe_STDOUT, 
+    cmsysProcess_SetPipeFile(cp, cmsysProcess_Pipe_STDOUT,
                              output_file.c_str());
     }
   if(!error_file.empty())
     {
-    cmsysProcess_SetPipeFile(cp, cmsysProcess_Pipe_STDERR, 
+    cmsysProcess_SetPipeFile(cp, cmsysProcess_Pipe_STDERR,
                              error_file.c_str());
     }
 
@@ -298,8 +293,8 @@ bool cmExecuteProcessCommand
   while((p = cmsysProcess_WaitForData(cp, &data, &length, 0), p))
     {
     // Put the output in the right place.
-    if(p == cmsysProcess_Pipe_STDOUT && !output_quiet ||
-       p == cmsysProcess_Pipe_STDERR && !error_quiet && merge_output)
+    if((p == cmsysProcess_Pipe_STDOUT && !output_quiet) ||
+       (p == cmsysProcess_Pipe_STDERR && !error_quiet && merge_output))
       {
       if(output_variable.empty())
         {
@@ -331,12 +326,12 @@ bool cmExecuteProcessCommand
   // Store the output obtained.
   if(!output_variable.empty() && tempOutput.size())
     {
-    this->Makefile->AddDefinition(output_variable.c_str(), 
+    this->Makefile->AddDefinition(output_variable.c_str(),
                                   &*tempOutput.begin());
     }
   if(!merge_output && !error_variable.empty() && tempError.size())
     {
-    this->Makefile->AddDefinition(error_variable.c_str(), 
+    this->Makefile->AddDefinition(error_variable.c_str(),
                                   &*tempError.begin());
     }
 

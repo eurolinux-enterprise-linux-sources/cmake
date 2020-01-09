@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc.
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmCTestReadCustomFilesCommand.h,v $
-  Language:  C++
-  Date:      $Date: 2006/03/10 20:03:09 $
-  Version:   $Revision: 1.2 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmCTestReadCustomFilesCommand_h
 #define cmCTestReadCustomFilesCommand_h
 
@@ -30,11 +25,11 @@ class cmCTestReadCustomFilesCommand : public cmCTestCommand
 public:
 
   cmCTestReadCustomFilesCommand() {}
-  
+
   /**
    * This is a virtual constructor for the command.
    */
-  virtual cmCommand* Clone() 
+  virtual cmCommand* Clone()
     {
     cmCTestReadCustomFilesCommand* ni = new cmCTestReadCustomFilesCommand;
     ni->CTest = this->CTest;
@@ -51,20 +46,20 @@ public:
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() { return "ctest_read_custom_files";}
+  virtual const char* GetName() const { return "ctest_read_custom_files";}
 
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation() 
+  virtual const char* GetTerseDocumentation() const
     {
     return "read CTestCustom files.";
     }
-  
+
   /**
    * More documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
     return
       "  ctest_read_custom_files( directory ... )\n"

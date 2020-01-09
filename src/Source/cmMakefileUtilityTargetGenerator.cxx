@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmMakefileUtilityTargetGenerator.cxx,v $
-  Language:  C++
-  Date:      $Date: 2008-02-18 21:38:34 $
-  Version:   $Revision: 1.8 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmMakefileUtilityTargetGenerator.h"
 
 #include "cmGeneratedFileStream.h"
@@ -29,6 +24,16 @@ cmMakefileUtilityTargetGenerator
   cmMakefileTargetGenerator(target)
 {
   this->CustomCommandDriver = OnUtility;
+  this->OSXBundleGenerator = new cmOSXBundleGenerator(this->Target,
+                                                      this->ConfigName);
+  this->OSXBundleGenerator->SetMacContentFolders(&this->MacContentFolders);
+}
+
+//----------------------------------------------------------------------------
+cmMakefileUtilityTargetGenerator
+::~cmMakefileUtilityTargetGenerator()
+{
+  delete this->OSXBundleGenerator;
 }
 
 //----------------------------------------------------------------------------
@@ -38,6 +43,20 @@ void cmMakefileUtilityTargetGenerator::WriteRuleFiles()
 
   *this->BuildFileStream
     << "# Utility rule file for " << this->Target->GetName() << ".\n\n";
+
+  if(!this->NoRuleMessages)
+    {
+    const char* root = (this->Makefile->IsOn("CMAKE_MAKE_INCLUDE_FROM_ROOT")?
+                      "$(CMAKE_BINARY_DIR)/" : "");
+    // Include the progress variables for the target.
+    *this->BuildFileStream
+      << "# Include the progress variables for this target.\n"
+      << this->LocalGenerator->IncludeDirective << " " << root
+      << this->Convert(this->ProgressFileNameFull.c_str(),
+                       cmLocalGenerator::HOME_OUTPUT,
+                       cmLocalGenerator::MAKEFILE)
+      << "\n\n";
+    }
 
   // write the custom commands for this target
   this->WriteTargetBuildRules();
@@ -54,13 +73,13 @@ void cmMakefileUtilityTargetGenerator::WriteRuleFiles()
     (depends, this->Target->GetPostBuildCommands());
 
   this->LocalGenerator->AppendCustomCommands
-    (commands, this->Target->GetPreBuildCommands());
+    (commands, this->Target->GetPreBuildCommands(), this->Target);
 
   // Depend on all custom command outputs for sources
   this->DriveCustomCommands(depends);
 
   this->LocalGenerator->AppendCustomCommands
-    (commands, this->Target->GetPostBuildCommands());
+    (commands, this->Target->GetPostBuildCommands(), this->Target);
 
   // Add dependencies on targets that must be built first.
   this->AppendTargetDepends(depends);

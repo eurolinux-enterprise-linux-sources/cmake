@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmUseMangledMesaCommand.cxx,v $
-  Language:  C++
-  Date:      $Date: 2008-01-23 15:27:59 $
-  Version:   $Revision: 1.18 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmUseMangledMesaCommand.h"
 #include "cmSystemTools.h"
 
@@ -22,7 +17,7 @@
 // cmUseMangledMesaCommand
 bool cmUseMangledMesaCommand
 ::InitialPass(std::vector<std::string> const& args, cmExecutionStatus &)
-{ 
+{
   // expected two arguments:
   // arguement one: the full path to gl_mangle.h
   // arguement two : directory for output of edited headers
@@ -60,11 +55,11 @@ bool cmUseMangledMesaCommand
     path += *i;
     this->CopyAndFullPathMesaHeader(path.c_str(), destDir);
     }
-  
+
   return true;
 }
 
-void 
+void
 cmUseMangledMesaCommand::
 CopyAndFullPathMesaHeader(const char* source,
                           const char* outdir)
@@ -79,7 +74,7 @@ CopyAndFullPathMesaHeader(const char* source,
   std::ofstream fout(tempOutputFile.c_str());
   if(!fout)
     {
-    cmSystemTools::Error("Could not open file for write in copy operation: ", 
+    cmSystemTools::Error("Could not open file for write in copy operation: ",
                          tempOutputFile.c_str(), outdir);
     cmSystemTools::ReportLastSystemError("");
     return;
@@ -93,7 +88,7 @@ CopyAndFullPathMesaHeader(const char* source,
     }
   // now copy input to output and expand variables in the
   // input file at the same time
-  std::string inLine;  
+  std::string inLine;
   // regular expression for any #include line
   cmsys::RegularExpression includeLine(
     "^[ \t]*#[ \t]*include[ \t]*[<\"]([^\">]+)[\">]");
@@ -113,7 +108,7 @@ CopyAndFullPathMesaHeader(const char* source,
         }
       else if(glLine.find(includeFile.c_str()))
         {
-        fout << "#include \"" << outdir << "/" << 
+        fout << "#include \"" << outdir << "/" <<
           includeLine.match(1).c_str() << "\"\n";
         }
       else

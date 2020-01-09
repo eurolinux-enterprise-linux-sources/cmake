@@ -2,15 +2,28 @@
 # Adds the given files as dependencies to source_file
 #
 
-MACRO(ADD_FILE_DEPENDENCIES _file)
+#=============================================================================
+# Copyright 2006-2009 Kitware, Inc.
+#
+# Distributed under the OSI-approved BSD License (the "License");
+# see accompanying file Copyright.txt for details.
+#
+# This software is distributed WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the License for more information.
+#=============================================================================
+# (To distribute this file outside of CMake, substitute the full
+#  License text for the above reference.)
 
-   GET_SOURCE_FILE_PROPERTY(_deps ${_file} OBJECT_DEPENDS)
-   IF (_deps)
-      SET(_deps ${_deps} ${ARGN})
-   ELSE (_deps)
-      SET(_deps ${ARGN})
-   ENDIF (_deps)
+macro(ADD_FILE_DEPENDENCIES _file)
 
-   SET_SOURCE_FILES_PROPERTIES(${_file} PROPERTIES OBJECT_DEPENDS "${_deps}")
+   get_source_file_property(_deps ${_file} OBJECT_DEPENDS)
+   if (_deps)
+      set(_deps ${_deps} ${ARGN})
+   else ()
+      set(_deps ${ARGN})
+   endif ()
 
-ENDMACRO(ADD_FILE_DEPENDENCIES)
+   set_source_files_properties(${_file} PROPERTIES OBJECT_DEPENDS "${_deps}")
+
+endmacro()

@@ -1,26 +1,21 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmIncludeExternalMSProjectCommand.cxx,v $
-  Language:  C++
-  Date:      $Date: 2008-01-28 13:38:35 $
-  Version:   $Revision: 1.23 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmIncludeExternalMSProjectCommand.h"
 
 // cmIncludeExternalMSProjectCommand
 bool cmIncludeExternalMSProjectCommand
 ::InitialPass(std::vector<std::string> const& args, cmExecutionStatus &)
 {
-  if(args.size() < 2) 
+  if(args.size() < 2)
   {
   this->SetError("INCLUDE_EXTERNAL_MSPROJECT called with incorrect "
                  "number of arguments");
@@ -30,37 +25,76 @@ bool cmIncludeExternalMSProjectCommand
 #ifdef _WIN32
   if(this->Makefile->GetDefinition("WIN32"))
     {
-    std::string location = args[1];
-    
+    enum Doing { DoingNone, DoingType, DoingGuid, DoingPlatform };
+
+    Doing doing = DoingNone;
+
+    std::string customType;
+    std::string customGuid;
+    std::string platformMapping;
+
     std::vector<std::string> depends;
-    if (args.size() > 2)
+    for (unsigned int i=2; i<args.size(); ++i)
       {
-      for (unsigned int i=2; i<args.size(); ++i) 
+      if (args[i] == "TYPE")
         {
-        depends.push_back(args[i]); 
+        doing = DoingType;
+        }
+      else if (args[i] == "GUID")
+        {
+        doing = DoingGuid;
+        }
+      else if (args[i] == "PLATFORM")
+        {
+        doing = DoingPlatform;
+        }
+      else
+        {
+        switch (doing)
+          {
+          case DoingNone: depends.push_back(args[i]);    break;
+          case DoingType: customType = args[i];          break;
+          case DoingGuid: customGuid = args[i];          break;
+          case DoingPlatform: platformMapping = args[i]; break;
+          }
+        doing = DoingNone;
         }
       }
 
     // Hack together a utility target storing enough information
     // to reproduce the target inclusion.
-    std::string utility_name("INCLUDE_EXTERNAL_MSPROJECT");
-    utility_name += "_";
-    utility_name += args[0];
+    std::string utility_name = args[0];
+
     std::string path = args[1];
     cmSystemTools::ConvertToUnixSlashes(path);
 
+    if (!customGuid.empty())
+      {
+      std::string guidVariable = utility_name + "_GUID_CMAKE";
+      this->Makefile->GetCMakeInstance()->AddCacheEntry(
+        guidVariable.c_str(), customGuid.c_str(),
+        "Stored GUID", cmCacheManager::INTERNAL);
+      }
+
     // Create a target instance for this utility.
-    cmTarget* target=this->Makefile->AddNewTarget(cmTarget::UTILITY, 
+    cmTarget* target=this->Makefile->AddNewTarget(cmTarget::UTILITY,
                                                   utility_name.c_str());
-    target->SetProperty("EXCLUDE_FROM_ALL","FALSE");
-    std::vector<std::string> no_outputs;
-    cmCustomCommandLines commandLines;
-    cmCustomCommandLine commandLine;
-    commandLine.push_back(args[0]);
-    commandLine.push_back(path);
-    commandLines.push_back(commandLine);
-    cmCustomCommand cc(no_outputs, depends, commandLines, 0, 0);
-    target->GetPostBuildCommands().push_back(cc);
+
+    target->SetProperty("GENERATOR_FILE_NAME", utility_name.c_str());
+    target->SetProperty("EXTERNAL_MSPROJECT", path.c_str());
+    target->SetProperty("EXCLUDE_FROM_ALL", "FALSE");
+
+    if (!customType.empty())
+      target->SetProperty("VS_PROJECT_TYPE",customType.c_str());
+    if (!platformMapping.empty())
+      target->SetProperty("VS_PLATFORM_MAPPING",platformMapping.c_str());
+
+    for (std::vector<std::string>::const_iterator it = depends.begin();
+         it != depends.end();
+         ++it)
+      {
+      target->AddUtility(it->c_str());
+      }
     }
 #endif
   return true;

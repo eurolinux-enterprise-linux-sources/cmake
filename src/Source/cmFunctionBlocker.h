@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmFunctionBlocker.h,v $
-  Language:  C++
-  Date:      $Date: 2009-02-04 16:44:17 $
-  Version:   $Revision: 1.12.2.1 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmFunctionBlocker_h
 #define cmFunctionBlocker_h
 
@@ -22,11 +17,6 @@
 #include "cmListFileCache.h"
 class cmMakefile;
 
-/** \class cmFunctionBlocker
- * \brief A class that defines an interface for blocking cmake functions
- *
- * This is the superclass for any classes that need to block a cmake function
- */
 class cmFunctionBlocker
 {
 public:
@@ -39,7 +29,7 @@ public:
 
   /**
    * should this function blocker be removed, useful when one function adds a
-   * blocker and another must remove it 
+   * blocker and another must remove it
    */
   virtual bool ShouldRemove(const cmListFileFunction&,
                             cmMakefile&) {return false;}

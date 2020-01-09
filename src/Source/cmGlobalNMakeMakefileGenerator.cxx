@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmGlobalNMakeMakefileGenerator.cxx,v $
-  Language:  C++
-  Date:      $Date: 2009-03-27 15:56:10 $
-  Version:   $Revision: 1.26.2.2 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmGlobalNMakeMakefileGenerator.h"
 #include "cmLocalUnixMakefileGenerator3.h"
 #include "cmMakefile.h"
@@ -27,14 +22,14 @@ cmGlobalNMakeMakefileGenerator::cmGlobalNMakeMakefileGenerator()
 }
 
 void cmGlobalNMakeMakefileGenerator
-::EnableLanguage(std::vector<std::string>const& l, 
-                 cmMakefile *mf, 
+::EnableLanguage(std::vector<std::string>const& l,
+                 cmMakefile *mf,
                  bool optional)
 {
-  // pick a default 
+  // pick a default
   mf->AddDefinition("CMAKE_GENERATOR_CC", "cl");
   mf->AddDefinition("CMAKE_GENERATOR_CXX", "cl");
-  if(!(cmSystemTools::GetEnv("INCLUDE") && 
+  if(!(cmSystemTools::GetEnv("INCLUDE") &&
        cmSystemTools::GetEnv("LIB"))
     )
     {
@@ -45,7 +40,7 @@ void cmGlobalNMakeMakefileGenerator
     mf->IssueMessage(cmake::WARNING,
                      message);
     }
-  
+
   this->cmGlobalUnixMakefileGenerator3::EnableLanguage(l, mf, optional);
 }
 
@@ -66,9 +61,9 @@ cmLocalGenerator *cmGlobalNMakeMakefileGenerator::CreateLocalGenerator()
 
 //----------------------------------------------------------------------------
 void cmGlobalNMakeMakefileGenerator
-::GetDocumentation(cmDocumentationEntry& entry) const
+::GetDocumentation(cmDocumentationEntry& entry)
 {
-  entry.Name = this->GetName();
+  entry.Name = cmGlobalNMakeMakefileGenerator::GetActualName();
   entry.Brief = "Generates NMake makefiles.";
   entry.Full = "";
 }

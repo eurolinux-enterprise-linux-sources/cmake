@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmLinkLibrariesCommand.h,v $
-  Language:  C++
-  Date:      $Date: 2008-01-23 15:27:59 $
-  Version:   $Revision: 1.20 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmLinkLibrariesCommand_h
 #define cmLinkLibrariesCommand_h
 
@@ -24,7 +19,7 @@
  *
  * cmLinkLibrariesCommand is used to specify a list of libraries to link
  * into executable(s) or shared objects. The names of the libraries
- * should be those defined by the LIBRARY(library) command(s).  
+ * should be those defined by the LIBRARY(library) command(s).
  */
 class cmLinkLibrariesCommand : public cmCommand
 {
@@ -32,7 +27,7 @@ public:
   /**
    * This is a virtual constructor for the command.
    */
-  virtual cmCommand* Clone() 
+  virtual cmCommand* Clone()
     {
     return new cmLinkLibrariesCommand;
     }
@@ -47,20 +42,20 @@ public:
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() { return "link_libraries";}
+  virtual const char* GetName() const { return "link_libraries";}
 
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation() 
+  virtual const char* GetTerseDocumentation() const
     {
     return "Deprecated. Use the target_link_libraries() command instead.";
     }
-  
+
   /**
    * More documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
     return
       "Link libraries to all targets added later.\n"
@@ -73,9 +68,9 @@ public:
       "the next library listed is to be used only for that specific "
       "type of build.";
     }
-  
+
   /** This command is kept for compatibility with older CMake versions. */
-  virtual bool IsDiscouraged()
+  virtual bool IsDiscouraged() const
     {
     return true;
     }

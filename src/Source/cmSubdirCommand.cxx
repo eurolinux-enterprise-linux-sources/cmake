@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmSubdirCommand.cxx,v $
-  Language:  C++
-  Date:      $Date: 2008-01-23 15:27:59 $
-  Version:   $Revision: 1.19 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmSubdirCommand.h"
 
 // cmSubdirCommand
@@ -44,13 +39,13 @@ bool cmSubdirCommand
       }
 
     // if they specified a relative path then compute the full
-    std::string srcPath = 
-      std::string(this->Makefile->GetCurrentDirectory()) + 
+    std::string srcPath =
+      std::string(this->Makefile->GetCurrentDirectory()) +
         "/" + i->c_str();
     if (cmSystemTools::FileIsDirectory(srcPath.c_str()))
       {
-      std::string binPath = 
-        std::string(this->Makefile->GetCurrentOutputDirectory()) + 
+      std::string binPath =
+        std::string(this->Makefile->GetCurrentOutputDirectory()) +
         "/" + i->c_str();
       this->Makefile->AddSubDirectory(srcPath.c_str(), binPath.c_str(),
                                   excludeFromAll, preorder, false);
@@ -60,8 +55,8 @@ bool cmSubdirCommand
       {
       // we must compute the binPath from the srcPath, we just take the last
       // element from the source path and use that
-      std::string binPath = 
-        std::string(this->Makefile->GetCurrentOutputDirectory()) + 
+      std::string binPath =
+        std::string(this->Makefile->GetCurrentOutputDirectory()) +
         "/" + cmSystemTools::GetFilenameName(i->c_str());
       this->Makefile->AddSubDirectory(i->c_str(), binPath.c_str(),
                                   excludeFromAll, preorder, false);
@@ -69,8 +64,8 @@ bool cmSubdirCommand
     else
       {
       std::string error = "Incorrect SUBDIRS command. Directory: ";
-      error += *i + " does not exists.";
-      this->SetError(error.c_str());   
+      error += *i + " does not exist.";
+      this->SetError(error.c_str());
       res = false;
       }
     }

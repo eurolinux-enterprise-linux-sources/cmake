@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmExportBuildFileGenerator.h,v $
-  Language:  C++
-  Date:      $Date: 2008-02-01 13:56:00 $
-  Version:   $Revision: 1.4 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmExportBuildFileGenerator_h
 #define cmExportBuildFileGenerator_h
 
@@ -49,15 +44,24 @@ protected:
   virtual bool GenerateMainFile(std::ostream& os);
   virtual void GenerateImportTargetsConfig(std::ostream& os,
                                            const char* config,
-                                           std::string const& suffix);
-  virtual void ComplainAboutMissingTarget(cmTarget* depender,
-                                          cmTarget* dependee);
+                                           std::string const& suffix,
+                            std::vector<std::string> &missingTargets);
+  virtual void HandleMissingTarget(std::string& link_libs,
+                                   std::vector<std::string>& missingTargets,
+                                   cmMakefile* mf,
+                                   cmTarget* depender,
+                                   cmTarget* dependee);
+
+  void ComplainAboutMissingTarget(cmTarget* depender,
+                                  cmTarget* dependee);
 
   /** Fill in properties indicating built file locations.  */
   void SetImportLocationProperty(const char* config,
                                  std::string const& suffix,
                                  cmTarget* target,
                                  ImportPropertyMap& properties);
+
+  std::string InstallNameDir(cmTarget* target, const std::string& config);
 
   std::vector<cmTarget*> const* Exports;
   cmExportCommand* ExportCommand;

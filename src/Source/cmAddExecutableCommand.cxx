@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmAddExecutableCommand.cxx,v $
-  Language:  C++
-  Date:      $Date: 2008-02-11 22:33:46 $
-  Version:   $Revision: 1.35 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmAddExecutableCommand.h"
 
 // cmExecutableCommand
@@ -34,6 +29,8 @@ bool cmAddExecutableCommand
   bool use_macbundle = false;
   bool excludeFromAll = false;
   bool importTarget = false;
+  bool importGlobal = false;
+  bool isAlias = false;
   while ( s != args.end() )
     {
     if (*s == "WIN32")
@@ -56,6 +53,16 @@ bool cmAddExecutableCommand
      ++s;
      importTarget = true;
      }
+    else if(importTarget && *s == "GLOBAL")
+      {
+      ++s;
+      importGlobal = true;
+      }
+    else if(*s == "ALIAS")
+      {
+      ++s;
+      isAlias = true;
+      }
     else
       {
       break;
@@ -63,7 +70,8 @@ bool cmAddExecutableCommand
     }
 
   // Special modifiers are not allowed with IMPORTED signature.
-  if(importTarget && (use_win32 || use_macbundle || excludeFromAll))
+  if(importTarget
+      && (use_win32 || use_macbundle || excludeFromAll))
     {
     if(use_win32)
       {
@@ -81,6 +89,72 @@ bool cmAddExecutableCommand
       }
     return false;
     }
+  if (isAlias)
+    {
+    if(!cmGeneratorExpression::IsValidTargetName(exename.c_str()))
+      {
+      this->SetError(("Invalid name for ALIAS: " + exename).c_str());
+      return false;
+      }
+    if(excludeFromAll)
+      {
+      this->SetError("EXCLUDE_FROM_ALL with ALIAS makes no sense.");
+      return false;
+      }
+    if(importTarget || importGlobal)
+      {
+      this->SetError("IMPORTED with ALIAS is not allowed.");
+      return false;
+      }
+    if(args.size() != 3)
+      {
+      cmOStringStream e;
+      e << "ALIAS requires exactly one target argument.";
+      this->SetError(e.str().c_str());
+      return false;
+      }
+
+    const char *aliasedName = s->c_str();
+    if(this->Makefile->IsAlias(aliasedName))
+      {
+      cmOStringStream e;
+      e << "cannot create ALIAS target \"" << exename
+        << "\" because target \"" << aliasedName << "\" is itself an ALIAS.";
+      this->SetError(e.str().c_str());
+      return false;
+      }
+    cmTarget *aliasedTarget =
+                    this->Makefile->FindTargetToUse(aliasedName, true);
+    if(!aliasedTarget)
+      {
+      cmOStringStream e;
+      e << "cannot create ALIAS target \"" << exename
+        << "\" because target \"" << aliasedName << "\" does not already "
+        "exist.";
+      this->SetError(e.str().c_str());
+      return false;
+      }
+    cmTarget::TargetType type = aliasedTarget->GetType();
+    if(type != cmTarget::EXECUTABLE)
+      {
+      cmOStringStream e;
+      e << "cannot create ALIAS target \"" << exename
+        << "\" because target \"" << aliasedName << "\" is not an "
+        "executable.";
+      this->SetError(e.str().c_str());
+      return false;
+      }
+    if(aliasedTarget->IsImported())
+      {
+      cmOStringStream e;
+      e << "cannot create ALIAS target \"" << exename
+        << "\" because target \"" << aliasedName << "\" is IMPORTED.";
+      this->SetError(e.str().c_str());
+      return false;
+      }
+    this->Makefile->AddAlias(exename.c_str(), aliasedTarget);
+    return true;
+    }
 
   // Handle imported target creation.
   if(importTarget)
@@ -96,7 +170,8 @@ bool cmAddExecutableCommand
       }
 
     // Create the imported target.
-    this->Makefile->AddImportedTarget(exename.c_str(), cmTarget::EXECUTABLE);
+    this->Makefile->AddImportedTarget(exename.c_str(), cmTarget::EXECUTABLE,
+                                      importGlobal);
     return true;
     }
 

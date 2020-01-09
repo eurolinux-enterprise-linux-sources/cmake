@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: ctest.cxx,v $
-  Language:  C++
-  Date:      $Date: 2008-01-31 16:43:44 $
-  Version:   $Revision: 1.102 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmCTest.h"
 #include "cmSystemTools.h"
 
@@ -22,6 +17,8 @@
 #include "cmDocumentation.h"
 
 #include "CTest/cmCTestScriptHandler.h"
+#include "CTest/cmCTestLaunch.h"
+
 //----------------------------------------------------------------------------
 static const char * cmDocumentationName[][3] =
 {
@@ -63,8 +60,19 @@ static const char * cmDocumentationOptions[][3] =
    "Test output is normally suppressed and only summary information is "
    "displayed.  This option will show even more test output."},
   {"--debug", "Displaying more verbose internals of CTest.",
-    "This feature will result in large number of output that is mostly "
+    "This feature will result in a large number of output that is mostly "
     "useful for debugging dashboard problems."},
+  {"--output-on-failure", "Output anything outputted by the test program "
+   "if the test should fail.  This option can also be enabled by setting "
+   "the environment variable CTEST_OUTPUT_ON_FAILURE"},
+  {"-F", "Enable failover.", "This option allows ctest to resume a test "
+   "set execution that was previously interrupted.  If no interruption "
+   "occurred, the -F option will have no effect."},
+  {"-j <jobs>, --parallel <jobs>", "Run the tests in parallel using the"
+   "given number of jobs.",
+   "This option tells ctest to run the tests in parallel using given "
+   "number of jobs.  This option can also be set by setting "
+   "the environment variable CTEST_PARALLEL_LEVEL."},
   {"-Q,--quiet", "Make ctest quiet.",
     "This option will suppress all the output. The output log file will "
     "still be generated if the --output-log is specified. Options such "
@@ -75,6 +83,10 @@ static const char * cmDocumentationOptions[][3] =
   {"-N,--show-only", "Disable actual execution of tests.",
    "This option tells ctest to list the tests that would be run but not "
    "actually run them.  Useful in conjunction with the -R and -E options."},
+  {"-L <regex>, --label-regex <regex>", "Run tests with labels matching "
+   "regular expression.",
+   "This option tells ctest to run only the tests whose labels match the "
+   "given regular expression."},
   {"-R <regex>, --tests-regex <regex>", "Run tests matching regular "
    "expression.",
    "This option tells ctest to run only the tests whose names match the "
@@ -83,11 +95,21 @@ static const char * cmDocumentationOptions[][3] =
    "expression.",
    "This option tells ctest to NOT run the tests whose names match the "
    "given regular expression."},
+  {"-LE <regex>, --label-exclude <regex>", "Exclude tests with labels "
+   "matching regular expression.",
+   "This option tells ctest to NOT run the tests whose labels match the "
+   "given regular expression."},
   {"-D <dashboard>, --dashboard <dashboard>", "Execute dashboard test",
-   "This option tells ctest to perform act as a Dart client and perform "
+   "This option tells ctest to act as a Dart client and perform "
    "a dashboard test. All tests are <Mode><Test>, where Mode can be "
    "Experimental, Nightly, and Continuous, and Test can be Start, Update, "
    "Configure, Build, Test, Coverage, and Submit."},
+  {"-D <var>:<type>=<value>", "Define a variable for script mode",
+   "Pass in variable values on the command line. Use in "
+   "conjunction with -S to pass variable values to a dashboard script. "
+   "Parsing -D arguments as variable values is only attempted if "
+   "the value following -D does not match any of the known dashboard "
+   "types."},
   {"-M <model>, --test-model <model>", "Sets the model for a dashboard",
    "This option tells ctest to act as a Dart client "
    "where the TestModel can be Experimental, "
@@ -112,8 +134,8 @@ static const char * cmDocumentationOptions[][3] =
   {"-SP <script>, --script-new-process <script>", "Execute a dashboard for a "
    "configuration",
    "This option does the same operations as -S but it will do them in a "
-   "seperate process. This is primarily useful in cases where the script "
-   "may modify the environment and you do not want the modified enviroment "
+   "separate process. This is primarily useful in cases where the script "
+   "may modify the environment and you do not want the modified environment "
    "to impact other -S scripts."},
   {"-A <file>, --add-notes <file>", "Add a notes file with submission",
    "This option tells ctest to include a notes file when submitting "
@@ -128,8 +150,11 @@ static const char * cmDocumentationOptions[][3] =
   {"-U, --union", "Take the Union of -I and -R",
    "When both -R and -I are specified by default the intersection of "
    "tests are run. By specifying -U the union of tests is run instead."},
+  {"--max-width <width>", "Set the max width for a test name to output",
+   "Set the maximum width for each test name to show in the output.  This "
+   "allows the user to widen the output to avoid clipping the test name which "
+   "can be very annoying."},
   {"--interactive-debug-mode [0|1]", "Set the interactive mode to 0 or 1.",
-
    "This option causes ctest to run tests in either an interactive mode or "
    "a non-interactive mode. On Windows this means that in non-interactive "
    "mode, all system debug pop up windows are blocked. In dashboard mode "
@@ -137,13 +162,17 @@ static const char * cmDocumentationOptions[][3] =
    "When just running tests not for a dashboard the default is to allow "
    "popups and interactive "
    "debugging."},
+  {"--no-label-summary", "Disable timing summary information for labels.",
+   "This option tells ctest not to print summary information for each label "
+   "associated with the tests run. If there are no labels on the "
+   "tests, nothing extra is printed."},
   {"--build-and-test", "Configure, build and run a test.",
    "This option tells ctest to configure (i.e. run cmake on), build, and or "
    "execute a test. The configure and test steps are optional. The arguments "
    "to this command line are the source and binary directories. By default "
    "this will run CMake on the Source/Bin directories specified unless "
    "--build-nocmake is specified. Both --build-makeprogram and "
-   "--build-generator MUST be provided to use --built-and-test. If "
+   "--build-generator MUST be provided to use --build-and-test. If "
    "--test-command is specified then that will be run after the build is "
    "complete. Other options that affect this mode are --build-target "
    "--build-nocmake, --build-run-dir, "
@@ -159,12 +188,13 @@ static const char * cmDocumentationOptions[][3] =
   {"--build-two-config", "Run CMake twice", "" },
   {"--build-exe-dir", "Specify the directory for the executable.", "" },
   {"--build-generator", "Specify the generator to use.", "" },
+  {"--build-generator-toolset", "Specify the generator-specific toolset.",""},
   {"--build-project", "Specify the name of the project to build.", "" },
   {"--build-makeprogram", "Specify the make program to use.", "" },
   {"--build-noclean", "Skip the make clean step.", "" },
-  {"--build-config-sample", 
-   "A sample executable to use to determine the configuraiton", 
-   "A sample executable to use to determine the configuraiton that "
+  {"--build-config-sample",
+   "A sample executable to use to determine the configuration",
+   "A sample executable to use to determine the configuration that "
    "should be used. e.g. Debug/Release/etc" },
   {"--build-options", "Add extra options to the build step.",
    "This option must be the last option with the exception of --test-command"
@@ -190,10 +220,37 @@ static const char * cmDocumentationOptions[][3] =
    "By default CTest will run child CTest instances within the same process. "
    "If this behavior is not desired, this argument will enforce new "
    "processes for child CTest processes." },
+  {"--schedule-random", "Use a random order for scheduling tests",
+   "This option will run the tests in a random order. It is commonly used to "
+   "detect implicit dependencies in a test suite." },
   {"--submit-index", "Submit individual dashboard tests with specific index",
    "This option allows performing the same CTest action (such as test) "
    "multiple times and submit all stages to the same dashboard (Dart2 "
    "required). Each execution requires different index." },
+  {"--timeout <seconds>", "Set a global timeout on all tests.",
+   "This option will set a global timeout on all tests that do not already "
+   "have a timeout set on them."},
+  {"--stop-time <time>", "Set a time at which all tests should stop running.",
+   "Set a real time of day at which all tests should timeout. Example: "
+   "7:00:00 -0400. Any time format understood by the curl date parser is "
+   "accepted. Local time is assumed if no timezone is specified."},
+  {"--http1.0", "Submit using HTTP 1.0.",
+  "This option will force CTest to use HTTP 1.0 to submit files to the "
+  "dashboard, instead of HTTP 1.1."},
+  {"--no-compress-output", "Do not compress test output when submitting.",
+   "This flag will turn off automatic compression of test output.  Use this "
+   "to maintain compatibility with an older version of CDash which doesn't "
+   "support compressed test output."},
+  {"--print-labels", "Print all available test labels.",
+   "This option will not run any tests, it will simply print the list of "
+   "all labels associated with the test set."},
+  {"--help-command <cmd> [<file>]", "Show help for a single command and exit.",
+   "Prints the help for the command to stdout or to the specified file." },
+  {"--help-command-list [<file>]", "List available commands and exit.",
+   "Prints the list of all available listfile commands to stdout or the "
+   "specified file." },
+  {"--help-commands [<file>]", "Print help for all commands and exit.",
+   "Prints the help for all commands to stdout or to the specified file." },
   {0,0,0}
 };
 
@@ -211,20 +268,26 @@ int main (int argc, char *argv[])
   cmSystemTools::DoNotInheritStdPipes();
   cmSystemTools::EnableMSVCDebugHook();
   cmSystemTools::FindExecutableDirectory(argv[0]);
-  int nocwd = 0;
+
+  // Dispatch 'ctest --launch' mode directly.
+  if(argc >= 2 && strcmp(argv[1], "--launch") == 0)
+    {
+    return cmCTestLaunch::Main(argc, argv);
+    }
+
   cmCTest inst;
 
   if ( cmSystemTools::GetCurrentWorkingDirectory().size() == 0 )
     {
     cmCTestLog(&inst, ERROR_MESSAGE,
       "Current working directory cannot be established." << std::endl);
-    nocwd = 1;
+    return 1;
     }
 
   // If there is a testing input file, check for documentation options
   // only if there are actually arguments.  We want running without
   // arguments to run tests.
-  if(argc > 1 || !(cmSystemTools::FileExists("CTestTestfile.cmake") || 
+  if(argc > 1 || !(cmSystemTools::FileExists("CTestTestfile.cmake") ||
                    cmSystemTools::FileExists("DartTestfile.txt")))
     {
     if(argc == 1)
@@ -235,7 +298,8 @@ int main (int argc, char *argv[])
         << "*********************************" << std::endl);
       }
     cmDocumentation doc;
-    if(doc.CheckOptions(argc, argv) || nocwd)
+    doc.addCTestStandardDocSections();
+    if(doc.CheckOptions(argc, argv))
       {
       // Construct and print requested documentation.
       std::vector<cmDocumentationEntry> commands;
@@ -244,11 +308,12 @@ int main (int argc, char *argv[])
       ch->CreateCMake();
       ch->GetCommandDocumentation(commands);
 
+      doc.SetShowGenerators(false);
       doc.SetName("ctest");
       doc.SetSection("Name",cmDocumentationName);
       doc.SetSection("Usage",cmDocumentationUsage);
       doc.SetSection("Description",cmDocumentationDescription);
-      doc.SetSection("Options",cmDocumentationOptions);
+      doc.PrependSection("Options",cmDocumentationOptions);
       doc.SetSection("Commands",commands);
       doc.SetSeeAlsoList(cmDocumentationSeeAlso);
 #ifdef cout

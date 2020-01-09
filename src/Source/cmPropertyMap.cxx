@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmPropertyMap.cxx,v $
-  Language:  C++
-  Date:      $Date: 2008-01-17 23:13:55 $
-  Version:   $Revision: 1.11 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmPropertyMap.h"
 #include "cmSystemTools.h"
 #include "cmake.h"
@@ -48,7 +43,7 @@ void cmPropertyMap::SetProperty(const char *name, const char *value,
 #ifdef CMAKE_STRICT
   if (!this->CMakeInstance)
     {
-    cmSystemTools::Error("CMakeInstance not set on a property map!"); 
+    cmSystemTools::Error("CMakeInstance not set on a property map!");
     abort();
     }
   else
@@ -64,7 +59,7 @@ void cmPropertyMap::SetProperty(const char *name, const char *value,
 }
 
 void cmPropertyMap::AppendProperty(const char* name, const char* value,
-                                   cmProperty::ScopeType scope)
+                                   cmProperty::ScopeType scope, bool asString)
 {
   // Skip if nothing to append.
   if(!name || !value || !*value)
@@ -86,14 +81,14 @@ void cmPropertyMap::AppendProperty(const char* name, const char* value,
 #endif
 
   cmProperty *prop = this->GetOrCreateProperty(name);
-  prop->Append(name,value);
+  prop->Append(name,value,asString);
 }
 
 const char *cmPropertyMap
-::GetPropertyValue(const char *name, 
-                   cmProperty::ScopeType scope, 
+::GetPropertyValue(const char *name,
+                   cmProperty::ScopeType scope,
                    bool &chain) const
-{ 
+{
   chain = false;
   if (!name)
     {
@@ -104,7 +99,7 @@ const char *cmPropertyMap
 #ifdef CMAKE_STRICT
   if (!this->CMakeInstance)
     {
-    cmSystemTools::Error("CMakeInstance not set on a property map!"); 
+    cmSystemTools::Error("CMakeInstance not set on a property map!");
     abort();
     }
   else

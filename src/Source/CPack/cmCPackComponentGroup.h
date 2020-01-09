@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc.
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmCPackComponentGroup.h,v $
-  Language:  C++
-  Date:      $Date: 2008-07-13 21:55:24 $
-  Version:   $Revision: 1.1.2.3 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc. All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 
 #ifndef cmCPackComponentGroup_h
 #define cmCPackComponentGroup_h
@@ -23,7 +18,7 @@
 class cmCPackComponentGroup;
 
 /** \class cmCPackInstallationType
- * \brief A certain type of installation, which encompasses a 
+ * \brief A certain type of installation, which encompasses a
  * set of components.
  */
 class cmCPackInstallationType
@@ -47,7 +42,9 @@ public:
 class cmCPackComponent
 {
 public:
- cmCPackComponent() : Group(0), TotalSize(0) { }
+ cmCPackComponent() : Group(0), IsRequired(true), IsHidden(false),
+                      IsDisabledByDefault(false), IsDownloaded(false),
+                      TotalSize(0) { }
 
   /// The name of the component (used to reference the component).
   std::string Name;
@@ -95,7 +92,7 @@ public:
   std::vector<std::string> Directories;
 
   /// Get the total installed size of all of the files in this
-  /// component, in bytes. installDir is the directory into which the 
+  /// component, in bytes. installDir is the directory into which the
   /// component was installed.
   unsigned long GetInstalledSize(const char* installDir) const;
 

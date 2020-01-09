@@ -1,26 +1,21 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmakexbuild.cxx,v $
-  Language:  C++
-  Date:      $Date: 2007-07-27 14:55:24 $
-  Version:   $Revision: 1.5 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include <cmsys/Process.h>
 #include "cmStandardIncludes.h"
 #include "cmSystemTools.h"
 
 // This is a wrapper program for xcodebuild
 // it calls xcodebuild, and does two things
-// it removes much of the output, all the setevn
+// it removes much of the output, all the setenv
 // stuff.  Also, it checks for the text file busy
 // error, and re-runs xcodebuild until that error does
 // not show up.
@@ -38,7 +33,7 @@ int RunXCode(std::vector<const char*>& argv, bool& hitbug)
   int pipe = cmSystemTools::WaitForLine(cp, line, 100.0, out, err);
   while(pipe != cmsysProcess_Pipe_None)
     {
-    if(line.find("/bin/sh: bad interpreter: Text file busy") 
+    if(line.find("/bin/sh: bad interpreter: Text file busy")
        != line.npos)
       {
       hitbug = true;
@@ -74,7 +69,7 @@ int RunXCode(std::vector<const char*>& argv, bool& hitbug)
 }
 
 int main(int ac, char*av[])
-{ 
+{
   std::vector<const char*> argv;
   argv.push_back("xcodebuild");
   for(int i =1; i < ac; i++)

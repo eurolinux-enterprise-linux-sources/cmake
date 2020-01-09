@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmInstallCommandArguments.cxx,v $
-  Language:  C++
-  Date:      $Date: 2008-03-27 15:16:30 $
-  Version:   $Revision: 1.4.2.1 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmInstallCommandArguments.h"
 #include "cmSystemTools.h"
 
@@ -28,7 +23,8 @@ const char* cmInstallCommandArguments::PermissionsTable[] =
 
 const std::string cmInstallCommandArguments::EmptyString;
 
-cmInstallCommandArguments::cmInstallCommandArguments()
+cmInstallCommandArguments::cmInstallCommandArguments(
+                                           const std::string& defaultComponent)
 :Parser()
 ,ArgumentGroup()
 ,Destination   (&Parser, "DESTINATION"   , &ArgumentGroup)
@@ -40,7 +36,9 @@ cmInstallCommandArguments::cmInstallCommandArguments()
 ,NamelinkOnly  (&Parser, "NAMELINK_ONLY" , &ArgumentGroup)
 ,NamelinkSkip  (&Parser, "NAMELINK_SKIP" , &ArgumentGroup)
 ,GenericArguments(0)
-{}
+,DefaultComponentName(defaultComponent)
+{
+}
 
 const std::string& cmInstallCommandArguments::GetDestination() const
 {
@@ -65,7 +63,10 @@ const std::string& cmInstallCommandArguments::GetComponent() const
     {
     return this->GenericArguments->GetComponent();
     }
-
+  if (!this->DefaultComponentName.empty())
+    {
+    return this->DefaultComponentName;
+    }
   static std::string unspecifiedComponent = "Unspecified";
   return unspecifiedComponent;
 }
@@ -135,7 +136,7 @@ bool cmInstallCommandArguments::GetNamelinkSkip() const
   return false;
 }
 
-const std::vector<std::string>& 
+const std::vector<std::string>&
     cmInstallCommandArguments::GetConfigurations() const
 {
   if (!this->Configurations.GetVector().empty())
@@ -161,7 +162,7 @@ bool cmInstallCommandArguments::Finalize()
   return true;
 }
 
-void cmInstallCommandArguments::Parse(const std::vector<std::string>* args, 
+void cmInstallCommandArguments::Parse(const std::vector<std::string>* args,
                                       std::vector<std::string>* unconsumedArgs)
 {
   this->Parser.Parse(args, unconsumedArgs);
@@ -171,9 +172,9 @@ void cmInstallCommandArguments::Parse(const std::vector<std::string>* args,
 bool cmInstallCommandArguments::CheckPermissions()
 {
   this->PermissionsString = "";
-  for(std::vector<std::string>::const_iterator 
-      permIt = this->Permissions.GetVector().begin(); 
-      permIt != this->Permissions.GetVector().end(); 
+  for(std::vector<std::string>::const_iterator
+      permIt = this->Permissions.GetVector().begin();
+      permIt != this->Permissions.GetVector().end();
       ++permIt)
     {
     if (!this->CheckPermissions(*permIt, this->PermissionsString))
@@ -188,7 +189,7 @@ bool cmInstallCommandArguments::CheckPermissions(
                     const std::string& onePermission, std::string& permissions)
 {
   // Check the permission against the table.
-  for(const char** valid = cmInstallCommandArguments::PermissionsTable; 
+  for(const char** valid = cmInstallCommandArguments::PermissionsTable;
       *valid; ++valid)
     {
     if(onePermission == *valid)
@@ -201,4 +202,38 @@ bool cmInstallCommandArguments::CheckPermissions(
     }
   // This is not a valid permission.
   return false;
+}
+
+cmInstallCommandIncludesArgument::cmInstallCommandIncludesArgument()
+{
+
+}
+
+const std::vector<std::string>&
+cmInstallCommandIncludesArgument::GetIncludeDirs() const
+{
+  return this->IncludeDirs;
+}
+
+void cmInstallCommandIncludesArgument::Parse(
+                                        const std::vector<std::string>* args,
+                                        std::vector<std::string>*)
+{
+  if(args->empty())
+    {
+    return;
+    }
+  std::vector<std::string>::const_iterator it = args->begin();
+  ++it;
+  for ( ; it != args->end(); ++it)
+    {
+    std::string dir = *it;
+    if (!cmSystemTools::FileIsFullPath(it->c_str())
+        && cmGeneratorExpression::Find(*it) == std::string::npos)
+      {
+      dir = "$<INSTALL_PREFIX>/" + dir;
+      }
+    cmSystemTools::ConvertToUnixSlashes(dir);
+    this->IncludeDirs.push_back(dir);
+    }
 }

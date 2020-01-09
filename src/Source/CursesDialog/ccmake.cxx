@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: ccmake.cxx,v $
-  Language:  C++
-  Date:      $Date: 2007-12-13 22:56:50 $
-  Version:   $Revision: 1.37 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "../cmCacheManager.h"
 #include "../cmSystemTools.h"
 #include "../cmake.h"
@@ -81,11 +76,11 @@ void onsig(int)
   if (cmCursesForm::CurrentForm)
     {
     endwin();
-    initscr(); /* Initialization */ 
-    noecho(); /* Echo off */ 
-    cbreak(); /* nl- or cr not needed */ 
-    keypad(stdscr,TRUE); /* Use key symbols as 
-                            KEY_DOWN*/ 
+    initscr(); /* Initialization */
+    noecho(); /* Echo off */
+    cbreak(); /* nl- or cr not needed */
+    keypad(stdscr,TRUE); /* Use key symbols as
+                            KEY_DOWN*/
     refresh();
     int x,y;
     getmaxyx(stdscr, y, x);
@@ -94,7 +89,7 @@ void onsig(int)
     }
   signal(SIGWINCH, onsig);
 }
- 
+
 }
 
 void CMakeErrorHandler(const char* message, const char* title, bool&, void* clientData)
@@ -107,6 +102,7 @@ int main(int argc, char** argv)
 {
   cmSystemTools::FindExecutableDirectory(argv[0]);
   cmDocumentation doc;
+  doc.addCMakeStandardDocSections();
   if(doc.CheckOptions(argc, argv))
     {
     cmake hcm;
@@ -121,13 +117,13 @@ int main(int argc, char** argv)
     doc.SetSection("Usage",cmDocumentationUsage);
     doc.SetSection("Description",cmDocumentationDescription);
     doc.SetSection("Generators",generators);
-    doc.SetSection("Options",cmDocumentationOptions);
+    doc.PrependSection("Options",cmDocumentationOptions);
     doc.SetSection("Command",commands);
     doc.SetSection("Compatibility Commands",compatCommands);
     doc.SetSeeAlsoList(cmDocumentationSeeAlso);
     return doc.PrintRequestedDocumentation(std::cout)? 0:1;
-    }  
-  
+    }
+
   bool debug = false;
   unsigned int i;
   int j;
@@ -161,22 +157,22 @@ int main(int argc, char** argv)
     cmCursesForm::DebugStart();
     }
 
-  initscr(); /* Initialization */ 
-  noecho(); /* Echo off */ 
-  cbreak(); /* nl- or cr not needed */ 
-  keypad(stdscr,TRUE); /* Use key symbols as 
-                          KEY_DOWN*/ 
+  initscr(); /* Initialization */
+  noecho(); /* Echo off */
+  cbreak(); /* nl- or cr not needed */
+  keypad(stdscr,TRUE); /* Use key symbols as
+                          KEY_DOWN*/
 
   signal(SIGWINCH, onsig);
 
   int x,y;
   getmaxyx(stdscr, y, x);
-  if ( x < cmCursesMainForm::MIN_WIDTH  || 
+  if ( x < cmCursesMainForm::MIN_WIDTH  ||
        y < cmCursesMainForm::MIN_HEIGHT )
     {
     endwin();
     std::cerr << "Window is too small. A size of at least "
-              << cmCursesMainForm::MIN_WIDTH << " x " 
+              << cmCursesMainForm::MIN_WIDTH << " x "
               <<  cmCursesMainForm::MIN_HEIGHT
               << " is required to run ccmake." <<  std::endl;
     return 1;
@@ -206,7 +202,7 @@ int main(int argc, char** argv)
     myform->Render(1, 1, x, y);
     myform->HandleInput();
     }
-  
+
   // Need to clean-up better
   curses_clear();
   touchwin(stdscr);
@@ -215,7 +211,7 @@ int main(int argc, char** argv)
   cmCursesForm::CurrentForm = 0;
 
   std::cout << std::endl << std::endl;
-  
+
   return 0;
 
 }

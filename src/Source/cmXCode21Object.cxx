@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmXCode21Object.cxx,v $
-  Language:  C++
-  Date:      $Date: 2007-08-14 15:45:14 $
-  Version:   $Revision: 1.7 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmXCode21Object.h"
 #include "cmSystemTools.h"
 
@@ -84,20 +79,20 @@ void cmXCode21Object::PrintList(std::vector<cmXCodeObject*> const& v,
   cmXCode21Object::PrintList(v, out, cmXCode21Object::PBXBuildStyle);
   cmXCode21Object::PrintList(v, out, cmXCode21Object::PBXContainerItemProxy);
   cmXCode21Object::PrintList(v, out, cmXCode21Object::PBXFileReference);
-  cmXCode21Object::PrintList(v, out, 
+  cmXCode21Object::PrintList(v, out,
                              cmXCode21Object::PBXFrameworksBuildPhase);
   cmXCode21Object::PrintList(v, out, cmXCode21Object::PBXGroup);
   cmXCode21Object::PrintList(v, out, cmXCode21Object::PBXHeadersBuildPhase);
   cmXCode21Object::PrintList(v, out, cmXCode21Object::PBXNativeTarget);
   cmXCode21Object::PrintList(v, out, cmXCode21Object::PBXProject);
-  cmXCode21Object::PrintList(v, out, 
+  cmXCode21Object::PrintList(v, out,
                              cmXCode21Object::PBXShellScriptBuildPhase);
   cmXCode21Object::PrintList(v, out, cmXCode21Object::PBXResourcesBuildPhase);
   cmXCode21Object::PrintList(v, out, cmXCode21Object::PBXSourcesBuildPhase);
   cmXCode21Object::PrintList(v, out, cmXCode21Object::PBXCopyFilesBuildPhase);
-  cmXCode21Object::PrintList(v, out, 
+  cmXCode21Object::PrintList(v, out,
                              cmXCode21Object::PBXApplicationReference);
-  cmXCode21Object::PrintList(v, out, 
+  cmXCode21Object::PrintList(v, out,
                              cmXCode21Object::PBXExecutableFileReference);
   cmXCode21Object::PrintList(v, out, cmXCode21Object::PBXLibraryReference);
   cmXCode21Object::PrintList(v, out, cmXCode21Object::PBXToolTarget);

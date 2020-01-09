@@ -1,4 +1,4 @@
-// A simple program that builds a sqrt table 
+// A simple program that builds a sqrt table
 #include <stdio.h>
 #include <math.h>
 
@@ -12,15 +12,15 @@ int main (int argc, char *argv[])
     {
     return 1;
     }
-  
+
   // open the output file
   FILE *fout = fopen(argv[1],"w");
   if (!fout)
     {
     return 1;
     }
-  
-  // crate a source file with a table of square roots
+
+  // create a source file with a table of square roots
   fprintf(fout,"double sqrtTable[] = {\n");
   for (i = 0; i < 10; ++i)
     {

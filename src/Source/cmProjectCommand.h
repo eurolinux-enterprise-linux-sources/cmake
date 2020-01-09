@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmProjectCommand.h,v $
-  Language:  C++
-  Date:      $Date: 2009-03-27 15:56:45 $
-  Version:   $Revision: 1.16.2.1 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmProjectCommand_h
 #define cmProjectCommand_h
 
@@ -33,7 +28,7 @@ public:
   /**
    * This is a virtual constructor for the command.
    */
-  virtual cmCommand* Clone() 
+  virtual cmCommand* Clone()
     {
     return new cmProjectCommand;
     }
@@ -44,24 +39,24 @@ public:
    */
   virtual bool InitialPass(std::vector<std::string> const& args,
                            cmExecutionStatus &status);
-  
+
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() {return "project";}
+  virtual const char* GetName() const {return "project";}
 
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation() 
+  virtual const char* GetTerseDocumentation() const
     {
     return "Set a name for the entire project.";
     }
-  
+
   /**
    * More documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
     return
       "  project(<projectname> [languageName1 languageName2 ... ] )\n"
@@ -71,11 +66,20 @@ public:
       "Optionally you can specify which languages your project supports.  "
       "Example languages are CXX (i.e. C++), C, Fortran, etc. "
       "By default C and CXX are enabled.  E.g. if you do not have a "
-      "C++ compiler, you can disable the check for it by explicitely listing "
+      "C++ compiler, you can disable the check for it by explicitly listing "
       "the languages you want to support, e.g. C.  By using the special "
-      "language \"NONE\" all checks for any language can be disabled.";
+      "language \"NONE\" all checks for any language can be disabled. "
+      "If a variable exists called CMAKE_PROJECT_<projectName>_INCLUDE, "
+      "the file pointed to by that variable will be included as the last step "
+      "of the project command."
+      "\n"
+      "The top-level CMakeLists.txt file for a project must contain a "
+      "literal, direct call to the project() command; loading one through "
+      "the include() command is not sufficient.  "
+      "If no such call exists CMake will implicitly add one to the top that "
+      "enables the default languages (C and CXX).";
     }
-  
+
   cmTypeMacro(cmProjectCommand, cmCommand);
 };
 

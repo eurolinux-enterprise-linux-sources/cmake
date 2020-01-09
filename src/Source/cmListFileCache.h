@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmListFileCache.h,v $
-  Language:  C++
-  Date:      $Date: 2008-10-24 15:18:48 $
-  Version:   $Revision: 1.21.2.1 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmListFileCache_h
 #define cmListFileCache_h
 
@@ -27,25 +22,30 @@
  */
 
 class cmMakefile;
- 
+
 struct cmListFileArgument
 {
-  cmListFileArgument(): Value(), Quoted(false), FilePath(0), Line(0) {}
+  enum Delimiter
+    {
+    Unquoted,
+    Quoted
+    };
+  cmListFileArgument(): Value(), Delim(Unquoted), FilePath(0), Line(0) {}
   cmListFileArgument(const cmListFileArgument& r):
-    Value(r.Value), Quoted(r.Quoted), FilePath(r.FilePath), Line(r.Line) {}
-  cmListFileArgument(const std::string& v, bool q, const char* file,
-                     long line): Value(v), Quoted(q),
+    Value(r.Value), Delim(r.Delim), FilePath(r.FilePath), Line(r.Line) {}
+  cmListFileArgument(const std::string& v, Delimiter d, const char* file,
+                     long line): Value(v), Delim(d),
                                  FilePath(file), Line(line) {}
   bool operator == (const cmListFileArgument& r) const
     {
-    return (this->Value == r.Value) && (this->Quoted == r.Quoted);
+    return (this->Value == r.Value) && (this->Delim == r.Delim);
     }
   bool operator != (const cmListFileArgument& r) const
     {
     return !(*this == r);
     }
   std::string Value;
-  bool Quoted;
+  Delimiter Delim;
   const char* FilePath;
   long Line;
 };
@@ -69,16 +69,25 @@ class cmListFileBacktrace: public std::vector<cmListFileContext> {};
 
 struct cmListFile
 {
-  cmListFile() 
-    :ModifiedTime(0) 
+  cmListFile()
+    :ModifiedTime(0)
     {
     }
-  bool ParseFile(const char* path, 
+  bool ParseFile(const char* path,
                  bool topLevel,
                  cmMakefile *mf);
 
   long int ModifiedTime;
   std::vector<cmListFileFunction> Functions;
+};
+
+struct cmValueWithOrigin {
+  cmValueWithOrigin(const std::string &value,
+                          const cmListFileBacktrace &bt)
+    : Value(value), Backtrace(bt)
+  {}
+  std::string Value;
+  cmListFileBacktrace Backtrace;
 };
 
 #endif

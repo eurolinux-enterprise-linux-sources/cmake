@@ -1,16 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  KWSys - Kitware System Library
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   KWSys - Kitware System Library
-  Module:    $RCSfile: RegularExpression.cxx,v $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 //
 // Copyright (C) 1991 Texas Instruments Incorporated.
 //
@@ -269,7 +267,7 @@ const unsigned char MAGIC = 0234;
  * Utility definitions.
  */
 
-#define UCHARAT(p)      ((const unsigned char*)(p))[0]
+#define UCHARAT(p)      (reinterpret_cast<const unsigned char*>(p))[0]
 
 
 #define FAIL(m) { regerror(m); return(0); }
@@ -314,9 +312,9 @@ static       char* regbranch (int*);
 static       char* regpiece (int*);
 static       char* regatom (int*);
 static       char* regnode (char);
-static const char* regnext (register const char*);
-static       char* regnext (register char*);
-static void        regc (unsigned char);
+static const char* regnext (const char*);
+static       char* regnext (char*);
+static void        regc (char);
 static void        reginsert (char, char*);
 static void        regtail (char*, const char*);
 static void        regoptail (char*, const char*);
@@ -346,10 +344,10 @@ static int strcspn ();
 // for later pattern matching.
 
 bool RegularExpression::compile (const char* exp) {
-    register const char* scan;
-    register const char* longest;
-    register unsigned long len;
-             int         flags;
+    const char* scan;
+    const char* longest;
+    size_t      len;
+    int         flags;
 
     if (exp == 0) {
       //RAISE Error, SYM(RegularExpression), SYM(No_Expr),
@@ -362,7 +360,7 @@ bool RegularExpression::compile (const char* exp) {
     regnpar = 1;
     regsize = 0L;
     regcode = &regdummy;
-    regc(MAGIC);
+    regc(static_cast<char>(MAGIC));
     if(!reg(0, &flags))
       {
         printf ("RegularExpression::compile(): Error in compile.\n");
@@ -394,7 +392,7 @@ bool RegularExpression::compile (const char* exp) {
     regparse = exp;
     regnpar = 1;
     regcode = this->program;
-    regc(MAGIC);
+    regc(static_cast<char>(MAGIC));
     reg(0, &flags);
 
     // Dig out information for optimizations.
@@ -426,7 +424,7 @@ bool RegularExpression::compile (const char* exp) {
             for (; scan != 0; scan = regnext(scan))
                 if (OP(scan) == EXACTLY && strlen(OPERAND(scan)) >= len) {
                     longest = OPERAND(scan);
-                    len = int(strlen(OPERAND(scan)));
+                    len = strlen(OPERAND(scan));
                 }
             this->regmust = longest;
             this->regmlen = len;
@@ -446,11 +444,11 @@ bool RegularExpression::compile (const char* exp) {
  * follows makes it hard to avoid.
  */
 static char* reg (int paren, int *flagp) {
-    register char* ret;
-    register char* br;
-    register char* ender;
-    register int   parno =0;
-             int   flags;
+    char* ret;
+    char* br;
+    char* ender;
+    int   parno =0;
+    int   flags;
 
     *flagp = HASWIDTH;          // Tentatively.
 
@@ -527,10 +525,10 @@ static char* reg (int paren, int *flagp) {
  * Implements the concatenation operator.
  */
 static char* regbranch (int *flagp) {
-    register char* ret;
-    register char* chain;
-    register char* latest;
-    int                  flags;
+    char* ret;
+    char* chain;
+    char* latest;
+    int   flags;
 
     *flagp = WORST;             // Tentatively.
 
@@ -564,10 +562,10 @@ static char* regbranch (int *flagp) {
  * endmarker role is not redundant.
  */
 static char* regpiece (int *flagp) {
-    register char* ret;
-    register char  op;
-    register char* next;
-    int            flags;
+    char* ret;
+    char  op;
+    char* next;
+    int   flags;
 
     ret = regatom(&flags);
     if (ret == 0)
@@ -633,8 +631,8 @@ static char* regpiece (int *flagp) {
  * separate node; the code is simpler that way and it's not worth fixing.
  */
 static char* regatom (int *flagp) {
-    register char* ret;
-             int   flags;
+    char* ret;
+    int   flags;
 
     *flagp = WORST;             // Tentatively.
 
@@ -650,8 +648,8 @@ static char* regatom (int *flagp) {
             *flagp |= HASWIDTH | SIMPLE;
             break;
         case '[':{
-                register int    rxpclass;
-                register int    rxpclassend;
+                int    rxpclass;
+                int    rxpclassend;
 
                 if (*regparse == '^') { // Complement of range.
                     ret = regnode(ANYBUT);
@@ -675,7 +673,7 @@ static char* regatom (int *flagp) {
                                return 0;
                             }
                             for (; rxpclass <= rxpclassend; rxpclass++)
-                                regc(static_cast<unsigned char>(rxpclass));
+                              regc(static_cast<char>(rxpclass));
                             regparse++;
                         }
                     }
@@ -722,8 +720,8 @@ static char* regatom (int *flagp) {
             *flagp |= HASWIDTH | SIMPLE;
             break;
         default:{
-                register int    len;
-                register char   ender;
+                int    len;
+                char   ender;
 
                 regparse--;
                 len = int(strcspn(regparse, META));
@@ -756,8 +754,8 @@ static char* regatom (int *flagp) {
    Location.
  */
 static char* regnode (char op) {
-    register char* ret;
-    register char* ptr;
+    char* ret;
+    char* ptr;
 
     ret = regcode;
     if (ret == &regdummy) {
@@ -778,7 +776,7 @@ static char* regnode (char op) {
 /*
  - regc - emit (if appropriate) a byte of code
  */
-static void regc (unsigned char b) {
+static void regc (char b) {
     if (regcode != &regdummy)
         *regcode++ = b;
     else
@@ -792,9 +790,9 @@ static void regc (unsigned char b) {
  * Means relocating the operand.
  */
 static void reginsert (char op, char* opnd) {
-    register char* src;
-    register char* dst;
-    register char* place;
+    char* src;
+    char* dst;
+    char* place;
 
     if (regcode == &regdummy) {
         regsize += 3;
@@ -818,9 +816,9 @@ static void reginsert (char op, char* opnd) {
  - regtail - set the next-pointer at the end of a node chain
  */
 static void regtail (char* p, const char* val) {
-    register char* scan;
-    register char* temp;
-    register int   offset;
+    char* scan;
+    char* temp;
+    int   offset;
 
     if (p == &regdummy)
         return;
@@ -895,7 +893,7 @@ bool RegularExpression::find (kwsys_stl::string const& s)
 // Returns true if found, and sets start and end indexes accordingly.
 
 bool RegularExpression::find (const char* string) {
-    register const char* s;
+    const char* s;
 
     this->searchstring = string;
 
@@ -958,9 +956,9 @@ bool RegularExpression::find (const char* string) {
  */
 static int regtry (const char* string, const char* *start,
                    const char* *end, const char* prog) {
-    register       int    i;
-    register const char* *sp1;
-    register const char* *ep;
+                   int    i;
+                   const char* *sp1;
+                   const char* *ep;
 
     reginput = string;
     regstartp = start;
@@ -994,8 +992,8 @@ static int regtry (const char* string, const char* *start,
  * 0 failure, 1 success
  */
 static int regmatch (const char* prog) {
-    register const char* scan;  // Current node.
-             const char* next;  // Next node.
+    const char* scan;  // Current node.
+    const char* next;  // Next node.
 
     scan = prog;
 
@@ -1018,14 +1016,14 @@ static int regmatch (const char* prog) {
                 reginput++;
                 break;
             case EXACTLY:{
-                    register int         len;
-                    register const char* opnd;
+                    size_t len;
+                    const char* opnd;
 
                     opnd = OPERAND(scan);
                     // Inline the first character, for speed.
                     if (*opnd != *reginput)
                         return (0);
-                    len = int(strlen(opnd));
+                    len = strlen(opnd);
                     if (len > 1 && strncmp(opnd, reginput, len) != 0)
                         return (0);
                     reginput += len;
@@ -1054,8 +1052,8 @@ static int regmatch (const char* prog) {
             case OPEN + 7:
             case OPEN + 8:
             case OPEN + 9:{
-                    register       int    no;
-                    register const char* save;
+                    int    no;
+                    const char* save;
 
                     no = OP(scan) - OPEN;
                     save = reginput;
@@ -1083,8 +1081,8 @@ static int regmatch (const char* prog) {
             case CLOSE + 7:
             case CLOSE + 8:
             case CLOSE + 9:{
-                    register       int    no;
-                    register const char* save;
+                    int    no;
+                    const char* save;
 
                     no = OP(scan) - CLOSE;
                     save = reginput;
@@ -1105,7 +1103,7 @@ static int regmatch (const char* prog) {
 //              break;
             case BRANCH:{
 
-              register const char* save;
+              const char* save;
 
                     if (OP(next) != BRANCH)     // No choice.
                         next = OPERAND(scan);   // Avoid recursion.
@@ -1124,10 +1122,10 @@ static int regmatch (const char* prog) {
                 break;
             case STAR:
             case PLUS:{
-              register char   nextch;
-                    register int        no;
-                    register const char* save;
-                    register int        min_no;
+                    char   nextch;
+                    int        no;
+                    const char* save;
+                    int        min_no;
 
                     //
                     // Lookahead to avoid useless match attempts when we know
@@ -1176,9 +1174,9 @@ static int regmatch (const char* prog) {
  - regrepeat - repeatedly match something simple, report how many
  */
 static int regrepeat (const char* p) {
-    register       int   count = 0;
-    register const char* scan;
-    register const char* opnd;
+    int         count = 0;
+    const char* scan;
+    const char* opnd;
 
     scan = reginput;
     opnd = OPERAND(p);
@@ -1218,8 +1216,8 @@ static int regrepeat (const char* p) {
 /*
  - regnext - dig the "next" pointer out of a node
  */
-static const char* regnext (register const char* p) {
-    register int offset;
+static const char* regnext (const char* p) {
+    int offset;
 
     if (p == &regdummy)
         return (0);
@@ -1234,9 +1232,8 @@ static const char* regnext (register const char* p) {
         return (p + offset);
 }
 
-
-static char* regnext (register char* p) {
-    register int offset;
+static char* regnext (char* p) {
+    int offset;
 
     if (p == &regdummy)
         return (0);

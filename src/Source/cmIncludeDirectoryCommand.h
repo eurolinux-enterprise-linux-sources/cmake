@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmIncludeDirectoryCommand.h,v $
-  Language:  C++
-  Date:      $Date: 2008-01-23 15:27:59 $
-  Version:   $Revision: 1.16 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmIncludeDirectoryCommand_h
 #define cmIncludeDirectoryCommand_h
 
@@ -31,7 +26,7 @@ public:
   /**
    * This is a virtual constructor for the command.
    */
-  virtual cmCommand* Clone() 
+  virtual cmCommand* Clone()
     {
     return new cmIncludeDirectoryCommand;
     }
@@ -46,39 +41,52 @@ public:
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() { return "include_directories";}
+  virtual const char* GetName() const { return "include_directories";}
 
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation() 
+  virtual const char* GetTerseDocumentation() const
     {
     return "Add include directories to the build.";
     }
-  
+
   /**
    * More documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
     return
       "  include_directories([AFTER|BEFORE] [SYSTEM] dir1 dir2 ...)\n"
-      "Add the given directories to those searched by the compiler for "
-      "include files. By default the directories are appended onto "
-      "the current list of directories. This default behavior can be "
-      "changed by setting CMAKE_include_directories_BEFORE to ON. "
-      "By using BEFORE or AFTER you can select between appending and "
-      "prepending, independent from the default. "
-      "If the SYSTEM option is given the compiler will be told that the "
+      "Add the given directories to those the compiler uses to search "
+      "for include files.  Relative paths are interpreted as relative to "
+      "the current source directory. \n"
+      "The include directories are added to the directory property "
+      "INCLUDE_DIRECTORIES for the current CMakeLists file. "
+      "They are also added to the target property INCLUDE_DIRECTORIES "
+      "for each target in the current CMakeLists file. "
+      "The target property values are the ones used by the generators."
+      "\n"
+      "By default the directories are appended onto the current list of "
+      "directories. "
+      "This default behavior can be changed by setting "
+      "CMAKE_INCLUDE_DIRECTORIES_BEFORE to ON. "
+      "By using AFTER or BEFORE explicitly, you can select between "
+      "appending and prepending, independent of the default. "
+      "\n"
+      "If the SYSTEM option is given, the compiler will be told the "
       "directories are meant as system include directories on some "
-      "platforms.";
+      "platforms (signalling this setting might achieve effects such as "
+      "the compiler skipping warnings, or these fixed-install system files "
+      "not being considered in dependency calculations - see compiler docs).";
     }
-  
+
   cmTypeMacro(cmIncludeDirectoryCommand, cmCommand);
 
 protected:
   // used internally
-  void AddDirectory(const char *arg, bool before, bool system);
+  void GetIncludes(const std::string &arg, std::vector<std::string> &incs);
+  void NormalizeInclude(std::string &inc);
 };
 
 

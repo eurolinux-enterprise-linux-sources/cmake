@@ -1,20 +1,15 @@
 %{
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmListFileLexer.in.l,v $
-  Language:  C++
-  Date:      $Date: 2006-08-09 13:45:04 $
-  Version:   $Revision: 1.15 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 /*
 
 This file must be translated to C and modified to build everywhere.
@@ -25,9 +20,11 @@ Run flex like this:
 
 Modify cmListFileLexer.c:
   - remove TABs
+  - remove use of the 'register' storage class specifier
   - remove the yyunput function
   - add a statement "(void)yyscanner;" to the top of these methods:
       yy_fatal_error, cmListFileLexer_yyalloc, cmListFileLexer_yyrealloc, cmListFileLexer_yyfree
+  - remove statement "yyscanner = NULL;" from cmListFileLexer_yylex_destroy
   - remove all YY_BREAK lines occurring right after return statements
   - remove the isatty forward declaration
 
@@ -79,6 +76,8 @@ static void cmListFileLexerDestroy(cmListFileLexer* lexer);
 %x STRING
 
 MAKEVAR \$\([A-Za-z0-9_]*\)
+UNQUOTED ([^ \t\r\n\(\)#\\\"]|\\.)
+LEGACY {MAKEVAR}|{UNQUOTED}|\"({MAKEVAR}|{UNQUOTED}|[ \t])*\"
 
 %%
 
@@ -115,7 +114,14 @@ MAKEVAR \$\([A-Za-z0-9_]*\)
   return 1;
 }
 
-({MAKEVAR}|[^ \t\r\n\(\)#\\\"]|\\.)({MAKEVAR}|[^ \t\r\n\(\)#\\\"]|\\.|\"({MAKEVAR}|[^\r\n\(\)#\\\"]|\\.)*\")* {
+({UNQUOTED})({UNQUOTED})* {
+  lexer->token.type = cmListFileLexer_Token_ArgumentUnquoted;
+  cmListFileLexerSetToken(lexer, yytext, yyleng);
+  lexer->column += yyleng;
+  return 1;
+}
+
+({MAKEVAR}|{UNQUOTED})({LEGACY})* {
   lexer->token.type = cmListFileLexer_Token_ArgumentUnquoted;
   cmListFileLexerSetToken(lexer, yytext, yyleng);
   lexer->column += yyleng;
@@ -129,9 +135,15 @@ MAKEVAR \$\([A-Za-z0-9_]*\)
   BEGIN(STRING);
 }
 
-<STRING>([^\\\n\"]|\\(.|\n))+ {
+<STRING>([^\\\n\"]|\\.)+ {
   cmListFileLexerAppend(lexer, yytext, yyleng);
   lexer->column += yyleng;
+}
+
+<STRING>\\\n {
+  cmListFileLexerAppend(lexer, yytext, yyleng);
+  ++lexer->line;
+  lexer->column = 1;
 }
 
 <STRING>\n {
@@ -157,8 +169,11 @@ MAKEVAR \$\([A-Za-z0-9_]*\)
   return 1;
 }
 
-[ \t\r] {
+[ \t\r]+ {
+  lexer->token.type = cmListFileLexer_Token_Space;
+  cmListFileLexerSetToken(lexer, yytext, yyleng);
   lexer->column += yyleng;
+  return 1;
 }
 
 . {
@@ -409,6 +424,7 @@ const char* cmListFileLexer_GetTypeAsString(cmListFileLexer* lexer,
   switch(type)
     {
     case cmListFileLexer_Token_None: return "nothing";
+    case cmListFileLexer_Token_Space: return "space";
     case cmListFileLexer_Token_Newline: return "newline";
     case cmListFileLexer_Token_Identifier: return "identifier";
     case cmListFileLexer_Token_ParenLeft: return "left paren";

@@ -1,23 +1,19 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmGlobalVisualStudio6Generator.h,v $
-  Language:  C++
-  Date:      $Date: 2007-06-28 13:09:26 $
-  Version:   $Revision: 1.29 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmGlobalVisualStudio6Generator_h
 #define cmGlobalVisualStudio6Generator_h
 
 #include "cmGlobalVisualStudioGenerator.h"
+#include "cmGlobalGeneratorFactory.h"
 
 class cmTarget;
 
@@ -30,25 +26,26 @@ class cmGlobalVisualStudio6Generator : public cmGlobalVisualStudioGenerator
 {
 public:
   cmGlobalVisualStudio6Generator();
-  static cmGlobalGenerator* New() { 
-    return new cmGlobalVisualStudio6Generator; }
-  
+  static cmGlobalGeneratorFactory* NewFactory() {
+    return new cmGlobalGeneratorSimpleFactory
+      <cmGlobalVisualStudio6Generator>(); }
+
   ///! Get the name for the generator.
   virtual const char* GetName() const {
     return cmGlobalVisualStudio6Generator::GetActualName();}
   static const char* GetActualName() {return "Visual Studio 6";}
 
   /** Get the documentation entry for this generator.  */
-  virtual void GetDocumentation(cmDocumentationEntry& entry) const;
-  
+  static void GetDocumentation(cmDocumentationEntry& entry);
+
   ///! Create a local generator appropriate to this Global Generator
   virtual cmLocalGenerator *CreateLocalGenerator();
 
   /**
    * Try to determine system infomation such as shared library
-   * extension, pthreads, byte order etc.  
+   * extension, pthreads, byte order etc.
    */
-  virtual void EnableLanguage(std::vector<std::string>const& languages, 
+  virtual void EnableLanguage(std::vector<std::string>const& languages,
                               cmMakefile *, bool optional);
 
   /**
@@ -57,8 +54,9 @@ public:
    */
   virtual std::string GenerateBuildCommand(const char* makeProgram,
                                            const char *projectName,
-                                           const char* additionalOptions, 
-                                           const char *targetName, 
+                                           const char *projectDir,
+                                           const char* additionalOptions,
+                                           const char *targetName,
                                            const char* config,
                                            bool ignoreErrors,
                                            bool fast);
@@ -66,7 +64,7 @@ public:
   /**
    * Generate the all required files for building this project/tree. This
    * basically creates a series of LocalGenerators for each directory and
-   * requests that they Generate.  
+   * requests that they Generate.
    */
   virtual void Generate();
 
@@ -87,17 +85,21 @@ public:
                                         std::string& dir);
 
   ///! What is the configurations directory variable called?
-  virtual const char* GetCMakeCFGInitDirectory()  { return "$(IntDir)"; }
+  virtual const char* GetCMakeCFGIntDir() const { return "$(IntDir)"; }
+
+protected:
+  virtual const char* GetIDEVersion() { return "6.0"; }
 private:
   void GenerateConfigurations(cmMakefile* mf);
   void WriteDSWFile(std::ostream& fout);
   void WriteDSWHeader(std::ostream& fout);
-  void WriteProject(std::ostream& fout, 
+  void WriteProject(std::ostream& fout,
                     const char* name, const char* path, cmTarget &t);
-  void WriteExternalProject(std::ostream& fout, 
+  void WriteExternalProject(std::ostream& fout,
                             const char* name, const char* path,
-                            const std::vector<std::string>& dependencies);
+                            const std::set<cmStdString>& dependencies);
   void WriteDSWFooter(std::ostream& fout);
+  virtual std::string WriteUtilityDepend(cmTarget* target);
 };
 
 #endif

@@ -1,28 +1,31 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmFindBase.cxx,v $
-  Language:  C++
-  Date:      $Date: 2008-10-24 15:18:46 $
-  Version:   $Revision: 1.35.2.5 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmFindBase.h"
-  
+
 cmFindBase::cmFindBase()
 {
-  cmSystemTools::ReplaceString(this->GenericDocumentationPathsOrder,
-                               "FIND_ARGS_XXX", "<VAR> NAMES name");
   this->AlreadyInCache = false;
   this->AlreadyInCacheWithoutMetaInfo = false;
-  this->GenericDocumentation = 
+  this->NamesPerDir = false;
+  this->NamesPerDirAllowed = false;
+}
+
+//----------------------------------------------------------------------------
+void cmFindBase::GenerateDocumentation()
+{
+  this->cmFindCommon::GenerateDocumentation();
+  cmSystemTools::ReplaceString(this->GenericDocumentationPathsOrder,
+                               "FIND_ARGS_XXX", "<VAR> NAMES name");
+  this->GenericDocumentation =
     "   FIND_XXX(<VAR> name1 [path1 path2 ...])\n"
     "This is the short-hand signature for the command that "
     "is sufficient in many cases.  It is the same "
@@ -71,12 +74,14 @@ cmFindBase::cmFindBase()
     "1. Search paths specified in cmake-specific cache variables.  "
     "These are intended to be used on the command line with a -DVAR=value.  "
     "This can be skipped if NO_CMAKE_PATH is passed.\n"
+    "XXX_EXTRA_PREFIX_ENTRY"
     "   <prefix>/XXX_SUBDIR for each <prefix> in CMAKE_PREFIX_PATH\n"
     "   CMAKE_XXX_PATH\n"
     "   CMAKE_XXX_MAC_PATH\n"
     "2. Search paths specified in cmake-specific environment variables.  "
     "These are intended to be set in the user's shell configuration.  "
     "This can be skipped if NO_CMAKE_ENVIRONMENT_PATH is passed.\n"
+    "XXX_EXTRA_PREFIX_ENTRY"
     "   <prefix>/XXX_SUBDIR for each <prefix> in CMAKE_PREFIX_PATH\n"
     "   CMAKE_XXX_PATH\n"
     "   CMAKE_XXX_MAC_PATH\n"
@@ -91,6 +96,7 @@ cmFindBase::cmFindBase()
     "5. Search cmake variables defined in the Platform files "
     "for the current system.  This can be skipped if NO_CMAKE_SYSTEM_PATH "
     "is passed.\n"
+    "XXX_EXTRA_PREFIX_ENTRY"
     "   <prefix>/XXX_SUBDIR for each <prefix> in CMAKE_SYSTEM_PREFIX_PATH\n"
     "   CMAKE_SYSTEM_XXX_PATH\n"
     "   CMAKE_SYSTEM_XXX_MAC_PATH\n"
@@ -102,7 +108,18 @@ cmFindBase::cmFindBase()
   this->GenericDocumentation += this->GenericDocumentationRootPath;
   this->GenericDocumentation += this->GenericDocumentationPathsOrder;
 }
-  
+
+//----------------------------------------------------------------------------
+const char* cmFindBase::GetFullDocumentation() const
+{
+  if(this->GenericDocumentation.empty())
+    {
+    const_cast<cmFindBase *>(this)->GenerateDocumentation();
+    }
+  return this->GenericDocumentation.c_str();
+}
+
+//----------------------------------------------------------------------------
 bool cmFindBase::ParseArguments(std::vector<std::string> const& argsIn)
 {
   if(argsIn.size() < 2 )
@@ -117,7 +134,7 @@ bool cmFindBase::ParseArguments(std::vector<std::string> const& argsIn)
   bool compatibility = this->Makefile->NeedBackwardsCompatibility(2,3);
 
   // copy argsIn into args so it can be modified,
-  // in the process extract the DOC "documentation" 
+  // in the process extract the DOC "documentation"
   size_t size = argsIn.size();
   std::vector<std::string> args;
   bool foundDoc = false;
@@ -152,13 +169,18 @@ bool cmFindBase::ParseArguments(std::vector<std::string> const& argsIn)
         }
       }
     }
+  if(args.size() < 2 )
+    {
+    this->SetError("called with incorrect number of arguments");
+    return false;
+    }
   this->VariableName = args[0];
   if(this->CheckForVariableInCache())
     {
     this->AlreadyInCache = true;
     return true;
     }
-  this->AlreadyInCache = false; 
+  this->AlreadyInCache = false;
 
   // Find the current root path mode.
   this->SelectDefaultRootPathMode();
@@ -192,6 +214,19 @@ bool cmFindBase::ParseArguments(std::vector<std::string> const& argsIn)
       doing = DoingPathSuffixes;
       compatibility = false;
       newStyle = true;
+      }
+    else if (args[j] == "NAMES_PER_DIR")
+      {
+      doing = DoingNone;
+      if(this->NamesPerDirAllowed)
+        {
+        this->NamesPerDir = true;
+        }
+      else
+        {
+        this->SetError("does not support NAMES_PER_DIR");
+        return false;
+        }
       }
     else if (args[j] == "NO_SYSTEM_PATH")
       {
@@ -244,17 +279,17 @@ bool cmFindBase::ParseArguments(std::vector<std::string> const& argsIn)
       }
     else if(this->Names.size() == 1)
       {
-      this->VariableDocumentation += "the " 
+      this->VariableDocumentation += "the "
         + this->Names[0] + " library be found";
       }
     else
-      { 
+      {
       this->VariableDocumentation += "one of the " + this->Names[0];
       for (unsigned int j = 1; j < this->Names.size() - 1; ++j)
         {
         this->VariableDocumentation += ", " + this->Names[j];
         }
-      this->VariableDocumentation += " or " 
+      this->VariableDocumentation += " or "
         + this->Names[this->Names.size() - 1] + " libraries be found";
       }
     }
@@ -274,11 +309,12 @@ bool cmFindBase::ParseArguments(std::vector<std::string> const& argsIn)
     }
   this->ExpandPaths();
 
-  // Handle search root stuff.
-  this->RerootPaths(this->SearchPaths);
+  // Filter out ignored paths from the prefix list
+  std::set<std::string> ignored;
+  this->GetIgnoredPaths(ignored);
+  this->FilterPaths(this->SearchPaths, ignored);
 
-  // Add a trailing slash to all prefixes to aid the search process.
-  this->AddTrailingSlashes(this->SearchPaths);
+  this->ComputeFinalPaths();
 
   return true;
 }
@@ -323,6 +359,15 @@ void cmFindBase::AddPrefixPaths(std::vector<std::string> const& in_paths,
     if(!subdir.empty() && !dir.empty() && dir[dir.size()-1] != '/')
       {
       dir += "/";
+      }
+    if(subdir == "include" || subdir == "lib")
+      {
+      const char* arch =
+        this->Makefile->GetDefinition("CMAKE_LIBRARY_ARCHITECTURE");
+      if(arch && *arch)
+        {
+        this->AddPathInternal(dir+subdir+"/"+arch, pathType);
+        }
       }
     std::string add = dir + subdir;
     if(add != "/")
@@ -474,7 +519,7 @@ void cmFindBase::AddPathSuffixes()
     cmSystemTools::ConvertToUnixSlashes(*i);
     // copy each finalPath combined with SearchPathSuffixes
     // to the SearchPaths ivar
-    for(std::vector<std::string>::iterator j = 
+    for(std::vector<std::string>::iterator j =
           this->SearchPathSuffixes.begin();
         j != this->SearchPathSuffixes.end(); ++j)
       {
@@ -487,7 +532,7 @@ void cmFindBase::AddPathSuffixes()
         p += std::string("/");
         }
       p +=  *j;
-      // add to all paths because the search path may be modified 
+      // add to all paths because the search path may be modified
       // later with lib being replaced for lib64 which may exist
       paths.push_back(p);
       }
@@ -505,13 +550,13 @@ void cmFindBase::PrintFindStuff()
   std::cerr << "SearchAppBundleOnly: " << this->SearchAppBundleOnly << "\n";
   std::cerr << "SearchAppBundleFirst: " << this->SearchAppBundleFirst << "\n";
   std::cerr << "VariableName " << this->VariableName << "\n";
-  std::cerr << "VariableDocumentation " 
+  std::cerr << "VariableDocumentation "
             << this->VariableDocumentation << "\n";
   std::cerr << "NoDefaultPath " << this->NoDefaultPath << "\n";
-  std::cerr << "NoCMakeEnvironmentPath " 
+  std::cerr << "NoCMakeEnvironmentPath "
             << this->NoCMakeEnvironmentPath << "\n";
   std::cerr << "NoCMakePath " << this->NoCMakePath << "\n";
-  std::cerr << "NoSystemEnvironmentPath " 
+  std::cerr << "NoSystemEnvironmentPath "
             << this->NoSystemEnvironmentPath << "\n";
   std::cerr << "NoCMakeSystemPath " << this->NoCMakeSystemPath << "\n";
   std::cerr << "EnvironmentPath " << this->EnvironmentPath << "\n";

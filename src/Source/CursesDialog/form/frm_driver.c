@@ -41,7 +41,7 @@
 #undef lines
 #undef columns
 
-MODULE_ID("$Id: frm_driver.c,v 1.15 2002-10-23 20:43:34 king Exp $")
+MODULE_ID("$Id$")
 
 /* These declarations are missing from curses.h on some platforms.  */
 extern int winnstr(WINDOW *, char *, int);
@@ -176,7 +176,7 @@ static int FE_Delete_Previous(FORM *);
 #define Address_Of_Current_Position_In_Buffer(form) \
   Address_Of_Current_Position_In_Nth_Buffer(form,0)
 
-/* Logic to decide wether or not a field is actually a field with
+/* Logic to decide whether or not a field is actually a field with
    vertical or horizontal scrolling */
 #define Is_Scroll_Field(field)          \
    (((field)->drows > (field)->rows) || \
@@ -357,8 +357,12 @@ static void Buffer_To_Window(const FIELD  * field, WINDOW * win)
 
   assert(win && field);
 
+#if defined(__LSB_VERSION__)
+  getmaxyx(win, height, width);
+#else
   width  = getmaxx(win);
   height = getmaxy(win);
+#endif
 
   for(row=0, pBuffer=field->buf; 
       row < height; 
@@ -396,7 +400,11 @@ static void Window_To_Buffer(WINDOW * win, FIELD  * field)
 
   pad = field->pad;
   p = field->buf;
+#if defined(__LSB_VERSION__)
+  { int width; getmaxyx(win, height, width); }
+#else
   height = getmaxy(win);
+#endif
 
   for(row=0; (row < height) && (row < field->drows); row++ )
     {
@@ -871,7 +879,17 @@ static int Display_Or_Erase_Field(FIELD * field, bool bEraseFlag)
       if (field->opts & O_VISIBLE)
         Set_Field_Window_Attributes(field,win);
       else
+        {
+#if defined(__LSB_VERSION__)
+        /* getattrs() would be handy, but it is not part of LSB 4.0 */
+        attr_t fwinAttrs;
+        short  fwinPair;
+        wattr_get(fwin, &fwinAttrs, &fwinPair, 0);
+        wattr_set(win, fwinAttrs, fwinPair, 0);
+#else
         wattrset(win,getattrs(fwin));
+#endif
+        }
       werase(win);
     }
 
@@ -1068,7 +1086,7 @@ _nc_Synchronize_Options(FIELD *field, Field_Options newopts)
 
       if (form->status & _POSTED)
         {
-          if ((form->curpage == field->page))
+          if (form->curpage == field->page)
             {
               if (changed_opts & O_VISIBLE)
                 {
@@ -2082,7 +2100,7 @@ static int Insert_String(FORM *form, int row, char *txt, int len)
 |                    the wrapping.
 |
 |   Return Values :  E_OK              - no wrapping required or wrapping
-|                                        was successfull
+|                                        was successful
 |                    E_REQUEST_DENIED  -
 |                    E_SYSTEM_ERROR    - some system error
 +--------------------------------------------------------------------------*/
@@ -3807,7 +3825,7 @@ int set_field_buffer(FIELD * field, int buffer, const char * value)
                            (int)(1 + (vlen-len)/((field->rows+field->nrow)*field->cols))))
             RETURN(E_SYSTEM_ERROR);
 
-          /* in this case we also have to check, wether or not the remaining
+          /* in this case we also have to check, whether or not the remaining
              characters in value are also printable for buffer 0. */
           if (buffer==0)
             {

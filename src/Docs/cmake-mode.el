@@ -1,15 +1,13 @@
 ;=============================================================================
+; CMake - Cross Platform Makefile Generator
+; Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 ;
-;  Program:   CMake - Cross-Platform Makefile Generator
-;  Module:    $RCSfile: cmake-mode.el,v $
+; Distributed under the OSI-approved BSD License (the "License");
+; see accompanying file Copyright.txt for details.
 ;
-;  Copyright (c) 2000-$Date: 2009-03-23 17:58:40 $ Kitware, Inc., Insight Consortium.  All rights reserved.
-;  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-;
-;     This software is distributed WITHOUT ANY WARRANTY; without even
-;     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-;     PURPOSE.  See the above copyright notices for more information.
-;
+; This software is distributed WITHOUT ANY WARRANTY; without even the
+; implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+; See the License for more information.
 ;=============================================================================
 ;;; cmake-mode.el --- major-mode for editing CMake sources
 
@@ -32,7 +30,22 @@
 ;------------------------------------------------------------------------------
 
 ;;; Code:
+;;
+;; cmake executable variable used to run cmake --help-command
+;; on commands in cmake-mode
+;;
+;; cmake-command-help Written by James Bigler
+;;
 
+(defcustom cmake-mode-cmake-executable "cmake"
+  "*The name of the cmake executable.
+
+This can be either absolute or looked up in $PATH.  You can also
+set the path with these commands:
+ (setenv \"PATH\" (concat (getenv \"PATH\") \";C:\\\\Program Files\\\\CMake 2.8\\\\bin\"))
+ (setenv \"PATH\" (concat (getenv \"PATH\") \":/usr/local/cmake/bin\"))"
+  :type 'file
+  :group 'cmake)
 ;;
 ;; Regular expressions used by line indentation function.
 ;;
@@ -55,9 +68,9 @@
                                        "\\|" "[ \t\r\n]"
                                        "\\)*"))
 (defconst cmake-regex-block-open
-  "^\\(IF\\|MACRO\\|FOREACH\\|ELSE\\|ELSEIF\\|WHILE\\|FUNCTION\\)$")
+  "^\\(if\\|macro\\|foreach\\|else\\|elseif\\|while\\|function\\)$")
 (defconst cmake-regex-block-close
-  "^[ \t]*\\(ENDIF\\|ENDFOREACH\\|ENDMACRO\\|ELSE\\|ELSEIF\\|ENDWHILE\\|ENDFUNCTION\\)[ \t]*(")
+  "^[ \t]*\\(endif\\|endforeach\\|endmacro\\|else\\|elseif\\|endwhile\\|endfunction\\)[ \t]*(")
 
 ;------------------------------------------------------------------------------
 
@@ -86,6 +99,7 @@
     (setq region (buffer-substring-no-properties (point) point-start))
     (while (and (not (bobp))
                 (or (looking-at cmake-regex-blank)
+                    (cmake-line-starts-inside-string)
                     (not (and (string-match cmake-regex-indented region)
                               (= (length region) (match-end 0))))))
       (forward-line -1)
@@ -112,6 +126,7 @@
           (beginning-of-line)
 
           (let ((point-start (point))
+                (case-fold-search t)  ;; case-insensitive
                 token)
 
             ; Search back for the last indented line.
@@ -177,11 +192,11 @@ the indentation.  Otherwise it retains the same position on the line"
   (setq save-point (point))
   (goto-char (point-min))
   (while (re-search-forward "^\\([ \t]*\\)\\(\\w+\\)\\([ \t]*(\\)" nil t)
-    (replace-match 
-     (concat 
-      (match-string 1) 
-      (downcase (match-string 2)) 
-      (match-string 3)) 
+    (replace-match
+     (concat
+      (match-string 1)
+      (downcase (match-string 2))
+      (match-string 3))
      t))
   (goto-char save-point)
   )
@@ -215,13 +230,26 @@ the indentation.  Otherwise it retains the same position on the line"
 ;;
 (defvar cmake-tab-width 2)
 
+;;
+;; Keymap.
+;;
+(defvar cmake-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map "\C-ch" 'cmake-help-command)
+    (define-key map "\C-cl" 'cmake-help-list-commands)
+    (define-key map "\C-cu" 'unscreamify-cmake-buffer)
+    map)
+  "Keymap used in cmake-mode buffers.")
+
 ;------------------------------------------------------------------------------
 
 ;;
 ;; CMake mode startup function.
 ;;
 (defun cmake-mode ()
-  "Major mode for editing CMake listfiles."
+  "Major mode for editing CMake listfiles.
+
+\\{cmake-mode-map}"
   (interactive)
   (kill-all-local-variables)
   (setq major-mode 'cmake-mode)
@@ -248,8 +276,80 @@ the indentation.  Otherwise it retains the same position on the line"
   (make-local-variable 'comment-start)
   (setq comment-start "#")
 
+  ; Setup keymap.
+  (use-local-map cmake-mode-map)
+
   ; Run user hooks.
   (run-hooks 'cmake-mode-hook))
+
+; Help mode starts here
+
+
+(defun cmake-command-run (type &optional topic)
+  "Runs the command cmake with the arguments specified.  The
+optional argument topic will be appended to the argument list."
+  (interactive "s")
+  (let* ((bufname (concat "*CMake" type (if topic "-") topic "*"))
+         (buffer  (get-buffer bufname))
+         )
+    (if buffer
+        (display-buffer buffer 'not-this-window)
+      ;; Buffer doesn't exist.  Create it and fill it
+      (setq buffer (generate-new-buffer bufname))
+      (setq command (concat cmake-mode-cmake-executable " " type " " topic))
+      (message "Running %s" command)
+      ;; We don't want the contents of the shell-command running to the
+      ;; minibuffer, so turn it off.  A value of nil means don't automatically
+      ;; resize mini-windows.
+      (setq resize-mini-windows-save resize-mini-windows)
+      (setq resize-mini-windows nil)
+      (shell-command command buffer)
+      ;; Save the original window, so that we can come back to it later.
+      ;; save-excursion doesn't seem to work for this.
+      (setq window (selected-window))
+      ;; We need to select it so that we can apply special modes to it
+      (select-window (display-buffer buffer 'not-this-window))
+      (cmake-mode)
+      (toggle-read-only t)
+      ;; Restore the original window
+      (select-window window)
+      (setq resize-mini-windows resize-mini-windows-save)
+      )
+    )
+  )
+
+(defun cmake-help-list-commands ()
+  "Prints out a list of the cmake commands."
+  (interactive)
+  (cmake-command-run "--help-command-list")
+  )
+
+(defvar cmake-help-command-history nil "Topic read history.")
+
+(require 'thingatpt)
+(defun cmake-get-topic (type)
+  "Gets the topic from the minibuffer input.  The default is the word the cursor is on."
+  (interactive)
+  (let* ((default-entry (word-at-point))
+         (input (read-string
+                 (format "CMake %s (default %s): " type default-entry) ; prompt
+                 nil ; initial input
+                 'cmake-help-command-history ; command history
+                 default-entry ; default-value
+                 )))
+    (if (string= input "")
+        (error "No argument given")
+      input))
+  )
+
+
+(defun cmake-help-command ()
+  "Prints out the help message corresponding to the command the cursor is on."
+  (interactive)
+  (setq command (cmake-get-topic "command"))
+  (cmake-command-run "--help-command" (downcase command))
+  )
+
 
 ; This file provides cmake-mode.
 (provide 'cmake-mode)

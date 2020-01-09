@@ -1,25 +1,21 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: QCMakeCacheView.h,v $
-  Language:  C++
-  Date:      $Date: 2008-06-25 13:51:50 $
-  Version:   $Revision: 1.17.2.3 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 
 #ifndef QCMakeCacheView_h
 #define QCMakeCacheView_h
 
 #include "QCMake.h"
 #include <QTreeView>
+#include <QSet>
 #include <QStandardItemModel>
 #include <QItemDelegate>
 
@@ -37,11 +33,11 @@ public:
   // retrieve the QCMakeCacheModel storing all the pointers
   // this isn't necessarily the model one would get from model()
   QCMakeCacheModel* cacheModel() const;
-  
+
   // get whether to show advanced entries
   bool showAdvanced() const;
 
-  QSize sizeHint(int) { return QSize(200,200); }
+  QSize sizeHint() const { return QSize(200,200); }
 
 public slots:
   // set whether to show advanced entries
@@ -69,8 +65,11 @@ public:
   // roles used to retrieve extra data such has help strings, types of
   // properties, and the advanced flag
   enum { HelpRole = Qt::ToolTipRole,
-         TypeRole = Qt::UserRole, 
-         AdvancedRole };
+         TypeRole = Qt::UserRole,
+         AdvancedRole,
+         StringsRole,
+         GroupRole
+       };
 
   enum ViewType { FlatView, GroupView };
 
@@ -80,6 +79,9 @@ public slots:
   // list of properties to set will become an old property.  All others will
   // become new properties and be marked red.
   void setProperties(const QCMakePropertyList& props);
+
+  // set whether to show new properties in red
+  void setShowNewProperties(bool);
 
   // clear everything from the model
   void clear();
@@ -100,7 +102,7 @@ public slots:
 public:
   // get the properties
   QCMakePropertyList properties() const;
-  
+
   // editing enabled
   bool editEnabled() const;
 
@@ -111,29 +113,31 @@ public:
   Qt::ItemFlags flags (const QModelIndex& index) const;
   QModelIndex buddy(const QModelIndex& idx) const;
 
-protected:
-  bool EditEnabled;
-  int NewPropertyCount;
-  ViewType View;
-
-  // set the data in the model for this property
-  void setPropertyData(const QModelIndex& idx1, 
-                       const QCMakeProperty& p, bool isNew);
   // get the data in the model for this property
   void getPropertyData(const QModelIndex& idx1,
                        QCMakeProperty& prop) const;
+
+protected:
+  bool EditEnabled;
+  int NewPropertyCount;
+  bool ShowNewProperties;
+  ViewType View;
+
+  // set the data in the model for this property
+  void setPropertyData(const QModelIndex& idx1,
+                       const QCMakeProperty& p, bool isNew);
 
   // breaks up he property list into groups
   // where each group has the same prefix up to the first underscore
   static void breakProperties(const QSet<QCMakeProperty>& props,
                        QMap<QString, QCMakePropertyList>& result);
-  
+
   // gets the prefix of a string up to the first _
   static QString prefix(const QString& s);
 
 };
 
-/// Qt delegate class for interaction (or other customization) 
+/// Qt delegate class for interaction (or other customization)
 /// with cache properties
 class QCMakeCacheModelDelegate : public QItemDelegate
 {
@@ -141,15 +145,27 @@ class QCMakeCacheModelDelegate : public QItemDelegate
 public:
   QCMakeCacheModelDelegate(QObject* p);
   /// create our own editors for cache properties
-  QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, 
+  QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option,
       const QModelIndex& index ) const;
-  bool editorEvent (QEvent* event, QAbstractItemModel* model, 
+  bool editorEvent (QEvent* event, QAbstractItemModel* model,
        const QStyleOptionViewItem& option, const QModelIndex& index);
   bool eventFilter(QObject* object, QEvent* event);
+  void setModelData(QWidget * editor, QAbstractItemModel * model, const QModelIndex & index ) const;
+  QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const;
+
+  QSet<QCMakeProperty> changes() const;
+  void clearChanges();
+
 protected slots:
   void setFileDialogFlag(bool);
 protected:
   bool FileDialogFlag;
+  // record a change to an item in the model.
+  // this simply saves the item in the set of changes
+  void recordChange(QAbstractItemModel* model, const QModelIndex& index);
+
+  // properties changed by user via this delegate
+  QSet<QCMakeProperty> mChanges;
 };
 
 #endif

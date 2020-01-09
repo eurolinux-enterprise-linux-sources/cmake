@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmExecProgramCommand.cxx,v $
-  Language:  C++
-  Date:      $Date: 2008-01-23 15:27:59 $
-  Version:   $Revision: 1.23 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmExecProgramCommand.h"
 #include "cmSystemTools.h"
 
@@ -41,7 +36,7 @@ bool cmExecProgramCommand
       doingargs = false;
       havereturn_variable = false;
       haveoutput_variable = true;
-      }    
+      }
     else if ( haveoutput_variable )
       {
       if ( output_variable.size() > 0 )
@@ -59,7 +54,7 @@ bool cmExecProgramCommand
       doingargs = false;
       haveoutput_variable = false;
       havereturn_variable = true;
-      }    
+      }
     else if ( havereturn_variable )
       {
       if ( return_variable.size() > 0 )
@@ -113,16 +108,16 @@ bool cmExecProgramCommand
     }
   else
     {
-    result = cmSystemTools::RunCommand(command.c_str(), output, 
+    result = cmSystemTools::RunCommand(command.c_str(), output,
                                        retVal, 0, verbose);
     }
   if(!result)
     {
     retVal = -1;
-    }  
+    }
 
   if ( output_variable.size() > 0 )
-    {    
+    {
     std::string::size_type first = output.find_first_not_of(" \n\t\r");
     std::string::size_type last = output.find_last_not_of(" \n\t\r");
     if(first == std::string::npos)
@@ -133,7 +128,7 @@ bool cmExecProgramCommand
       {
       last = output.size()-1;
       }
-    
+
     std::string coutput = std::string(output, first, last-first+1);
     this->Makefile->AddDefinition(output_variable.c_str(), coutput.c_str());
     }
@@ -144,7 +139,7 @@ bool cmExecProgramCommand
     sprintf(buffer, "%d", retVal);
     this->Makefile->AddDefinition(return_variable.c_str(), buffer);
     }
-  
+
   return true;
 }
 

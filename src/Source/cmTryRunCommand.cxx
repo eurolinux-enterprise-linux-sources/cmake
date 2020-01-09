@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmTryRunCommand.cxx,v $
-  Language:  C++
-  Date:      $Date: 2008-01-23 15:27:59 $
-  Version:   $Revision: 1.41 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmTryRunCommand.h"
 #include "cmCacheManager.h"
 #include "cmTryCompileCommand.h"
@@ -24,6 +19,14 @@ bool cmTryRunCommand
 {
   if(argv.size() < 4)
     {
+    return false;
+    }
+
+  if(this->Makefile->GetCMakeInstance()->GetWorkingMode() ==
+                                                      cmake::FIND_PACKAGE_MODE)
+    {
+    this->Makefile->IssueMessage(cmake::FATAL_ERROR,
+            "The TRY_RUN() command is not supported in --find-package mode.");
     return false;
     }
 
@@ -54,8 +57,8 @@ bool cmTryRunCommand
         {
         tryCompile.push_back(argv[i]);
         }
-      } 
-    else 
+      }
+    else
       {
       if (argv[i] == "OUTPUT_VARIABLE")
         {
@@ -99,8 +102,8 @@ bool cmTryRunCommand
 
   // although they could be used together, don't allow it, because
   // using OUTPUT_VARIABLE makes crosscompiling harder
-  if (this->OutputVariable.size() 
-      && ((this->RunOutputVariable.size()) 
+  if (this->OutputVariable.size()
+      && ((this->RunOutputVariable.size())
        || (this->CompileOutputVariable.size())))
     {
     cmSystemTools::Error(
@@ -146,8 +149,8 @@ bool cmTryRunCommand
       std::string runOutputContents;
       if (this->Makefile->IsOn("CMAKE_CROSSCOMPILING"))
         {
-        this->DoNotRunExecutable(runArgs, 
-                                 argv[3], 
+        this->DoNotRunExecutable(runArgs,
+                                 argv[3],
                                  captureRunOutput ? &runOutputContents : 0);
         }
       else
@@ -158,7 +161,7 @@ bool cmTryRunCommand
       // now put the output into the variables
       if(this->RunOutputVariable.size())
         {
-        this->Makefile->AddDefinition(this->RunOutputVariable.c_str(), 
+        this->Makefile->AddDefinition(this->RunOutputVariable.c_str(),
                                       runOutputContents.c_str());
         }
 
@@ -172,7 +175,7 @@ bool cmTryRunCommand
           {
           runOutputContents = std::string(compileOutput) + runOutputContents;
           }
-        this->Makefile->AddDefinition(this->OutputVariable.c_str(), 
+        this->Makefile->AddDefinition(this->OutputVariable.c_str(),
                                       runOutputContents.c_str());
         }
       }
@@ -199,7 +202,7 @@ void cmTryRunCommand::RunExecutable(const std::string& runArgs,
   int timeout = 0;
   bool worked = cmSystemTools::RunSingleCommand(finalCommand.c_str(),
                 out, &retVal,
-                0, false, timeout);
+                0, cmSystemTools::OUTPUT_NONE, timeout);
   // set the run var
   char retChar[1000];
   if (worked)
@@ -217,9 +220,9 @@ void cmTryRunCommand::RunExecutable(const std::string& runArgs,
 
 /* This is only used when cross compiling. Instead of running the
  executable, two cache variables are created which will hold the results
- the executable would have produced. 
+ the executable would have produced.
 */
-void cmTryRunCommand::DoNotRunExecutable(const std::string& runArgs, 
+void cmTryRunCommand::DoNotRunExecutable(const std::string& runArgs,
                                     const std::string& srcFile,
                                     std::string* out
                                     )
@@ -254,7 +257,7 @@ void cmTryRunCommand::DoNotRunExecutable(const std::string& runArgs,
     comment += "Run result of TRY_RUN(), indicates whether the executable "
                "would have been able to run on its target platform.\n";
     comment += detailsString;
-    this->Makefile->AddCacheDefinition(this->RunResultVariable.c_str(), 
+    this->Makefile->AddCacheDefinition(this->RunResultVariable.c_str(),
                                        "PLEASE_FILL_OUT-FAILED_TO_RUN",
                                        comment.c_str(),
                                        cmCacheManager::STRING);
@@ -281,7 +284,7 @@ void cmTryRunCommand::DoNotRunExecutable(const std::string& runArgs,
            "would have printed on stdout and stderr on its target platform.\n";
       comment += detailsString;
 
-      this->Makefile->AddCacheDefinition(internalRunOutputName.c_str(), 
+      this->Makefile->AddCacheDefinition(internalRunOutputName.c_str(),
                                          "PLEASE_FILL_OUT-NOTFOUND",
                                          comment.c_str(),
                                          cmCacheManager::STRING);
@@ -299,7 +302,7 @@ void cmTryRunCommand::DoNotRunExecutable(const std::string& runArgs,
   if (error)
     {
     static bool firstTryRun = true;
-    std::ofstream file(resultFileName.c_str(), 
+    std::ofstream file(resultFileName.c_str(),
                                   firstTryRun ? std::ios::out : std::ios::app);
     if ( file )
       {
@@ -366,7 +369,7 @@ void cmTryRunCommand::DoNotRunExecutable(const std::string& runArgs,
 
     std::string errorMessage = "TRY_RUN() invoked in cross-compiling mode, "
                                "please set the following cache variables "
-                               "appropriatly:\n";
+                               "appropriately:\n";
     errorMessage += "   " + this->RunResultVariable + " (advanced)\n";
     if (out!=0)
       {

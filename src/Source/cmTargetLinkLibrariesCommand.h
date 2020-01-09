@@ -1,30 +1,26 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmTargetLinkLibrariesCommand.h,v $
-  Language:  C++
-  Date:      $Date: 2009-01-13 18:03:53 $
-  Version:   $Revision: 1.15.2.2 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmTargetLinkLibrariesCommand_h
 #define cmTargetLinkLibrariesCommand_h
 
 #include "cmCommand.h"
+#include "cmDocumentGeneratorExpressions.h"
 
 /** \class cmTargetLinkLibrariesCommand
  * \brief Specify a list of libraries to link into executables.
  *
  * cmTargetLinkLibrariesCommand is used to specify a list of libraries to link
  * into executable(s) or shared objects. The names of the libraries
- * should be those defined by the LIBRARY(library) command(s).  
+ * should be those defined by the LIBRARY(library) command(s).
  */
 class cmTargetLinkLibrariesCommand : public cmCommand
 {
@@ -32,7 +28,7 @@ public:
   /**
    * This is a virtual constructor for the command.
    */
-  virtual cmCommand* Clone() 
+  virtual cmCommand* Clone()
     {
     return new cmTargetLinkLibrariesCommand;
     }
@@ -47,29 +43,36 @@ public:
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() { return "target_link_libraries";}
+  virtual const char* GetName() const { return "target_link_libraries";}
 
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation() 
+  virtual const char* GetTerseDocumentation() const
     {
-    return 
+    return
       "Link a target to given libraries.";
     }
-  
+
   /**
    * More documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
     return
-      "  target_link_libraries(<target> [lib1 [lib2 [...]]]\n"
-      "                        [[debug|optimized|general] <lib>] ...)\n"
-      "Specify a list of libraries to be linked into the specified target.  "
-      "If any library name matches that of a target in the current project "
+      "  target_link_libraries(<target> [item1 [item2 [...]]]\n"
+      "                        [[debug|optimized|general] <item>] ...)\n"
+      "Specify libraries or flags to use when linking a given target.  "
+      "The named <target> must have been created in the current directory "
+      "by a command such as add_executable or add_library.  "
+      "The remaining arguments specify library names or flags.  "
+      "Repeated calls for the same <target> append items in the order called."
+      "\n"
+      "If a library name matches that of another target in the project "
       "a dependency will automatically be added in the build system to make "
-      "sure the library being linked is up-to-date before the target links."
+      "sure the library being linked is up-to-date before the target links.  "
+      "Item names starting with '-', but not '-l' or '-framework', are "
+      "treated as linker flags."
       "\n"
       "A \"debug\", \"optimized\", or \"general\" keyword indicates that "
       "the library immediately following it is to be used only for the "
@@ -85,38 +88,132 @@ public:
       "See the IMPORTED mode of the add_library command for more "
       "information.  "
       "\n"
-      "Library dependencies are transitive by default.  "
+      "Library dependencies are transitive by default with this signature.  "
       "When this target is linked into another target then the libraries "
       "linked to this target will appear on the link line for the other "
       "target too.  "
-      "See the LINK_INTERFACE_LIBRARIES target property to override the "
-      "set of transitive link dependencies for a target."
+      "This transitive \"link interface\" is stored in the "
+      "INTERFACE_LINK_LIBRARIES target property when policy CMP0022 is set "
+      "to NEW and may be overridden by setting the property directly. "
+      "("
+      "When CMP0022 is not set to NEW, transitive linking is builtin "
+      "but may be overridden by the LINK_INTERFACE_LIBRARIES property.  "
+      "Calls to other signatures of this command may set the property "
+      "making any libraries linked exclusively by this signature private."
+      ")"
+      "\n"
+      "CMake will also propagate \"usage requirements\" from linked library "
+      "targets.  "
+      "Usage requirements affect compilation of sources in the <target>.  "
+      "They are specified by properties defined on linked targets.  "
+      "During generation of the build system, CMake integrates "
+      "usage requirement property values with the corresponding "
+      "build properties for <target>:\n"
+      " INTERFACE_COMPILE_DEFINITONS: Appends to COMPILE_DEFINITONS\n"
+      " INTERFACE_INCLUDE_DIRECTORIES: Appends to INCLUDE_DIRECTORIES\n"
+      " INTERFACE_POSITION_INDEPENDENT_CODE: Sets POSITION_INDEPENDENT_CODE\n"
+      "   or checked for consistency with existing value\n"
+      "\n"
+      "If an <item> is a library in a Mac OX framework, the Headers "
+      "directory of the framework will also be processed as a \"usage "
+      "requirement\".  This has the same effect as passing the framework "
+      "directory as an include directory."
+      "  target_link_libraries(<target>\n"
+      "                      <PRIVATE|PUBLIC|INTERFACE> <lib> ...\n"
+      "                      [<PRIVATE|PUBLIC|INTERFACE> <lib> ... ] ...])\n"
+      "The PUBLIC, PRIVATE and INTERFACE keywords can be used to specify "
+      "both the link dependencies and the link interface in one command.  "
+      "Libraries and targets following PUBLIC are linked to, and are "
+      "made part of the link interface.  Libraries and targets "
+      "following PRIVATE are linked to, but are not made part of the "
+      "link interface.  Libraries following INTERFACE are appended "
+      "to the link interface and are not used for linking <target>."
       "\n"
       "  target_link_libraries(<target> LINK_INTERFACE_LIBRARIES\n"
       "                        [[debug|optimized|general] <lib>] ...)\n"
       "The LINK_INTERFACE_LIBRARIES mode appends the libraries "
-      "to the LINK_INTERFACE_LIBRARIES and its per-configuration equivalent "
-      "target properties instead of using them for linking.  "
-      "Libraries specified as \"debug\" are appended to the "
-      "the LINK_INTERFACE_LIBRARIES_DEBUG property (or to the properties "
+      "to the INTERFACE_LINK_LIBRARIES target property instead of using them "
+      "for linking.  If policy CMP0022 is not NEW, then this mode also "
+      "appends libraries to the LINK_INTERFACE_LIBRARIES and its "
+      "per-configuration equivalent.  This signature "
+      "is for compatibility only. Prefer the INTERFACE mode instead.  "
+      "Libraries specified as \"debug\" are wrapped in a generator "
+      "expression to correspond to debug builds.  If policy CMP0022 is not "
+      "NEW, the libraries are also appended to the "
+      "LINK_INTERFACE_LIBRARIES_DEBUG property (or to the properties "
       "corresponding to configurations listed in the DEBUG_CONFIGURATIONS "
       "global property if it is set).  "
       "Libraries specified as \"optimized\" are appended to the "
-      "the LINK_INTERFACE_LIBRARIES property.  "
+      "INTERFACE_LINK_LIBRARIES property.  If policy CMP0022 is not NEW, "
+      "they are also appended to the LINK_INTERFACE_LIBRARIES property.  "
       "Libraries specified as \"general\" (or without any keyword) are "
       "treated as if specified for both \"debug\" and \"optimized\"."
+      "\n"
+      "  target_link_libraries(<target>\n"
+      "                        <LINK_PRIVATE|LINK_PUBLIC>\n"
+      "                          [[debug|optimized|general] <lib>] ...\n"
+      "                        [<LINK_PRIVATE|LINK_PUBLIC>\n"
+      "                          [[debug|optimized|general] <lib>] ...])\n"
+      "The LINK_PUBLIC and LINK_PRIVATE modes can be used to specify both "
+      "the link dependencies and the link interface in one command.  This "
+      "signature is for compatibility only. Prefer the PUBLIC or PRIVATE "
+      "keywords instead.  "
+      "Libraries and targets following LINK_PUBLIC are linked to, and are "
+      "made part of the INTERFACE_LINK_LIBRARIES.  If policy CMP0022 is not "
+      "NEW, they are also made part of the LINK_INTERFACE_LIBRARIES.  "
+      "Libraries and targets following LINK_PRIVATE are linked to, but are "
+      "not made part of the INTERFACE_LINK_LIBRARIES (or "
+      "LINK_INTERFACE_LIBRARIES)."
+      "\n"
+      "The library dependency graph is normally acyclic (a DAG), but in the "
+      "case of mutually-dependent STATIC libraries CMake allows the graph "
+      "to contain cycles (strongly connected components).  "
+      "When another target links to one of the libraries CMake repeats "
+      "the entire connected component.  "
+      "For example, the code\n"
+      "  add_library(A STATIC a.c)\n"
+      "  add_library(B STATIC b.c)\n"
+      "  target_link_libraries(A B)\n"
+      "  target_link_libraries(B A)\n"
+      "  add_executable(main main.c)\n"
+      "  target_link_libraries(main A)\n"
+      "links 'main' to 'A B A B'.  "
+      "("
+      "While one repetition is usually sufficient, pathological object "
+      "file and symbol arrangements can require more.  "
+      "One may handle such cases by manually repeating the component in "
+      "the last target_link_libraries call.  "
+      "However, if two archives are really so interdependent they should "
+      "probably be combined into a single archive."
+      ")"
+      "\n"
+      "Arguments to target_link_libraries may use \"generator expressions\" "
+      "with the syntax \"$<...>\".  Note however, that generator expressions "
+      "will not be used in OLD handling of CMP0003 or CMP0004."
+      "\n"
+      CM_DOCUMENT_COMMAND_GENERATOR_EXPRESSIONS
       ;
     }
-  
+
   cmTypeMacro(cmTargetLinkLibrariesCommand, cmCommand);
 private:
   void LinkLibraryTypeSpecifierWarning(int left, int right);
   static const char* LinkLibraryTypeNames[3];
 
   cmTarget* Target;
-  bool DoingInterface;
+  enum ProcessingState {
+    ProcessingLinkLibraries,
+    ProcessingPlainLinkInterface,
+    ProcessingKeywordLinkInterface,
+    ProcessingPlainPublicInterface,
+    ProcessingKeywordPublicInterface,
+    ProcessingPlainPrivateInterface,
+    ProcessingKeywordPrivateInterface
+  };
 
-  void HandleLibrary(const char* lib, cmTarget::LinkLibraryType llt);
+  ProcessingState CurrentProcessingState;
+
+  bool HandleLibrary(const char* lib, cmTarget::LinkLibraryType llt);
 };
 
 

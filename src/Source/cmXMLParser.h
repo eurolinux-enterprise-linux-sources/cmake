@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmXMLParser.h,v $
-  Language:  C++
-  Date:      $Date: 2007-07-26 18:36:06 $
-  Version:   $Revision: 1.4 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmXMLParser_h
 #define cmXMLParser_h
 
@@ -23,7 +18,7 @@ extern "C"
 {
   void cmXMLParserStartElement(void*, const char*, const char**);
   void cmXMLParserEndElement(void*, const char*);
-  void cmXMLParserCharacterDataHandler(void*, const char*, int);  
+  void cmXMLParserCharacterDataHandler(void*, const char*, int);
 }
 
 /** \class cmXMLParser
@@ -42,7 +37,7 @@ public:
 
   //! Parse given XML file
   virtual int ParseFile(const char* file);
-  
+
   /**
    * When parsing fragments of XML or streaming XML, use the following
    * three methods.  InitializeParser method initialize parser but does
@@ -52,7 +47,7 @@ public:
    * them.
    */
   virtual int InitializeParser();
-  virtual int ParseChunk(const char* inputString, 
+  virtual int ParseChunk(const char* inputString,
                          std::string::size_type length);
   virtual int CleanupParser();
 
@@ -70,7 +65,7 @@ protected:
    * terminating condition for parsing.  Parsing always stops when the end of
    * file is reached in the stream.
    */
-  
+
   virtual int ParsingComplete();
 
   /**
@@ -80,27 +75,33 @@ protected:
    * Even indices are attribute names, and odd indices are values.
    */
   virtual void StartElement(const char* name, const char** atts);
-  
+
   //! Called at the end of an element in the XML source opened when
   //StartElement was called.
   virtual void EndElement(const char* name);
-  
+
   //! Called when there is character data to handle.
-  virtual void CharacterDataHandler(const char* data, int length);  
+  virtual void CharacterDataHandler(const char* data, int length);
 
   //! Called by Parse to report an XML syntax error.
-  virtual void ReportXmlParseError();  
+  virtual void ReportXmlParseError();
+
+  /** Called by ReportXmlParseError with basic error info.  */
+  virtual void ReportError(int line, int column, const char* msg);
 
   //! Utility for convenience of subclasses.  Wraps isspace C library
   // routine.
-  static int IsSpace(char c);  
-  
+  static int IsSpace(char c);
+
   //! Send the given buffer to the XML parser.
-  virtual int ParseBuffer(const char* buffer, 
+  virtual int ParseBuffer(const char* buffer,
                           std::string::size_type length);
-  
+
   //! Send the given c-style string to the XML parser.
   int ParseBuffer(const char* buffer);
+
+  /** Helps subclasses search for attributes on elements.  */
+  static const char* FindAttribute(const char** atts, const char* attribute);
 
   //! Callbacks for the expat
   friend void cmXMLParserStartElement(void*, const char*, const char**);

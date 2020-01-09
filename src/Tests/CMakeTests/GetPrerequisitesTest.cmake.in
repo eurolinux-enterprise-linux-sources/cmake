@@ -2,7 +2,6 @@
 #
 include(GetPrerequisites)
 
-
 set(CMAKE_BUILD_TYPE "@CMAKE_BUILD_TYPE@")
 set(CMAKE_CONFIGURATION_TYPES "@CMAKE_CONFIGURATION_TYPES@")
 set(CMAKE_EXECUTABLE_SUFFIX "@CMAKE_EXECUTABLE_SUFFIX@")
@@ -59,7 +58,7 @@ function(stresstest_list_prerequisites file)
 
   message(STATUS "=============================================================================")
   message(STATUS "")
-endfunction(stresstest_list_prerequisites)
+endfunction()
 
 
 function(test_cmake_executables)
@@ -69,13 +68,18 @@ function(test_cmake_executables)
 
   get_filename_component(cmake_bin_dir "${CMAKE_COMMAND}" PATH)
   list_prerequisites_by_glob(GLOB "${cmake_bin_dir}/*" 0 0 1)
-endfunction(test_cmake_executables)
+endfunction()
 
 
 message(STATUS "=============================================================================")
 message(STATUS "Simplest test - list all the direct prerequisites of CMake itself")
 message(STATUS "")
 list_prerequisites("${CMAKE_COMMAND}" 0 0 1)
+message(STATUS "")
+
+message(STATUS "=============================================================================")
+string(LENGTH "$ENV{PATH}" PATH_LENGTH_BEGIN)
+message(STATUS "Begin PATH length is: ${PATH_LENGTH_BEGIN}")
 message(STATUS "")
 
 
@@ -89,7 +93,7 @@ if(do_testdefaults)
   message(STATUS "")
   list_prerequisites("${CMAKE_COMMAND}")
   message(STATUS "")
-endif(do_testdefaults)
+endif()
 
 
 set(do_stresstest 0)
@@ -99,7 +103,7 @@ if(do_stresstest)
   message(STATUS "")
   stresstest_list_prerequisites("${CMAKE_COMMAND}")
   message(STATUS "")
-endif(do_stresstest)
+endif()
 
 
 test_cmake_executables()
@@ -117,11 +121,11 @@ message(STATUS "")
 message(STATUS "=============================================================================")
 message(STATUS "Test overriding 'gp_tool' with value unlikely to be found")
 message(STATUS "")
-if(WIN32 OR APPLE)
-  set(gp_tool "ldd")
-else(WIN32 OR APPLE)
+if(APPLE)
+  set(gp_tool "dumpbin")
+else()
   set(gp_tool "otool")
-endif(WIN32 OR APPLE)
+endif()
 set(gp_cmd "gp_cmd-NOTFOUND")
 list_prerequisites("${CMAKE_COMMAND}" 0 0 0)
 set(gp_cmd)
@@ -137,7 +141,16 @@ message(STATUS "")
 get_cmake_property(vs VARIABLES)
 foreach(v ${vs})
   message(STATUS "${v}='${${v}}'")
-endforeach(v)
+endforeach()
+message(STATUS "")
+
+message(STATUS "=============================================================================")
+string(LENGTH "$ENV{PATH}" PATH_LENGTH_END)
+message(STATUS "Final PATH length is: ${PATH_LENGTH_END}")
+
+if(PATH_LENGTH_END GREATER ${PATH_LENGTH_BEGIN})
+    message(FATAL_ERROR "list_prerequisties is endlessly appending the path of gp_tool to the PATH.")
+endif()
 message(STATUS "")
 
 

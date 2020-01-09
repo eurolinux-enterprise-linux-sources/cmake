@@ -1,23 +1,19 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmExportCommand.h,v $
-  Language:  C++
-  Date:      $Date: 2008-01-30 22:25:52 $
-  Version:   $Revision: 1.9 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmExportCommand_h
 #define cmExportCommand_h
 
 #include "cmCommand.h"
+#include "cmDocumentLocationUndefined.h"
 
 class cmExportBuildFileGenerator;
 
@@ -49,12 +45,12 @@ public:
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() { return "export";}
+  virtual const char* GetName() const { return "export";}
 
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation()
+  virtual const char* GetTerseDocumentation() const
     {
     return
       "Export targets from the build tree for use by outside projects.";
@@ -63,11 +59,11 @@ public:
   /**
    * More documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
     return
       "  export(TARGETS [target1 [target2 [...]]] [NAMESPACE <namespace>]\n"
-      "         [APPEND] FILE <filename>)\n"
+      "         [APPEND] FILE <filename> [EXPORT_LINK_INTERFACE_LIBRARIES])\n"
       "Create a file <filename> that may be included by outside projects to "
       "import targets from the current project's build tree.  "
       "This is useful during cross-compiling to build utility executables "
@@ -77,6 +73,10 @@ public:
       "prepended to all target names written to the file.  "
       "If the APPEND option is given the generated code will be appended "
       "to the file instead of overwriting it.  "
+      "The EXPORT_LINK_INTERFACE_LIBRARIES keyword, if present, causes the "
+      "contents of the properties matching "
+      "(IMPORTED_)?LINK_INTERFACE_LIBRARIES(_<CONFIG>)? to be exported, when "
+      "policy CMP0022 is NEW.  "
       "If a library target is included in the export but "
       "a target to which it links is not included the behavior is "
       "unspecified."
@@ -84,7 +84,20 @@ public:
       "The file created by this command is specific to the build tree and "
       "should never be installed.  "
       "See the install(EXPORT) command to export targets from an "
-      "installation tree.";
+      "installation tree."
+      CM_LOCATION_UNDEFINED_BEHAVIOR("passing it to this command")
+      "\n"
+      "  export(PACKAGE <name>)\n"
+      "Store the current build directory in the CMake user package registry "
+      "for package <name>.  "
+      "The find_package command may consider the directory while searching "
+      "for package <name>.  "
+      "This helps dependent projects find and use a package from the "
+      "current project's build tree without help from the user.  "
+      "Note that the entry in the package registry that this command "
+      "creates works only in conjunction with a package configuration "
+      "file (<name>Config.cmake) that works with the build tree."
+      ;
     }
 
   cmTypeMacro(cmExportCommand, cmCommand);
@@ -95,9 +108,18 @@ private:
   cmCAEnabler Append;
   cmCAString Namespace;
   cmCAString Filename;
+  cmCAEnabler ExportOld;
 
   friend class cmExportBuildFileGenerator;
   std::string ErrorMessage;
+
+  bool HandlePackage(std::vector<std::string> const& args);
+  void StorePackageRegistryWin(std::string const& package,
+                               const char* content, const char* hash);
+  void StorePackageRegistryDir(std::string const& package,
+                               const char* content, const char* hash);
+  void ReportRegistryError(std::string const& msg, std::string const& key,
+                           long err);
 };
 
 

@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmFindFileCommand.h,v $
-  Language:  C++
-  Date:      $Date: 2007-10-10 15:47:43 $
-  Version:   $Revision: 1.20 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmFindFileCommand_h
 #define cmFindFileCommand_h
 
@@ -23,7 +18,7 @@
  * \brief Define a command to search for an executable program.
  *
  * cmFindFileCommand is used to define a CMake variable
- * that specifies an executable program. The command searches 
+ * that specifies an executable program. The command searches
  * in the current path (e.g., PATH environment variable) for
  * an executable that matches one of the supplied names.
  */
@@ -34,21 +29,23 @@ public:
   /**
    * This is a virtual constructor for the command.
    */
-  virtual cmCommand* Clone() 
+  virtual cmCommand* Clone()
     {
     return new cmFindFileCommand;
     }
-  virtual const char* GetName() { return "find_file";}
+  virtual const char* GetName() const { return "find_file";}
 
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation() 
+  virtual const char* GetTerseDocumentation() const
     {
     return "Find the full path to a file.";
     }
-  
+
   cmTypeMacro(cmFindFileCommand, cmFindPathCommand);
+protected:
+  virtual void GenerateDocumentation();
 };
 
 

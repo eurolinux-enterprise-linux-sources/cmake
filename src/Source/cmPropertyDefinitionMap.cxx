@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmPropertyDefinitionMap.cxx,v $
-  Language:  C++
-  Date:      $Date: 2007-10-23 14:40:49 $
-  Version:   $Revision: 1.5 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmPropertyDefinitionMap.h"
 #include "cmSystemTools.h"
 #include "cmDocumentationSection.h"
@@ -35,7 +30,7 @@ void cmPropertyDefinitionMap
   if (it == this->end())
     {
     prop = &(*this)[name];
-    prop->DefineProperty(name,scope,ShortDescription, FullDescription, 
+    prop->DefineProperty(name,scope,ShortDescription, FullDescription,
                          DocumentationSection, chain);
     }
 }
@@ -54,10 +49,10 @@ void cmPropertyDefinitionMap
       {
       switch (j->second.GetScope())
         {
-        case cmProperty::GLOBAL: 
+        case cmProperty::GLOBAL:
           secName = "Properties of Global Scope";
           break;
-        case cmProperty::TARGET: 
+        case cmProperty::TARGET:
           secName = "Properties on Targets";
           break;
         case cmProperty::SOURCE_FILE:
@@ -68,6 +63,9 @@ void cmPropertyDefinitionMap
           break;
         case cmProperty::TEST:
           secName = "Properties on Tests";
+          break;
+        case cmProperty::CACHE:
+          secName = "Properties on Cache Entries";
           break;
         case cmProperty::VARIABLE:
           secName = "Variables";
@@ -82,7 +80,7 @@ void cmPropertyDefinitionMap
       }
     if (!v[secName])
       {
-      v[secName] = new 
+      v[secName] = new
         cmDocumentationSection(secName.c_str(),
                                cmSystemTools::UpperCase(secName).c_str());
       }

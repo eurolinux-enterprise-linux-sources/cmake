@@ -1,20 +1,17 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmForEachCommand.cxx,v $
-  Language:  C++
-  Date:      $Date: 2009-02-04 16:44:17 $
-  Version:   $Revision: 1.27.2.1 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmForEachCommand.h"
+
+#include <cmsys/auto_ptr.hxx>
 
 bool cmForEachFunctionBlocker::
 IsFunctionBlocked(const cmListFileFunction& lff, cmMakefile &mf,
@@ -28,7 +25,7 @@ IsFunctionBlocked(const cmListFileFunction& lff, cmMakefile &mf,
   else if (!cmSystemTools::Strucmp(lff.Name.c_str(),"endforeach"))
     {
     // if this is the endofreach for this statement
-    if (!this->Depth) 
+    if (!this->Depth)
       {
       // Remove the function blocker for this scope or bail.
       cmsys::auto_ptr<cmFunctionBlocker>
@@ -48,7 +45,7 @@ IsFunctionBlocked(const cmListFileFunction& lff, cmMakefile &mf,
       std::string tmps;
       cmListFileArgument arg;
       for( ; j != this->Args.end(); ++j)
-        {   
+        {
         // set the variable to the loop value
         mf.AddDefinition(this->Args[0].c_str(),j->c_str());
         // Invoke all the functions that were collected in the block.
@@ -70,6 +67,10 @@ IsFunctionBlocked(const cmListFileFunction& lff, cmMakefile &mf,
             mf.AddDefinition(this->Args[0].c_str(),oldDef.c_str());
             return true;
             }
+          if(cmSystemTools::GetFatalErrorOccured() )
+            {
+            return true;
+            }
           }
         }
       // restore the variable to its prior value
@@ -82,10 +83,10 @@ IsFunctionBlocked(const cmListFileFunction& lff, cmMakefile &mf,
       this->Depth--;
       }
     }
-  
+
   // record the command
   this->Functions.push_back(lff);
-  
+
   // always return true
   return true;
 }
@@ -116,7 +117,11 @@ bool cmForEachCommand
     this->SetError("called with incorrect number of arguments");
     return false;
     }
-  
+  if(args.size() > 1 && args[1] == "IN")
+    {
+    return this->HandleInMode(args);
+    }
+
   // create a function blocker
   cmForEachFunctionBlocker *f = new cmForEachFunctionBlocker();
   if ( args.size() > 1 )
@@ -152,7 +157,7 @@ bool cmForEachCommand
           step = 1;
           }
         }
-      if ( 
+      if (
         (start > stop && step > 0) ||
         (start < stop && step < 0) ||
         step == 0
@@ -193,7 +198,49 @@ bool cmForEachCommand
     f->Args = args;
     }
   this->Makefile->AddFunctionBlocker(f);
-  
+
   return true;
 }
 
+//----------------------------------------------------------------------------
+bool cmForEachCommand::HandleInMode(std::vector<std::string> const& args)
+{
+  cmsys::auto_ptr<cmForEachFunctionBlocker> f(new cmForEachFunctionBlocker());
+  f->Args.push_back(args[0]);
+
+  enum Doing { DoingNone, DoingLists, DoingItems };
+  Doing doing = DoingNone;
+  for(unsigned int i=2; i < args.size(); ++i)
+    {
+    if(doing == DoingItems)
+      {
+      f->Args.push_back(args[i]);
+      }
+    else if(args[i] == "LISTS")
+      {
+      doing = DoingLists;
+      }
+    else if(args[i] == "ITEMS")
+      {
+      doing = DoingItems;
+      }
+    else if(doing == DoingLists)
+      {
+      const char* value = this->Makefile->GetDefinition(args[i].c_str());
+      if(value && *value)
+        {
+        cmSystemTools::ExpandListArgument(value, f->Args, true);
+        }
+      }
+    else
+      {
+      cmOStringStream e;
+      e << "Unknown argument:\n" << "  " << args[i] << "\n";
+      this->Makefile->IssueMessage(cmake::FATAL_ERROR, e.str());
+      return true;
+      }
+    }
+
+  this->Makefile->AddFunctionBlocker(f.release()); // TODO: pass auto_ptr
+  return true;
+}

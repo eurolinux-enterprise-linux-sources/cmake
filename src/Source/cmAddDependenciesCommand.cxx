@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmAddDependenciesCommand.cxx,v $
-  Language:  C++
-  Date:      $Date: 2008-01-28 13:38:35 $
-  Version:   $Revision: 1.17 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmAddDependenciesCommand.h"
 #include "cmLocalGenerator.h"
 #include "cmGlobalGenerator.h"
@@ -29,11 +24,14 @@ bool cmAddDependenciesCommand
     }
 
   std::string target_name = args[0];
-
-  cmTarget* target = 
-    this->GetMakefile()->GetLocalGenerator()->
-    GetGlobalGenerator()->FindTarget(0, target_name.c_str());
-  if(target)
+  if(this->Makefile->IsAlias(target_name.c_str()))
+    {
+    cmOStringStream e;
+    e << "Cannot add target-level dependencies to alias target \""
+      << target_name << "\".\n";
+    this->Makefile->IssueMessage(cmake::FATAL_ERROR, e.str());
+    }
+  if(cmTarget* target = this->Makefile->FindTargetToUse(target_name.c_str()))
     {
     std::vector<std::string>::const_iterator s = args.begin();
     ++s; // skip over target_name
@@ -44,10 +42,14 @@ bool cmAddDependenciesCommand
     }
   else
     {
-    std::string error = "Adding dependency to non-existent target: ";
-    error += target_name;
-    this->SetError(error.c_str());
-    return false;
+    cmOStringStream e;
+    e << "Cannot add target-level dependencies to non-existent target \""
+      << target_name << "\".\n"
+      << "The add_dependencies works for top-level logical targets created "
+      << "by the add_executable, add_library, or add_custom_target commands.  "
+      << "If you want to add file-level dependencies see the DEPENDS option "
+      << "of the add_custom_target and add_custom_command commands.";
+    this->Makefile->IssueMessage(cmake::FATAL_ERROR, e.str());
     }
 
   return true;

@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: CMakeSetupDialog.h,v $
-  Language:  C++
-  Date:      $Date: 2008-07-13 21:55:25 $
-  Version:   $Revision: 1.21.2.5 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 
 #ifndef CMakeSetupDialog_h
 #define CMakeSetupDialog_h
@@ -21,6 +16,7 @@
 #include "QCMake.h"
 #include <QMainWindow>
 #include <QThread>
+#include <QEventLoop>
 #include "ui_CMakeSetupDialog.h"
 
 class QCMakeThread;
@@ -40,7 +36,7 @@ public slots:
   void setBinaryDirectory(const QString& dir);
   void setSourceDirectory(const QString& dir);
 
-protected slots: 
+protected slots:
   void initialize();
   void doConfigure();
   void doGenerate();
@@ -48,11 +44,9 @@ protected slots:
   void doHelp();
   void doAbout();
   void doInterrupt();
-  void finishConfigure(int error);
-  void finishGenerate(int error);
   void error(const QString& message);
   void message(const QString& message);
-  
+
   void doSourceBrowse();
   void doBinaryBrowse();
   void doReloadCache();
@@ -75,7 +69,19 @@ protected slots:
   void addCacheEntry();
   void startSearch();
   void setDebugOutput(bool);
-  void setViewType(int);
+  void setAdvancedView(bool);
+  void setGroupedView(bool);
+  void showUserChanges();
+  void setSearchFilter(const QString& str);
+  bool prepareConfigure();
+  bool doConfigureInternal();
+  bool doGenerateInternal();
+  void exitLoop(int);
+  void doOutputContextMenu(const QPoint &);
+  void doOutputFindDialog();
+  void doOutputFindNext(bool directionForward = true);
+  void doOutputFindPrev();
+  void doOutputErrorNext();
 
 protected:
 
@@ -89,18 +95,28 @@ protected:
   QCMakeThread* CMakeThread;
   bool ExitAfterGenerate;
   bool CacheModified;
+  bool ConfigureNeeded;
   QAction* ReloadCacheAction;
   QAction* DeleteCacheAction;
   QAction* ExitAction;
   QAction* ConfigureAction;
   QAction* GenerateAction;
   QAction* SuppressDevWarningsAction;
+  QAction* WarnUninitializedAction;
+  QAction* WarnUnusedAction;
   QAction* InstallForCommandLineAction;
   State CurrentState;
 
   QTextCharFormat ErrorFormat;
   QTextCharFormat MessageFormat;
 
+  QStringList AddVariableCompletions;
+  QStringList FindHistory;
+
+  QEventLoop LocalLoop;
+
+  float ProgressOffset;
+  float ProgressFactor;
 };
 
 // QCMake instance on a thread
@@ -110,8 +126,8 @@ class QCMakeThread : public QThread
 public:
   QCMakeThread(QObject* p);
   QCMake* cmakeInstance() const;
-  
-signals:  
+
+signals:
   void cmakeInitialized();
 
 protected:

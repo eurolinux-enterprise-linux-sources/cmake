@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmFindBase.h,v $
-  Language:  C++
-  Date:      $Date: 2008-06-13 12:55:17 $
-  Version:   $Revision: 1.13.2.1 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmFindBase_h
 #define cmFindBase_h
 
@@ -35,11 +30,11 @@ public:
    */
   virtual bool ParseArguments(std::vector<std::string> const& args);
   cmTypeMacro(cmFindBase, cmFindCommon);
-  
-  virtual const char* GetFullDocumentation()
-    {return this->GenericDocumentation.c_str();}
+
+  virtual const char* GetFullDocumentation() const;
 
 protected:
+  virtual void GenerateDocumentation();
   void PrintFindStuff();
   void ExpandPaths();
   void AddPathSuffixes();
@@ -48,12 +43,14 @@ protected:
   // also copy the documentation from the cache to VariableDocumentation
   // if it has documentation in the cache
   bool CheckForVariableInCache();
-  
+
   cmStdString GenericDocumentation;
   // use by command during find
   cmStdString VariableDocumentation;
   cmStdString VariableName;
   std::vector<std::string> Names;
+  bool NamesPerDir;
+  bool NamesPerDirAllowed;
 
   // CMAKE_*_PATH CMAKE_SYSTEM_*_PATH FRAMEWORK|LIBRARY|INCLUDE|PROGRAM
   cmStdString EnvironmentPath; // LIB,INCLUDE

@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmMacroCommand.cxx,v $
-  Language:  C++
-  Date:      $Date: 2009-02-04 16:44:17 $
-  Version:   $Revision: 1.36.2.2 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmMacroCommand.h"
 
 #include "cmake.h"
@@ -28,6 +23,17 @@ public:
   ~cmMacroHelperCommand() {};
 
   /**
+   * This is used to avoid including this command
+   * in documentation. This is mainly used by
+   * cmMacroHelperCommand and cmFunctionHelperCommand
+   * which cannot provide appropriate documentation.
+   */
+  virtual bool ShouldAppearInDocumentation() const
+    {
+    return false;
+    }
+
+  /**
    * This is a virtual constructor for the command.
    */
   virtual cmCommand* Clone()
@@ -36,6 +42,7 @@ public:
     // we must copy when we clone
     newC->Args = this->Args;
     newC->Functions = this->Functions;
+    newC->FilePath = this->FilePath;
     newC->Policies = this->Policies;
     return newC;
   }
@@ -43,13 +50,13 @@ public:
   /**
    * This determines if the command is invoked when in script mode.
    */
-  virtual bool IsScriptable() { return true; }
+  virtual bool IsScriptable() const { return true; }
 
   /**
    * This is called when the command is first encountered in
    * the CMakeLists.txt file.
    */
-  virtual bool InvokeInitialPass(const std::vector<cmListFileArgument>& args, 
+  virtual bool InvokeInitialPass(const std::vector<cmListFileArgument>& args,
                                  cmExecutionStatus &);
 
   virtual bool InitialPass(std::vector<std::string> const&,
@@ -58,12 +65,12 @@ public:
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() { return this->Args[0].c_str(); }
-  
+  virtual const char* GetName() const { return this->Args[0].c_str(); }
+
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation()
+  virtual const char* GetTerseDocumentation() const
   {
     std::string docs = "Macro named: ";
     docs += this->GetName();
@@ -73,7 +80,7 @@ public:
   /**
    * More documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
   {
     return this->GetTerseDocumentation();
   }
@@ -83,6 +90,7 @@ public:
   std::vector<std::string> Args;
   std::vector<cmListFileFunction> Functions;
   cmPolicies::PolicyMap Policies;
+  std::string FilePath;
 };
 
 
@@ -126,7 +134,10 @@ bool cmMacroHelperCommand::InvokeInitialPass
   std::string argnDef;
   bool argnDefInitialized = false;
   bool argvDefInitialized = false;
-
+  if( this->Functions.size())
+    {
+    this->FilePath = this->Functions[0].FilePath;
+    }
   // Invoke all the functions that were collected in the block.
   cmListFileFunction newLFF;
   // for each function
@@ -140,17 +151,20 @@ bool cmMacroHelperCommand::InvokeInitialPass
     newLFF.Line = this->Functions[c].Line;
 
     // for each argument of the current function
-    for (std::vector<cmListFileArgument>::const_iterator k = 
+    for (std::vector<cmListFileArgument>::iterator k =
            this->Functions[c].Arguments.begin();
          k != this->Functions[c].Arguments.end(); ++k)
       {
+      // Set the FilePath on the arguments to match the function since it is
+      // not stored and the original values may be freed
+      k->FilePath = this->FilePath.c_str();
       tmps = k->Value;
       // replace formal arguments
       for (unsigned int j = 1; j < this->Args.size(); ++j)
         {
         variable = "${";
         variable += this->Args[j];
-        variable += "}"; 
+        variable += "}";
         cmSystemTools::ReplaceString(tmps, variable.c_str(),
                                      expandedArgs[j-1].c_str());
         }
@@ -213,7 +227,7 @@ bool cmMacroHelperCommand::InvokeInitialPass
         }
 
       arg.Value = tmps;
-      arg.Quoted = k->Quoted;
+      arg.Delim = k->Delim;
       arg.FilePath = k->FilePath;
       arg.Line = k->Line;
       newLFF.Arguments.push_back(arg);
@@ -256,7 +270,7 @@ IsFunctionBlocked(const cmListFileFunction& lff, cmMakefile &mf,
   else if(!cmSystemTools::Strucmp(lff.Name.c_str(),"endmacro"))
     {
     // if this is the endmacro for this macro then execute
-    if (!this->Depth) 
+    if (!this->Depth)
       {
       std::string name = this->Args[0];
       std::vector<std::string>::size_type cc;
@@ -273,7 +287,7 @@ IsFunctionBlocked(const cmListFileFunction& lff, cmMakefile &mf,
       f->Functions = this->Functions;
       mf.RecordPolicies(f->Policies);
       std::string newName = "_" + this->Args[0];
-      mf.GetCMakeInstance()->RenameCommand(this->Args[0].c_str(), 
+      mf.GetCMakeInstance()->RenameCommand(this->Args[0].c_str(),
                                            newName.c_str());
       mf.AddCommand(f);
 
@@ -327,7 +341,7 @@ bool cmMacroCommand::InitialPass(std::vector<std::string> const& args,
   cmMacroFunctionBlocker *f = new cmMacroFunctionBlocker();
   for(std::vector<std::string>::const_iterator j = args.begin();
       j != args.end(); ++j)
-    {   
+    {
     f->Args.push_back(*j);
     }
   this->Makefile->AddFunctionBlocker(f);

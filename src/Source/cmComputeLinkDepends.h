@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmComputeLinkDepends.h,v $
-  Language:  C++
-  Date:      $Date: 2009-04-07 19:32:07 $
-  Version:   $Revision: 1.5.2.8 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmComputeLinkDepends_h
 #define cmComputeLinkDepends_h
 
@@ -37,7 +32,7 @@ class cmake;
 class cmComputeLinkDepends
 {
 public:
-  cmComputeLinkDepends(cmTarget* target, const char* config);
+  cmComputeLinkDepends(cmTarget* target, const char* config, cmTarget *head);
   ~cmComputeLinkDepends();
 
   // Basic information about each link item.
@@ -64,6 +59,7 @@ private:
 
   // Context information.
   cmTarget* Target;
+  cmTarget* HeadTarget;
   cmMakefile* Makefile;
   cmLocalGenerator* LocalGenerator;
   cmGlobalGenerator* GlobalGenerator;
@@ -83,11 +79,9 @@ private:
   AllocateLinkEntry(std::string const& item);
   int AddLinkEntry(int depender_index, std::string const& item);
   void AddVarLinkEntries(int depender_index, const char* value);
-  void AddTargetLinkEntries(int depender_index,
-                            LinkLibraryVectorType const& libs);
+  void AddDirectLinkEntries();
   void AddLinkEntries(int depender_index,
                       std::vector<std::string> const& libs);
-  std::string CleanItemName(std::string const& item);
   cmTarget* FindTargetToLink(int depender_index, const char* name);
 
   // One entry for each unique item.
@@ -112,6 +106,10 @@ private:
     int DependerIndex;
   };
   std::queue<SharedDepEntry> SharedDepQueue;
+  std::set<int> SharedDepFollowed;
+  void FollowSharedDeps(int depender_index,
+                        cmTarget::LinkInterface const* iface,
+                        bool follow_interface = false);
   void QueueSharedDependencies(int depender_index,
                                std::vector<std::string> const& deps);
   void HandleSharedDependency(SharedDepEntry const& dep);
@@ -124,6 +122,7 @@ private:
 
   // Ordering constraint graph adjacency list.
   typedef cmGraphNodeList NodeList;
+  typedef cmGraphEdgeList EdgeList;
   typedef cmGraphAdjacencyList Graph;
   Graph EntryConstraintGraph;
   void CleanConstraintGraph();
@@ -155,6 +154,7 @@ private:
   void VisitComponent(unsigned int c);
   void VisitEntry(int index);
   PendingComponent& MakePendingComponent(unsigned int component);
+  int ComputeComponentCount(NodeList const& nl);
   void DisplayFinalEntries();
 
   // Record of the original link line.

@@ -1,13 +1,12 @@
 # - Find OpenSceneGraph
 # This module searches for the OpenSceneGraph core "osg" library as well as
-# OpenThreads, and whatever additional COMPONENTS that you specify.
+# OpenThreads, and whatever additional COMPONENTS (nodekits) that you specify.
 #    See http://www.openscenegraph.org
 #
-# NOTE: If you would like to use this module in your CMAKE_MODULE_PATH instead
-# of requiring CMake >= 2.6.3, you will also need to download
-# FindOpenThreads.cmake, Findosg_functions.cmake, Findosg.cmake, as well as
-# files for any Components you need to call (FindosgDB.cmake,
-# FindosgUtil.cmake, etc.)
+# NOTE: To use this module effectively you must either require CMake >= 2.6.3
+# with cmake_minimum_required(VERSION 2.6.3) or download and place
+# FindOpenThreads.cmake, Findosg_functions.cmake, Findosg.cmake,
+# and Find<etc>.cmake files into your CMAKE_MODULE_PATH.
 #
 #==================================
 #
@@ -15,7 +14,7 @@
 #
 #    OpenSceneGraph_DEBUG - Enable debugging output
 #
-#    OpenSceneGraph_MARK_AS_ADVANCED - Mark cache variables as advanced 
+#    OpenSceneGraph_MARK_AS_ADVANCED - Mark cache variables as advanced
 #                                      automatically
 #
 # The following environment variables are also respected for finding the OSG
@@ -26,6 +25,10 @@
 #    OSG_DIR
 #    OSGDIR
 #    OSG_ROOT
+#
+# [CMake 2.8.10]:
+# The CMake variable OSG_DIR can now be used as well to influence detection, instead of needing
+# to specify an environment variable.
 #
 # This module defines the following output variables:
 #
@@ -40,28 +43,36 @@
 #==================================
 # Example Usage:
 #
-#  find_package(OpenSceneGraph 2.0.0 COMPONENTS osgDB osgUtil)
+#  find_package(OpenSceneGraph 2.0.0 REQUIRED osgDB osgUtil)
+#      # libOpenThreads & libosg automatically searched
 #  include_directories(${OPENSCENEGRAPH_INCLUDE_DIRS})
 #
 #  add_executable(foo foo.cc)
 #  target_link_libraries(foo ${OPENSCENEGRAPH_LIBRARIES})
 #
-#==================================
+
+#=============================================================================
+# Copyright 2009 Kitware, Inc.
+# Copyright 2009-2012 Philip Lowman <philip@yhbt.com>
+#
+# Distributed under the OSI-approved BSD License (the "License");
+# see accompanying file Copyright.txt for details.
+#
+# This software is distributed WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the License for more information.
+#=============================================================================
+# (To distribute this file outside of CMake, substitute the full
+#  License text for the above reference.)
+
 #
 # Naming convention:
 #  Local variables of the form _osg_foo
 #  Input variables of the form OpenSceneGraph_FOO
 #  Output variables of the form OPENSCENEGRAPH_FOO
 #
-# Copyright (c) 2009, Philip Lowman <philip@yhbt.com>
-#
-# Redistribution AND use is allowed according to the terms of the New
-# BSD license.
-# For details see the accompanying COPYING-CMAKE-SCRIPTS file.
-#
-#==================================
 
-include(Findosg_functions)
+include(${CMAKE_CURRENT_LIST_DIR}/Findosg_functions.cmake)
 
 set(_osg_modules_to_process)
 foreach(_osg_component ${OpenSceneGraph_FIND_COMPONENTS})
@@ -71,7 +82,7 @@ list(APPEND _osg_modules_to_process "osg" "OpenThreads")
 list(REMOVE_DUPLICATES _osg_modules_to_process)
 
 if(OpenSceneGraph_DEBUG)
-    message("[ FindOpenSceneGraph.cmake:${CMAKE_CURRENT_LIST_LINE} ] "
+    message(STATUS "[ FindOpenSceneGraph.cmake:${CMAKE_CURRENT_LIST_LINE} ] "
         "Components = ${_osg_modules_to_process}")
 endif()
 
@@ -86,16 +97,26 @@ endif()
 # Try to ascertain the version...
 if(OSG_INCLUDE_DIR)
     if(OpenSceneGraph_DEBUG)
-        message("[ FindOpenSceneGraph.cmake:${CMAKE_CURRENT_LIST_LINE} ] "
+        message(STATUS "[ FindOpenSceneGraph.cmake:${CMAKE_CURRENT_LIST_LINE} ] "
             "Detected OSG_INCLUDE_DIR = ${OSG_INCLUDE_DIR}")
     endif()
 
-    file(READ "${OSG_INCLUDE_DIR}/osg/Version" _osg_Version_contents)
+    set(_osg_Version_file "${OSG_INCLUDE_DIR}/osg/Version")
+    if("${OSG_INCLUDE_DIR}" MATCHES "\\.framework$" AND NOT EXISTS "${_osg_Version_file}")
+        set(_osg_Version_file "${OSG_INCLUDE_DIR}/Headers/Version")
+    endif()
+
+    if(EXISTS "${_osg_Version_file}")
+      file(STRINGS "${_osg_Version_file}" _osg_Version_contents
+           REGEX "#define (OSG_VERSION_[A-Z]+|OPENSCENEGRAPH_[A-Z]+_VERSION)[ \t]+[0-9]+")
+    else()
+      set(_osg_Version_contents "unknown")
+    endif()
 
     string(REGEX MATCH ".*#define OSG_VERSION_MAJOR[ \t]+[0-9]+.*"
-        _osg_old_defines ${_osg_Version_contents})
+        _osg_old_defines "${_osg_Version_contents}")
     string(REGEX MATCH ".*#define OPENSCENEGRAPH_MAJOR_VERSION[ \t]+[0-9]+.*"
-        _osg_new_defines ${_osg_Version_contents})
+        _osg_new_defines "${_osg_Version_contents}")
     if(_osg_old_defines)
         string(REGEX REPLACE ".*#define OSG_VERSION_MAJOR[ \t]+([0-9]+).*"
             "\\1" _osg_VERSION_MAJOR ${_osg_Version_contents})
@@ -111,52 +132,32 @@ if(OSG_INCLUDE_DIR)
         string(REGEX REPLACE ".*#define OPENSCENEGRAPH_PATCH_VERSION[ \t]+([0-9]+).*"
             "\\1" _osg_VERSION_PATCH ${_osg_Version_contents})
     else()
-        message("[ FindOpenSceneGraph.cmake:${CMAKE_CURRENT_LIST_LINE} ] "
+        message(WARNING "[ FindOpenSceneGraph.cmake:${CMAKE_CURRENT_LIST_LINE} ] "
             "Failed to parse version number, please report this as a bug")
     endif()
+    unset(_osg_Version_contents)
 
     set(OPENSCENEGRAPH_VERSION "${_osg_VERSION_MAJOR}.${_osg_VERSION_MINOR}.${_osg_VERSION_PATCH}"
                                 CACHE INTERNAL "The version of OSG which was detected")
     if(OpenSceneGraph_DEBUG)
-        message("[ FindOpenSceneGraph.cmake:${CMAKE_CURRENT_LIST_LINE} ] "
+        message(STATUS "[ FindOpenSceneGraph.cmake:${CMAKE_CURRENT_LIST_LINE} ] "
             "Detected version ${OPENSCENEGRAPH_VERSION}")
     endif()
 endif()
 
-#
-# Version checking
-#
-if(OpenSceneGraph_FIND_VERSION)
-    if(OpenSceneGraph_FIND_VERSION_EXACT)
-        if(NOT OPENSCENEGRAPH_VERSION VERSION_EQUAL ${OpenSceneGraph_FIND_VERSION})
-            set(_osg_version_not_exact TRUE)
-        endif()
-    else()
-        # version is too low
-        if(NOT OPENSCENEGRAPH_VERSION VERSION_EQUAL ${OpenSceneGraph_FIND_VERSION} AND 
-                NOT OPENSCENEGRAPH_VERSION VERSION_GREATER ${OpenSceneGraph_FIND_VERSION})
-            set(_osg_version_not_high_enough TRUE)
-        endif()
-    endif()
-endif()
-
-set(_osg_required)
 set(_osg_quiet)
-if(OpenSceneGraph_FIND_REQUIRED)
-    set(_osg_required "REQUIRED")
-endif()
 if(OpenSceneGraph_FIND_QUIETLY)
     set(_osg_quiet "QUIET")
 endif()
 #
-# Here we call FIND_PACKAGE() on all of the components
+# Here we call find_package() on all of the components
 #
 foreach(_osg_module ${_osg_modules_to_process})
     if(OpenSceneGraph_DEBUG)
-        message("[ FindOpenSceneGraph.cmake:${CMAKE_CURRENT_LIST_LINE} ] "
+        message(STATUS "[ FindOpenSceneGraph.cmake:${CMAKE_CURRENT_LIST_LINE} ] "
             "Calling find_package(${_osg_module} ${_osg_required} ${_osg_quiet})")
     endif()
-    find_package(${_osg_module} ${_osg_required} ${_osg_quiet})
+    find_package(${_osg_module} ${_osg_quiet})
 
     string(TOUPPER ${_osg_module} _osg_module_UC)
     list(APPEND OPENSCENEGRAPH_INCLUDE_DIR ${${_osg_module_UC}_INCLUDE_DIR})
@@ -170,44 +171,24 @@ endforeach()
 if(OPENSCENEGRAPH_INCLUDE_DIR)
     list(REMOVE_DUPLICATES OPENSCENEGRAPH_INCLUDE_DIR)
 endif()
-        
+
 #
-# Inform the users with an error message based on
-# what version they have vs. what version was
-# required.
+# Check each module to see if it's found
 #
+set(_osg_component_founds)
 if(OpenSceneGraph_FIND_REQUIRED)
-    set(_osg_version_output_type FATAL_ERROR)
-else()
-    set(_osg_version_output_type STATUS)
-endif()
-if(_osg_version_not_high_enough)
-    set(_osg_EPIC_FAIL TRUE)
-    if(NOT OpenSceneGraph_FIND_QUIETLY)
-        message(${_osg_version_output_type}
-            "ERROR: Version ${OpenSceneGraph_FIND_VERSION} or higher of the OSG "
-            "is required.  Version ${OPENSCENEGRAPH_VERSION} was found.")
-    endif()
-elseif(_osg_version_not_exact)
-    set(_osg_EPIC_FAIL TRUE)
-    if(NOT OpenSceneGraph_FIND_QUIETLY)
-        message(${_osg_version_output_type}
-            "ERROR: Version ${OpenSceneGraph_FIND_VERSION} of the OSG is required "
-            "(exactly), version ${OPENSCENEGRAPH_VERSION} was found.")
-    endif()
-else()
-    # If the version was OK, we should hit this case where we can do the
-    # typical user notifications
-    include(FindPackageHandleStandardArgs)
-    FIND_PACKAGE_HANDLE_STANDARD_ARGS(OpenSceneGraph DEFAULT_MSG OPENSCENEGRAPH_LIBRARIES OPENSCENEGRAPH_INCLUDE_DIR)
+    foreach(_osg_module ${_osg_modules_to_process})
+        string(TOUPPER ${_osg_module} _osg_module_UC)
+        list(APPEND _osg_component_founds ${_osg_module_UC}_FOUND)
+    endforeach()
 endif()
 
-if(_osg_EPIC_FAIL)
-    # Zero out everything, we didn't meet version requirements
-    set(OPENSCENEGRAPH_FOUND FALSE)
-    set(OPENSCENEGRAPH_LIBRARIES)
-    set(OPENSCENEGRAPH_INCLUDE_DIR)
-endif()
+include(${CMAKE_CURRENT_LIST_DIR}/FindPackageHandleStandardArgs.cmake)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(OpenSceneGraph
+                                  REQUIRED_VARS OPENSCENEGRAPH_LIBRARIES OPENSCENEGRAPH_INCLUDE_DIR ${_osg_component_founds}
+                                  VERSION_VAR OPENSCENEGRAPH_VERSION)
+
+unset(_osg_component_founds)
 
 set(OPENSCENEGRAPH_INCLUDE_DIRS ${OPENSCENEGRAPH_INCLUDE_DIR})
 

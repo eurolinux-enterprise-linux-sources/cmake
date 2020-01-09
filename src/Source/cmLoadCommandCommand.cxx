@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmLoadCommandCommand.cxx,v $
-  Language:  C++
-  Date:      $Date: 2008-01-23 15:27:59 $
-  Version:   $Revision: 1.29 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmLoadCommandCommand.h"
 #include "cmCPluginAPI.h"
 #include "cmCPluginAPI.cxx"
@@ -30,23 +25,23 @@
 #include <signal.h>
 extern "C" void TrapsForSignalsCFunction(int sig);
 
-  
+
 // a class for loadabple commands
 class cmLoadedCommand : public cmCommand
 {
 public:
   cmLoadedCommand() {
-    memset(&this->info,0,sizeof(this->info)); 
+    memset(&this->info,0,sizeof(this->info));
     this->info.CAPI = &cmStaticCAPI;
   }
-  
+
   ///! clean up any memory allocated by the plugin
   ~cmLoadedCommand();
-    
+
   /**
    * This is a virtual constructor for the command.
    */
-  virtual cmCommand* Clone() 
+  virtual cmCommand* Clone()
     {
       cmLoadedCommand *newC = new cmLoadedCommand;
       // we must copy when we clone
@@ -58,7 +53,7 @@ public:
    * This is called when the command is first encountered in
    * the CMakeLists.txt file.
    */
-  virtual bool InitialPass(std::vector<std::string> const& args, 
+  virtual bool InitialPass(std::vector<std::string> const& args,
                            cmExecutionStatus &);
 
   /**
@@ -68,21 +63,23 @@ public:
    * writing to the cache can be done.
    */
   virtual void FinalPass();
+  virtual bool HasFinalPass() const
+    { return this->info.FinalPass? true:false; }
 
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() { return info.Name; }
-  
+  virtual const char* GetName() const { return info.Name; }
+
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation() 
+  virtual const char* GetTerseDocumentation() const
     {
       if (this->info.GetTerseDocumentation)
         {
         cmLoadedCommand::InstallSignalHandlers(info.Name);
-        const char* ret = info.GetTerseDocumentation(); 
+        const char* ret = info.GetTerseDocumentation();
         cmLoadedCommand::InstallSignalHandlers(info.Name, 1);
         return ret;
         }
@@ -104,7 +101,7 @@ public:
         {
         cmLoadedCommand::LastName = "????";
         }
-      
+
       if(!remove)
         {
         signal(SIGSEGV, TrapsForSignalsCFunction);
@@ -122,11 +119,11 @@ public:
         signal(SIGILL,  0);
         }
     }
-  
+
   /**
    * More documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
       if (this->info.GetFullDocumentation)
         {
@@ -140,7 +137,7 @@ public:
         return "LoadedCommand without any additional documentation";
         }
     }
-  
+
   cmTypeMacro(cmLoadedCommand, cmCommand);
 
   cmLoadedCommandInfo info;
@@ -167,7 +164,7 @@ bool cmLoadedCommand::InitialPass(std::vector<std::string> const& args,
     {
     free(this->info.Error);
     }
-  
+
   // create argc and argv and then invoke the command
   int argc = static_cast<int> (args.size());
   char **argv = 0;
@@ -182,10 +179,10 @@ bool cmLoadedCommand::InitialPass(std::vector<std::string> const& args,
     }
   cmLoadedCommand::InstallSignalHandlers(info.Name);
   int result = info.InitialPass((void *)&info,
-                                (void *)this->Makefile,argc,argv); 
+                                (void *)this->Makefile,argc,argv);
   cmLoadedCommand::InstallSignalHandlers(info.Name, 1);
   cmFreeArguments(argc,argv);
-  
+
   if (result)
     {
     return true;
@@ -252,7 +249,7 @@ bool cmLoadCommandCommand
     // expand variables
     std::string exp = args[j];
     cmSystemTools::ExpandRegistryValues(exp);
-    
+
     // Glob the entry in case of wildcards.
     cmSystemTools::GlobDirs(exp.c_str(), path);
     }
@@ -301,7 +298,7 @@ bool cmLoadCommandCommand
     initFunction = (CM_INIT_FUNCTION)(
       cmsys::DynamicLoader::GetSymbolAddress(lib, initFuncName.c_str()));
     }
-  // if the symbol is found call it to set the name on the 
+  // if the symbol is found call it to set the name on the
   // function blocker
   if(initFunction)
     {

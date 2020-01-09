@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmWhileCommand.h,v $
-  Language:  C++
-  Date:      $Date: 2009-02-04 16:44:18 $
-  Version:   $Revision: 1.9.2.1 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmWhileCommand_h
 #define cmWhileCommand_h
 
@@ -21,11 +16,6 @@
 #include "cmFunctionBlocker.h"
 #include "cmListFileCache.h"
 
-/** \class cmWhileFunctionBlocker
- * \brief subclass of function blocker
- *
- * 
- */
 class cmWhileFunctionBlocker : public cmFunctionBlocker
 {
 public:
@@ -35,25 +25,21 @@ public:
                                  cmMakefile &mf,
                                  cmExecutionStatus &);
   virtual bool ShouldRemove(const cmListFileFunction& lff, cmMakefile &mf);
-  
+
   std::vector<cmListFileArgument> Args;
   std::vector<cmListFileFunction> Functions;
 private:
   int Depth;
 };
 
-/** \class cmWhileCommand
- * \brief starts a while loop
- *
- * cmWhileCommand starts a while loop
- */
+/// \brief Starts a while loop
 class cmWhileCommand : public cmCommand
 {
 public:
   /**
    * This is a virtual constructor for the command.
    */
-  virtual cmCommand* Clone() 
+  virtual cmCommand* Clone()
     {
     return new cmWhileCommand;
     }
@@ -64,7 +50,7 @@ public:
    */
   virtual bool InvokeInitialPass(const std::vector<cmListFileArgument>& args,
                                  cmExecutionStatus &);
-    
+
   /**
    * This is called when the command is first encountered in
    * the CMakeLists.txt file.
@@ -75,25 +61,25 @@ public:
   /**
    * This determines if the command is invoked when in script mode.
    */
-  virtual bool IsScriptable() { return true; }
+  virtual bool IsScriptable() const { return true; }
 
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() { return "while";}
+  virtual const char* GetName() const { return "while";}
 
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation() 
+  virtual const char* GetTerseDocumentation() const
     {
     return "Evaluate a group of commands while a condition is true";
     }
-  
+
   /**
    * More documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
     return
       "  while(condition)\n"
@@ -107,7 +93,7 @@ public:
       "is true. The condition is evaluated using the same logic as the "
       "if command.";
     }
-  
+
   cmTypeMacro(cmWhileCommand, cmCommand);
 };
 

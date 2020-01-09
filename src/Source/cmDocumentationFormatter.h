@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmDocumentationFormatter.h,v $
-  Language:  C++
-  Date:      $Date: 2008-10-24 15:18:46 $
-  Version:   $Revision: 1.8.2.2 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef _cmDocumentationFormatter_h
 #define _cmDocumentationFormatter_h
 
@@ -21,7 +16,7 @@
 
 /** This is just a helper class to make it build with MSVC 6.0.
 Actually the enums and internal classes could directly go into
-cmDocumentation, but then MSVC6 complains in RequestedHelpItem that 
+cmDocumentation, but then MSVC6 complains in RequestedHelpItem that
 cmDocumentation is an undefined type and so it doesn't know the enums.
 Moving the enums to a class which is then already completely parsed helps
 against this. */
@@ -29,10 +24,10 @@ class cmDocumentationEnums
 {
 public:
   /** Types of help provided.  */
-  enum Type 
+  enum Type
   { None, Usage, Single, SingleModule, SingleProperty, SingleVariable,
     List, ModuleList, PropertyList, VariableList,
-    Full, Properties, Variables, Modules, CustomModules, Commands, 
+    Full, Properties, Variables, Modules, CustomModules, Commands,
     CompatCommands, Copyright, Version, Policies, SinglePolicy };
 
   /** Forms of documentation output.  */
@@ -41,7 +36,7 @@ public:
 
 class cmDocumentationSection;
 
-/** Base class for printing the documentation in the various supported 
+/** Base class for printing the documentation in the various supported
    formats. */
 class cmDocumentationFormatter
 {
@@ -51,7 +46,7 @@ public:
   void PrintFormatted(std::ostream& os, const char* text);
 
   virtual cmDocumentationEnums::Form GetForm() const = 0;
-  
+
   virtual void PrintHeader(const char* /*docname*/,
                            const char* /*appname*/,
                            std::ostream& /*os*/) {}
@@ -65,7 +60,7 @@ public:
                           std::vector<const cmDocumentationSection *>&)
     {}
 
-  /** Compute a prefix for links into a section (#<prefix>_SOMETHING).  */
+  /** Compute a prefix for links into a section (#\<prefix\>_SOMETHING). */
   std::string ComputeSectionLinkPrefix(std::string const& name);
 };
 

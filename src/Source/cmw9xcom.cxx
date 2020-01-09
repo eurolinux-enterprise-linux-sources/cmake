@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmw9xcom.cxx,v $
-  Language:  C++
-  Date:      $Date: 2002-12-11 16:49:08 $
-  Version:   $Revision: 1.5 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmSystemTools.h"
 #include "cmWin32ProcessExecution.h"
 
@@ -27,7 +22,7 @@ int main (int argc, char *argv[])
     return 1;
     }
   std::string arg = argv[1];
-  if ( (arg.find_first_of(" ") != arg.npos) && 
+  if ( (arg.find_first_of(" ") != arg.npos) &&
        (arg.find_first_of("\"") == arg.npos) )
     {
     arg = "\"" + arg + "\"";
@@ -36,14 +31,14 @@ int main (int argc, char *argv[])
   int cc;
   for ( cc = 2; cc < argc; cc ++ )
     {
-    std::string arg = argv[cc];
-    if ( (arg.find_first_of(" ") != arg.npos) && 
-         (arg.find_first_of("\"") == arg.npos) )
+    std::string nextArg = argv[cc];
+    if ( (nextArg.find_first_of(" ") != nextArg.npos) &&
+         (nextArg.find_first_of("\"") == nextArg.npos) )
       {
-      arg = "\"" + arg + "\"";
+      nextArg = "\"" + nextArg + "\"";
       }
     command += " ";
-    command += arg;
+    command += nextArg;
     }
 
   return cmWin32ProcessExecution::Windows9xHack(command.c_str());

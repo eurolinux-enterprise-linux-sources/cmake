@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmCPackOSXX11Generator.cxx,v $
-  Language:  C++
-  Date:      $Date: 2009-02-04 16:44:18 $
-  Version:   $Revision: 1.5.2.1 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmCPackOSXX11Generator.h"
 
 #include "cmake.h"
@@ -26,6 +21,7 @@
 
 #include <cmsys/SystemTools.hxx>
 #include <cmsys/Glob.hxx>
+#include <sys/stat.h>
 
 //----------------------------------------------------------------------
 cmCPackOSXX11Generator::cmCPackOSXX11Generator()
@@ -38,12 +34,10 @@ cmCPackOSXX11Generator::~cmCPackOSXX11Generator()
 }
 
 //----------------------------------------------------------------------
-int cmCPackOSXX11Generator::CompressFiles(const char* outFileName,
-  const char* toplevel,
-  const std::vector<std::string>& files)
+int cmCPackOSXX11Generator::PackageFiles()
 {
-  (void) files; // TODO: Fix api to not need files.
-  (void) toplevel; // TODO: Use toplevel
+  // TODO: Use toplevel ?
+  //       It is used! Is this an obsolete comment?
 
   const char* cpackPackageExecutables
     = this->GetOption("CPACK_PACKAGE_EXECUTABLES");
@@ -70,7 +64,7 @@ int cmCPackOSXX11Generator::CompressFiles(const char* outFileName,
       {
       std::string cpackExecutableName = *it;
       ++ it;
-      this->SetOptionIfNotSet("CPACK_EXECUTABLE_NAME", 
+      this->SetOptionIfNotSet("CPACK_EXECUTABLE_NAME",
         cpackExecutableName.c_str());
       }
     }
@@ -119,7 +113,7 @@ int cmCPackOSXX11Generator::CompressFiles(const char* outFileName,
   cmSystemTools::CreateSymlink("/Applications", applicationsLinkName.c_str());
 
   if (
-    !this->CopyResourcePlistFile("VolumeIcon.icns", 
+    !this->CopyResourcePlistFile("VolumeIcon.icns",
                                  diskImageDirectory.c_str(),
                                  ".VolumeIcon.icns", true ) ||
     !this->CopyResourcePlistFile("DS_Store", diskImageDirectory.c_str(),
@@ -131,9 +125,9 @@ int cmCPackOSXX11Generator::CompressFiles(const char* outFileName,
       "Info.plist" ) ||
     !this->CopyResourcePlistFile("OSXX11.main.scpt", scrDir,
       "main.scpt", true ) ||
-    !this->CopyResourcePlistFile("OSXScriptLauncher.rsrc", dir, 
+    !this->CopyResourcePlistFile("OSXScriptLauncher.rsrc", dir,
       rsrcFile, true) ||
-    !this->CopyResourcePlistFile("OSXScriptLauncher", appdir, 
+    !this->CopyResourcePlistFile("OSXScriptLauncher", appdir,
       this->GetOption("CPACK_PACKAGE_FILE_NAME"), true)
   )
     {
@@ -142,20 +136,61 @@ int cmCPackOSXX11Generator::CompressFiles(const char* outFileName,
     return 0;
     }
 
+  // Two of the files need to have execute permission, so ensure they do:
+  std::string runTimeScript = dir;
+  runTimeScript += "/";
+  runTimeScript += "RuntimeScript";
+
+  std::string appScriptName = appdir;
+  appScriptName += "/";
+  appScriptName += this->GetOption("CPACK_PACKAGE_FILE_NAME");
+
+  mode_t mode;
+  if (cmsys::SystemTools::GetPermissions(runTimeScript.c_str(), mode))
+    {
+    mode |= (S_IXUSR | S_IXGRP | S_IXOTH);
+    cmsys::SystemTools::SetPermissions(runTimeScript.c_str(), mode);
+    cmCPackLogger(cmCPackLog::LOG_OUTPUT, "Setting: " << runTimeScript
+      << " to permission: " << mode << std::endl);
+    }
+
+  if (cmsys::SystemTools::GetPermissions(appScriptName.c_str(), mode))
+    {
+    mode |= (S_IXUSR | S_IXGRP | S_IXOTH);
+    cmsys::SystemTools::SetPermissions(appScriptName.c_str(), mode);
+    cmCPackLogger(cmCPackLog::LOG_OUTPUT,  "Setting: " << appScriptName
+      << " to permission: " << mode << std::endl);
+    }
+
   std::string output;
   std::string tmpFile = this->GetOption("CPACK_TOPLEVEL_DIRECTORY");
   tmpFile += "/hdiutilOutput.log";
   cmOStringStream dmgCmd;
   dmgCmd << "\"" << this->GetOption("CPACK_INSTALLER_PROGRAM_DISK_IMAGE")
-         << "\" create -ov -format UDZO -srcfolder \"" 
-         << diskImageDirectory.c_str() 
-         << "\" \"" << outFileName << "\"";
-  int retVal = 1;
+         << "\" create -ov -format UDZO -srcfolder \""
+         << diskImageDirectory.c_str()
+         << "\" \"" << packageFileNames[0] << "\"";
   cmCPackLogger(cmCPackLog::LOG_VERBOSE,
-                "Compress disk image using command: " 
+                "Compress disk image using command: "
                 << dmgCmd.str().c_str() << std::endl);
-  bool res = cmSystemTools::RunSingleCommand(dmgCmd.str().c_str(), &output,
-    &retVal, 0, this->GeneratorVerbose, 0);
+  // since we get random dashboard failures with this one
+  // try running it more than once
+  int retVal = 1;
+  int numTries = 10;
+  bool res = false;
+  while(numTries > 0)
+    {
+    res = cmSystemTools::RunSingleCommand(dmgCmd.str().c_str(), &output,
+                                          &retVal, 0,
+                                          this->GeneratorVerbose, 0);
+    if ( res && !retVal )
+      {
+      numTries = -1;
+      break;
+      }
+    cmSystemTools::Delay(500);
+    numTries--;
+    }
   if ( !res || retVal )
     {
     cmGeneratedFileStream ofs(tmpFile.c_str());
@@ -184,7 +219,7 @@ int cmCPackOSXX11Generator::InitializeInternal()
       << std::endl);
     return 0;
     }
-  this->SetOptionIfNotSet("CPACK_INSTALLER_PROGRAM_DISK_IMAGE", 
+  this->SetOptionIfNotSet("CPACK_INSTALLER_PROGRAM_DISK_IMAGE",
                           pkgPath.c_str());
 
   return this->Superclass::InitializeInternal();
@@ -200,7 +235,7 @@ bool cmCPackOSXX11Generator::CopyCreateResourceFile(const char* name)
   if ( !inFileName )
     {
     cmCPackLogger(cmCPackLog::LOG_ERROR, "CPack option: " << cpackVar.c_str()
-                  << " not specified. It should point to " 
+                  << " not specified. It should point to "
                   << (name ? name : "(NULL)")
                   << ".rtf, " << name
                   << ".html, or " << name << ".txt file" << std::endl);
@@ -208,7 +243,7 @@ bool cmCPackOSXX11Generator::CopyCreateResourceFile(const char* name)
     }
   if ( !cmSystemTools::FileExists(inFileName) )
     {
-    cmCPackLogger(cmCPackLog::LOG_ERROR, "Cannot find " 
+    cmCPackLogger(cmCPackLog::LOG_ERROR, "Cannot find "
                   << (name ? name : "(NULL)")
                   << " resource file: " << inFileName << std::endl);
     return false;
@@ -227,7 +262,7 @@ bool cmCPackOSXX11Generator::CopyCreateResourceFile(const char* name)
   destFileName += name + ext;
 
 
-  cmCPackLogger(cmCPackLog::LOG_VERBOSE, "Configure file: " 
+  cmCPackLogger(cmCPackLog::LOG_VERBOSE, "Configure file: "
                 << (inFileName ? inFileName : "(NULL)")
                 << " to " << destFileName.c_str() << std::endl);
   this->ConfigureFile(inFileName, destFileName.c_str());

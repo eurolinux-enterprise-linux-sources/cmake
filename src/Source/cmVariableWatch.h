@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmVariableWatch.h,v $
-  Language:  C++
-  Date:      $Date: 2007-05-17 21:40:59 $
-  Version:   $Revision: 1.10 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmVariableWatch_h
 #define cmVariableWatch_h
 
@@ -31,6 +26,7 @@ class cmVariableWatch
 public:
   typedef void (*WatchMethod)(const std::string& variable, int access_type,
     void* client_data, const char* newValue, const cmMakefile* mf);
+  typedef void (*DeleteData)(void* client_data);
 
   cmVariableWatch();
   ~cmVariableWatch();
@@ -38,10 +34,11 @@ public:
   /**
    * Add watch to the variable
    */
-  void AddWatch(const std::string& variable, WatchMethod method,
-                void* client_data=0);
-  void RemoveWatch(const std::string& variable, WatchMethod method);
-  
+  bool AddWatch(const std::string& variable, WatchMethod method,
+                void* client_data=0, DeleteData delete_data=0);
+  void RemoveWatch(const std::string& variable, WatchMethod method,
+                   void* client_data=0);
+
   /**
    * This method is called when variable is accessed
    */
@@ -66,16 +63,24 @@ public:
    * Return the access as string
    */
   static const char* GetAccessAsString(int access_type);
-  
+
 protected:
   struct Pair
   {
     WatchMethod Method;
     void*        ClientData;
-    Pair() : Method(0), ClientData(0) {}
+    DeleteData   DeleteDataCall;
+    Pair() : Method(0), ClientData(0), DeleteDataCall(0) {}
+    ~Pair()
+      {
+      if (this->DeleteDataCall && this->ClientData)
+        {
+        this->DeleteDataCall(this->ClientData);
+        }
+      }
   };
 
-  typedef std::vector< Pair > VectorOfPairs;
+  typedef std::vector< Pair* > VectorOfPairs;
   typedef std::map<cmStdString, VectorOfPairs > StringToVectorOfPairs;
 
   StringToVectorOfPairs WatchMap;

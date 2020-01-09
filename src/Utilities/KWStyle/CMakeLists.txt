@@ -1,50 +1,78 @@
+#=============================================================================
+# CMake - Cross Platform Makefile Generator
+# Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
+#
+# Distributed under the OSI-approved BSD License (the "License");
+# see accompanying file Copyright.txt for details.
+#
+# This software is distributed WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the License for more information.
+#=============================================================================
+
 #-----------------------------------------------------------------------------
 # CMake uses KWStyle for checking the coding style
-OPTION(CMAKE_USE_KWSTYLE "Run KWStyle in order to check for violations of the coding standard." OFF)
-MARK_AS_ADVANCED(CMAKE_USE_KWSTYLE)
 
-IF(CMAKE_USE_KWSTYLE)
-  FIND_PROGRAM(KWSTYLE_EXECUTABLE
-  NAMES KWStyle 
+# Search for a built-from-source KWStyle under Dashboards/Support on a typical
+# dashboard machines:
+#
+set(home "$ENV{HOME}")
+if(NOT home)
+  string(REPLACE "\\" "/" home "$ENV{USERPROFILE}")
+endif()
+
+find_program(KWSTYLE_EXECUTABLE
+  NAMES KWStyle
   PATHS
   "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Kitware Inc.\\KWStyle 1.0.0]/bin"
+  "${home}/Dashboards/Support/KWStyle/bin"
   )
-  MARK_AS_ADVANCED(KWSTYLE_EXECUTABLE)
+mark_as_advanced(KWSTYLE_EXECUTABLE)
 
-  OPTION(KWSTYLE_USE_VIM_FORMAT "Set KWStyle to generate errors with a VIM-compatible format." OFF)
-  OPTION(KWSTYLE_USE_MSVC_FORMAT "Set KWStyle to generate errors with a VisualStudio-compatible format." OFF)
-  MARK_AS_ADVANCED(KWSTYLE_USE_VIM_FORMAT)
-  MARK_AS_ADVANCED(KWSTYLE_USE_MSVC_FORMAT)
+set(CMAKE_USE_KWSTYLE_DEFAULT OFF)
+if(KWSTYLE_EXECUTABLE)
+  set(CMAKE_USE_KWSTYLE_DEFAULT ON)
+endif()
 
-  IF(KWSTYLE_USE_VIM_FORMAT)
-    SET(KWSTYLE_ARGUMENTS -vim ${KWSTYLE_ARGUMENTS})
-  ENDIF(KWSTYLE_USE_VIM_FORMAT)
+option(CMAKE_USE_KWSTYLE
+  "Add StyleCheck target and KWStyle test: run KWStyle to check for coding standard violations."
+  ${CMAKE_USE_KWSTYLE_DEFAULT})
+mark_as_advanced(CMAKE_USE_KWSTYLE)
 
-  IF(KWSTYLE_USE_MSVC_FORMAT)
-    SET(KWSTYLE_ARGUMENTS -msvc ${KWSTYLE_ARGUMENTS})
-  ENDIF(KWSTYLE_USE_MSVC_FORMAT)
+if(CMAKE_USE_KWSTYLE)
+  option(KWSTYLE_USE_VIM_FORMAT "Set KWStyle to generate errors with a VIM-compatible format." OFF)
+  option(KWSTYLE_USE_MSVC_FORMAT "Set KWStyle to generate errors with a VisualStudio-compatible format." OFF)
+  mark_as_advanced(KWSTYLE_USE_VIM_FORMAT)
+  mark_as_advanced(KWSTYLE_USE_MSVC_FORMAT)
 
-  CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/Utilities/KWStyle/CMake.kws.xml.in
-               ${CMAKE_BINARY_DIR}/CMake.kws.xml)
-  CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/Utilities/KWStyle/CMakeMoreChecks.kws.xml.in
-               ${CMAKE_BINARY_DIR}/CMakeMoreChecks.kws.xml)
+  if(KWSTYLE_USE_VIM_FORMAT)
+    set(KWSTYLE_ARGUMENTS -vim ${KWSTYLE_ARGUMENTS})
+  endif()
 
-  CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/Utilities/KWStyle/CMakeFiles.txt.in
-                 ${CMAKE_BINARY_DIR}/CMakeKWSFiles.txt)
+  if(KWSTYLE_USE_MSVC_FORMAT)
+    set(KWSTYLE_ARGUMENTS -msvc ${KWSTYLE_ARGUMENTS})
+  endif()
 
-  ADD_CUSTOM_COMMAND(
-    OUTPUT ${CMAKE_BINARY_DIR}/KWStyleReport.txt
+  configure_file(${CMake_SOURCE_DIR}/Utilities/KWStyle/CMake.kws.xml.in
+               ${CMake_BINARY_DIR}/CMake.kws.xml)
+  configure_file(${CMake_SOURCE_DIR}/Utilities/KWStyle/CMakeMoreChecks.kws.xml.in
+               ${CMake_BINARY_DIR}/CMakeMoreChecks.kws.xml)
+
+  configure_file(${CMake_SOURCE_DIR}/Utilities/KWStyle/CMakeFiles.txt.in
+                 ${CMake_BINARY_DIR}/CMakeKWSFiles.txt)
+
+  add_custom_command(
+    OUTPUT ${CMake_BINARY_DIR}/KWStyleReport.txt
     COMMAND ${KWSTYLE_EXECUTABLE}
-    ARGS    -xml ${CMAKE_BINARY_DIR}/CMake.kws.xml -o ${CMAKE_SOURCE_DIR}/Utilities/KWStyle/CMakeOverwrite.txt -v ${KWSTYLE_ARGUMENTS} -D ${CMAKE_BINARY_DIR}/CMakeKWSFiles.txt 
+    ARGS    -xml ${CMake_BINARY_DIR}/CMake.kws.xml -o ${CMake_SOURCE_DIR}/Utilities/KWStyle/CMakeOverwrite.txt -v ${KWSTYLE_ARGUMENTS} -D ${CMake_BINARY_DIR}/CMakeKWSFiles.txt
     COMMENT "Coding Style Checker"
     )
 
-  ADD_CUSTOM_TARGET(MoreStyleChecks
+  add_custom_target(MoreStyleChecks
     COMMAND ${KWSTYLE_EXECUTABLE}
-    -xml ${CMAKE_BINARY_DIR}/CMakeMoreChecks.kws.xml -html ${CMAKE_BINARY_DIR}/html -o ${CMAKE_SOURCE_DIR}/Utilities/KWStyle/CMakeOverwrite.txt -v ${KWSTYLE_ARGUMENTS} -D ${CMAKE_BINARY_DIR}/CMakeKWSFiles.txt 
+    -xml ${CMake_BINARY_DIR}/CMakeMoreChecks.kws.xml -html ${CMake_BINARY_DIR}/html -o ${CMake_SOURCE_DIR}/Utilities/KWStyle/CMakeOverwrite.txt -v ${KWSTYLE_ARGUMENTS} -D ${CMake_BINARY_DIR}/CMakeKWSFiles.txt
     COMMENT "Coding Style Checker, more checks enabled"
     )
 
-  ADD_CUSTOM_TARGET(StyleCheck DEPENDS ${CMAKE_BINARY_DIR}/KWStyleReport.txt)
-ENDIF(CMAKE_USE_KWSTYLE)
-
+  add_custom_target(StyleCheck DEPENDS ${CMake_BINARY_DIR}/KWStyleReport.txt)
+endif()

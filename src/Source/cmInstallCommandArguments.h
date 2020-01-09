@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmInstallCommandArguments.h,v $
-  Language:  C++
-  Date:      $Date: 2008-02-04 22:03:48 $
-  Version:   $Revision: 1.5 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 
 #ifndef cmInstallCommandArguments_h
 #define cmInstallCommandArguments_h
@@ -24,10 +19,10 @@
 class cmInstallCommandArguments
 {
   public:
-    cmInstallCommandArguments();
-    void SetGenericArguments(cmInstallCommandArguments* args) 
+    cmInstallCommandArguments(const std::string& defaultComponent);
+    void SetGenericArguments(cmInstallCommandArguments* args)
                                                {this->GenericArguments = args;}
-    void Parse(const std::vector<std::string>* args, 
+    void Parse(const std::vector<std::string>* args,
                std::vector<std::string>* unconsumedArgs);
 
     // Compute destination path.and check permissions
@@ -42,14 +37,15 @@ class cmInstallCommandArguments
     bool GetNamelinkOnly() const;
     bool GetNamelinkSkip() const;
 
-    // once HandleDirectoryMode() is also switched to using 
+    // once HandleDirectoryMode() is also switched to using
     // cmInstallCommandArguments then these two functions can become non-static
     // private member functions without arguments
-    static bool CheckPermissions(const std::string& onePerm, 
+    static bool CheckPermissions(const std::string& onePerm,
                                  std::string& perm);
     cmCommandArgumentsHelper Parser;
     cmCommandArgumentGroup ArgumentGroup;
   private:
+    cmInstallCommandArguments(); // disabled
     cmCAString Destination;
     cmCAString Component;
     cmCAString Rename;
@@ -65,7 +61,21 @@ class cmInstallCommandArguments
     cmInstallCommandArguments* GenericArguments;
     static const char* PermissionsTable[];
     static const std::string EmptyString;
+    std::string DefaultComponentName;
     bool CheckPermissions();
+};
+
+class cmInstallCommandIncludesArgument
+{
+  public:
+    cmInstallCommandIncludesArgument();
+    void Parse(const std::vector<std::string>* args,
+               std::vector<std::string>* unconsumedArgs);
+
+    const std::vector<std::string>& GetIncludeDirs() const;
+
+  private:
+    std::vector<std::string> IncludeDirs;
 };
 
 #endif

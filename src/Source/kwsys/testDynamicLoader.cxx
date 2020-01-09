@@ -1,23 +1,21 @@
-/*=========================================================================
+/*============================================================================
+  KWSys - Kitware System Library
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   KWSys - Kitware System Library
-  Module:    $RCSfile: testDynamicLoader.cxx,v $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "kwsysPrivate.h"
 
 #include KWSYS_HEADER(DynamicLoader.hxx)
 #include KWSYS_HEADER(ios/iostream)
 #include KWSYS_HEADER(stl/string)
 
-#if defined(__BEOS__) && !defined(__HAIKU__)
+#if defined(__BEOS__)
 #include <be/kernel/OS.h>  /* disable_debugger() API. */
 #endif
 
@@ -37,7 +35,7 @@
 // left on disk.
 #include <testSystemTools.h>
 
-kwsys_stl::string GetLibName(const char* lname)
+static kwsys_stl::string GetLibName(const char* lname)
 {
   // Construct proper name of lib
   kwsys_stl::string slname;
@@ -111,9 +109,9 @@ int testDynamicLoader(int argc, char *argv[])
 
 // dlopen() on Syllable before 11/22/2007 doesn't return 0 on error
 #ifndef __SYLLABLE__
-  // Make sure that inexistant lib is giving correct result
+  // Make sure that inexistent lib is giving correct result
   res += TestDynamicLoader("azerty_", "foo_bar",0,0,0);
-  // Make sure that random binary file cannnot be assimilated as dylib
+  // Make sure that random binary file cannot be assimilated as dylib
   res += TestDynamicLoader(TEST_SYSTEMTOOLS_BIN_FILE, "wp",0,0,0);
 #endif
 

@@ -1,25 +1,20 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmExprParserHelper.cxx,v $
-  Language:  C++
-  Date:      $Date: 2006-05-11 14:45:28 $
-  Version:   $Revision: 1.3 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmExprParserHelper.h"
 
 #include "cmSystemTools.h"
-#include "cmExprLexer.h"
-
 #include "cmMakefile.h"
+
+#include "cmExprLexer.h"
 
 int cmExpr_yyparse( yyscan_t yyscanner );
 //
@@ -35,12 +30,6 @@ cmExprParserHelper::~cmExprParserHelper()
   this->CleanupParser();
 }
 
-void cmExprParserHelper::SetLineFile(long line, const char* file)
-{
-  this->FileLine = line;
-  this->FileName = file;
-}
-
 int cmExprParserHelper::ParseString(const char* str, int verb)
 {
   if ( !str)
@@ -53,7 +42,7 @@ int cmExprParserHelper::ParseString(const char* str, int verb)
   this->InputBuffer = str;
   this->InputBufferPos = 0;
   this->CurrentLine = 0;
-  
+
   this->Result = 0;
 
   yyscan_t yyscanner;
@@ -72,7 +61,7 @@ int cmExprParserHelper::ParseString(const char* str, int verb)
 
   if ( Verbose )
     {
-    std::cerr << "Expanding [" << str << "] produced: [" 
+    std::cerr << "Expanding [" << str << "] produced: ["
               << this->Result << "]" << std::endl;
     }
   return 1;

@@ -1,28 +1,23 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmCMakeMinimumRequired.h,v $
-  Language:  C++
-  Date:      $Date: 2009-01-13 18:03:49 $
-  Version:   $Revision: 1.12.2.2 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmCMakeMinimumRequired_h
 #define cmCMakeMinimumRequired_h
 
 #include "cmCommand.h"
 
 /** \class cmCMakeMinimumRequired
- * \brief Build a CMAKE variable
+ * \brief cmake_minimum_required command
  *
- * cmCMakeMinimumRequired sets a variable to a value with expansion.  
+ * cmCMakeMinimumRequired implements the cmake_minimum_required CMake command
  */
 class cmCMakeMinimumRequired : public cmCommand
 {
@@ -30,7 +25,7 @@ public:
   /**
    * This is a virtual constructor for the command.
    */
-  virtual cmCommand* Clone() 
+  virtual cmCommand* Clone()
     {
     return new cmCMakeMinimumRequired;
     }
@@ -45,34 +40,34 @@ public:
   /**
    * This determines if the command is invoked when in script mode.
    */
-  virtual bool IsScriptable() { return true; }
+  virtual bool IsScriptable() const { return true; }
 
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() {return "cmake_minimum_required";}
-  
+  virtual const char* GetName() const {return "cmake_minimum_required";}
+
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation() 
+  virtual const char* GetTerseDocumentation() const
     {
     return "Set the minimum required version of cmake for a project.";
     }
-  
+
   /**
    * More documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
     return
-      "  cmake_minimum_required(VERSION major[.minor[.patch]]\n"
+      "  cmake_minimum_required(VERSION major[.minor[.patch[.tweak]]]\n"
       "                         [FATAL_ERROR])\n"
       "If the current version of CMake is lower than that required "
       "it will stop processing the project and report an error.  "
       "When a version higher than 2.4 is specified the command implicitly "
       "invokes\n"
-      "  cmake_policy(VERSION major[.minor[.patch]])\n"
+      "  cmake_policy(VERSION major[.minor[.patch[.tweak]]])\n"
       "which sets the cmake policy version level to the version specified.  "
       "When version 2.4 or lower is given the command implicitly invokes\n"
       "  cmake_policy(VERSION 2.4)\n"
@@ -82,7 +77,7 @@ public:
       "It should be specified so CMake versions 2.4 and lower fail with an "
       "error instead of just a warning.";
     }
-  
+
   cmTypeMacro(cmCMakeMinimumRequired, cmCommand);
 
 private:

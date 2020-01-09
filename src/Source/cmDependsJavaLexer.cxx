@@ -48,7 +48,7 @@ typedef uint32_t flex_uint32_t;
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
 typedef int flex_int32_t;
-typedef unsigned char flex_uint8_t; 
+typedef unsigned char flex_uint8_t;
 typedef unsigned short int flex_uint16_t;
 typedef unsigned int flex_uint32_t;
 #endif /* ! C99 */
@@ -169,7 +169,7 @@ typedef struct yy_buffer_state *YY_BUFFER_STATE;
 #define EOB_ACT_LAST_MATCH 2
 
     #define YY_LESS_LINENO(n)
-    
+
 /* Return all but the first "n" matched characters back to the input stream. */
 #define yyless(n) \
   do \
@@ -234,7 +234,7 @@ struct yy_buffer_state
 
     int yy_bs_lineno; /**< The line count. */
     int yy_bs_column; /**< The column count. */
-    
+
   /* Whether to try to fill the input buffer when we reach the
    * end of it.
    */
@@ -641,22 +641,17 @@ static yyconst flex_int16_t yy_chk[479] =
 #define YY_RESTORE_YY_MORE_OFFSET
 #line 1 "cmDependsJavaLexer.in.l"
 #line 2 "cmDependsJavaLexer.in.l"
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmDependsJavaLexer.cxx,v $
-  Language:  C++
-  Date:      $Date: 2008-10-24 15:18:46 $
-  Version:   $Revision: 1.12.2.1 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 /*
 
 This file must be translated to C and modified to build everywhere.
@@ -909,9 +904,9 @@ extern int cmDependsJava_yylex (yyscan_t yyscanner);
  */
 YY_DECL
 {
-  register yy_state_type yy_current_state;
-  register char *yy_cp, *yy_bp;
-  register int yy_act;
+  yy_state_type yy_current_state;
+  char *yy_cp, *yy_bp;
+  int yy_act;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
 #line 88 "cmDependsJavaLexer.in.l"
@@ -960,7 +955,7 @@ YY_DECL
 yy_match:
     do
       {
-      register YY_CHAR yy_c = yy_ec[YY_SC_TO_UI(*yy_cp)];
+      YY_CHAR yy_c = yy_ec[YY_SC_TO_UI(*yy_cp)];
       if ( yy_accept[yy_current_state] )
         {
         yyg->yy_last_accepting_state = yy_current_state;
@@ -1433,9 +1428,9 @@ YY_RULE_SETUP
 case 107:
 YY_RULE_SETUP
 #line 200 "cmDependsJavaLexer.in.l"
-{ 
-  yyextra->AllocateParserType(yylvalp, yytext, strlen(yytext)); 
-  return jp_NAME; 
+{
+  yyextra->AllocateParserType(yylvalp, yytext, strlen(yytext));
+  return jp_NAME;
 }
 case 108:
 /* rule 108 can match eol */
@@ -1452,11 +1447,11 @@ YY_RULE_SETUP
 case 110:
 YY_RULE_SETUP
 #line 207 "cmDependsJavaLexer.in.l"
-{ 
-  std::cerr << "Unknown character: " << yytext[0] 
-    << " (" << (int)yytext[0] << ")" << std::endl; 
-  yyextra->Error("Unknown character"); 
-  return jp_ERROR; 
+{
+  std::cerr << "Unknown character: " << yytext[0]
+    << " (" << (int)yytext[0] << ")" << std::endl;
+  yyextra->Error("Unknown character");
+  return jp_ERROR;
 }
 case 111:
 YY_RULE_SETUP
@@ -1609,9 +1604,9 @@ return 0; /* this should not happen but it silences a warning*/
 static int yy_get_next_buffer (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-  register char *dest = YY_CURRENT_BUFFER_LVALUE->yy_ch_buf;
-  register char *source = yyg->yytext_ptr;
-  register int number_to_move, i;
+  char *dest = YY_CURRENT_BUFFER_LVALUE->yy_ch_buf;
+  char *source = yyg->yytext_ptr;
+  int number_to_move, i;
   int ret_val;
 
   if ( yyg->yy_c_buf_p > &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[yyg->yy_n_chars + 1] )
@@ -1735,15 +1730,15 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 
     static yy_state_type yy_get_previous_state (yyscan_t yyscanner)
 {
-  register yy_state_type yy_current_state;
-  register char *yy_cp;
+  yy_state_type yy_current_state;
+  char *yy_cp;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
   yy_current_state = yyg->yy_start;
 
   for ( yy_cp = yyg->yytext_ptr + YY_MORE_ADJ; yy_cp < yyg->yy_c_buf_p; ++yy_cp )
     {
-    register YY_CHAR yy_c = (*yy_cp ? yy_ec[YY_SC_TO_UI(*yy_cp)] : 1);
+    YY_CHAR yy_c = (*yy_cp ? yy_ec[YY_SC_TO_UI(*yy_cp)] : 1);
     if ( yy_accept[yy_current_state] )
       {
       yyg->yy_last_accepting_state = yy_current_state;
@@ -1768,11 +1763,11 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
  */
     static yy_state_type yy_try_NUL_trans  (yy_state_type yy_current_state , yyscan_t yyscanner)
 {
-  register int yy_is_jam;
+  int yy_is_jam;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-  register char *yy_cp = yyg->yy_c_buf_p;
+  char *yy_cp = yyg->yy_c_buf_p;
 
-  register YY_CHAR yy_c = 1;
+  YY_CHAR yy_c = 1;
   if ( yy_accept[yy_current_state] )
     {
     yyg->yy_last_accepting_state = yy_current_state;
@@ -1938,7 +1933,7 @@ static void cmDependsJava_yy_load_buffer_state  (yyscan_t yyscanner)
     YY_BUFFER_STATE cmDependsJava_yy_create_buffer  (FILE * file, int  size , yyscan_t yyscanner)
 {
   YY_BUFFER_STATE b;
-    
+
   b = (YY_BUFFER_STATE) cmDependsJava_yyalloc(sizeof( struct yy_buffer_state ) ,yyscanner );
   if ( ! b )
     YY_FATAL_ERROR( "out of dynamic memory in cmDependsJava_yy_create_buffer()" );
@@ -1982,7 +1977,7 @@ static void cmDependsJava_yy_load_buffer_state  (yyscan_t yyscanner)
 #ifndef __cplusplus
 extern int isatty (int );
 #endif /* __cplusplus */
-    
+
 /* Initializes or reinitializes a buffer.
  * This function is sometimes called more than once on the same buffer,
  * such as during a cmDependsJava_yyrestart() or at EOF.
@@ -2008,7 +2003,7 @@ extern int isatty (int );
     }
 
         b->yy_is_interactive = file ? (isatty( fileno(file) ) > 0) : 0;
-    
+
   errno = oerrno;
 }
 
@@ -2112,9 +2107,9 @@ static void cmDependsJava_yyensure_buffer_stack (yyscan_t yyscanner)
     yyg->yy_buffer_stack = (struct yy_buffer_state**)cmDependsJava_yyalloc
                 (nuto_alloc * sizeof(struct yy_buffer_state*)
                 , yyscanner);
-    
+
     memset(yyg->yy_buffer_stack, 0, nuto_alloc * sizeof(struct yy_buffer_state*));
-        
+
     yyg->yy_buffer_stack_max = nuto_alloc;
     yyg->yy_buffer_stack_top = 0;
     return;
@@ -2141,12 +2136,12 @@ static void cmDependsJava_yyensure_buffer_stack (yyscan_t yyscanner)
  * @param base the character buffer
  * @param size the size in bytes of the character buffer
  * @param yyscanner The scanner object.
- * @return the newly allocated buffer state object. 
+ * @return the newly allocated buffer state object.
  */
 YY_BUFFER_STATE cmDependsJava_yy_scan_buffer  (char * base, yy_size_t  size , yyscan_t yyscanner)
 {
   YY_BUFFER_STATE b;
-    
+
   if ( size < 2 ||
        base[size-2] != YY_END_OF_BUFFER_CHAR ||
        base[size-1] != YY_END_OF_BUFFER_CHAR )
@@ -2173,8 +2168,8 @@ YY_BUFFER_STATE cmDependsJava_yy_scan_buffer  (char * base, yy_size_t  size , yy
 }
 
 /** Setup the input buffer state to scan a string. The next call to cmDependsJava_yylex() will
- * scan from a @e copy of @a str.
- * @param str a NUL-terminated string to scan
+ * scan from a @e copy of @a yy_str.
+ * @param yy_str a NUL-terminated string to scan
  * @param yyscanner The scanner object.
  * @return the newly allocated buffer state object.
  * @note If you want to scan bytes that may contain NUL values, then use
@@ -2182,7 +2177,7 @@ YY_BUFFER_STATE cmDependsJava_yy_scan_buffer  (char * base, yy_size_t  size , yy
  */
 YY_BUFFER_STATE cmDependsJava_yy_scan_string (yyconst char * yy_str , yyscan_t yyscanner)
 {
-    
+
   return cmDependsJava_yy_scan_bytes(yy_str,strlen(yy_str) ,yyscanner);
 }
 
@@ -2199,7 +2194,7 @@ YY_BUFFER_STATE cmDependsJava_yy_scan_bytes  (yyconst char * bytes, int  len , y
   char *buf;
   yy_size_t n;
   int i;
-    
+
   /* Get memory for full buffer, including space for trailing EOB's. */
   n = len + 2;
   buf = (char *) cmDependsJava_yyalloc(n ,yyscanner );
@@ -2267,10 +2262,10 @@ YY_EXTRA_TYPE cmDependsJava_yyget_extra  (yyscan_t yyscanner)
 int cmDependsJava_yyget_lineno  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-    
+
         if (! YY_CURRENT_BUFFER)
             return 0;
-    
+
     return yylineno;
 }
 
@@ -2280,10 +2275,10 @@ int cmDependsJava_yyget_lineno  (yyscan_t yyscanner)
 int cmDependsJava_yyget_column  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-    
+
         if (! YY_CURRENT_BUFFER)
             return 0;
-    
+
     return yycolumn;
 }
 
@@ -2344,13 +2339,13 @@ void cmDependsJava_yyset_lineno (int  line_number , yyscan_t yyscanner)
 
         /* lineno is only valid if an input buffer exists. */
         if (! YY_CURRENT_BUFFER )
-           yy_fatal_error( "cmDependsJava_yyset_lineno called with no buffer" , yyscanner); 
-    
+           yy_fatal_error( "cmDependsJava_yyset_lineno called with no buffer" , yyscanner);
+
     yylineno = line_number;
 }
 
 /** Set the current column.
- * @param line_number
+ * @param column_no
  * @param yyscanner The scanner object.
  */
 void cmDependsJava_yyset_column (int  column_no , yyscan_t yyscanner)
@@ -2359,8 +2354,8 @@ void cmDependsJava_yyset_column (int  column_no , yyscan_t yyscanner)
 
         /* column is only valid if an input buffer exists. */
         if (! YY_CURRENT_BUFFER )
-           yy_fatal_error( "cmDependsJava_yyset_column called with no buffer" , yyscanner); 
-    
+           yy_fatal_error( "cmDependsJava_yyset_column called with no buffer" , yyscanner);
+
     yycolumn = column_no;
 }
 
@@ -2486,7 +2481,7 @@ int cmDependsJava_yylex_destroy  (yyscan_t yyscanner)
 #ifndef yytext_ptr
 static void yy_flex_strncpy (char* s1, yyconst char * s2, int n , yyscan_t yyscanner)
 {
-  register int i;
+  int i;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
   for ( i = 0; i < n; ++i )
     s1[i] = s2[i];
@@ -2496,7 +2491,7 @@ static void yy_flex_strncpy (char* s1, yyconst char * s2, int n , yyscan_t yysca
 #ifdef YY_NEED_STRLEN
 static int yy_flex_strlen (yyconst char * s , yyscan_t yyscanner)
 {
-  register int n;
+  int n;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
   for ( n = 0; s[n]; ++n )
     ;

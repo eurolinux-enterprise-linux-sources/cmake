@@ -1,27 +1,24 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmMakefileTargetGenerator.h,v $
-  Language:  C++
-  Date:      $Date: 2008-10-24 15:18:53 $
-  Version:   $Revision: 1.24.2.2 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmMakefileTargetGenerator_h
 #define cmMakefileTargetGenerator_h
 
 #include "cmLocalUnixMakefileGenerator3.h"
+#include "cmOSXBundleGenerator.h"
 
 class cmCustomCommand;
 class cmDependInformation;
 class cmDepends;
+class cmGeneratorTarget;
 class cmGeneratedFileStream;
 class cmGlobalUnixMakefileGenerator3;
 class cmLocalUnixMakefileGenerator3;
@@ -38,7 +35,7 @@ class cmMakefileTargetGenerator
 public:
   // constructor to set the ivars
   cmMakefileTargetGenerator(cmTarget* target);
-  virtual ~cmMakefileTargetGenerator() {};
+  virtual ~cmMakefileTargetGenerator();
 
   // construct using this factory call
   static cmMakefileTargetGenerator *New(cmTarget *tgt);
@@ -47,16 +44,14 @@ public:
      with this target */
   virtual void WriteRuleFiles() = 0;
 
-  /* the main entry point for this class. Writes the Makefiles associated
-     with this target */
-  virtual void WriteProgressVariables(unsigned long total, 
-                                      unsigned long &current);
-  
   /* return the number of actions that have progress reporting on them */
   virtual unsigned long GetNumberOfProgressActions() {
     return this->NumberOfProgressActions;}
+  std::string GetProgressFileNameFull()
+    { return this->ProgressFileNameFull; }
 
   cmTarget* GetTarget() { return this->Target;}
+
 protected:
 
   // create the file and directory etc
@@ -80,7 +75,18 @@ protected:
   void WriteTargetDependRules();
 
   // write rules for Mac OS X Application Bundle content.
-  void WriteMacOSXContentRules(cmSourceFile& source, const char* pkgloc);
+  struct MacOSXContentGeneratorType :
+    cmOSXBundleGenerator::MacOSXContentGeneratorType
+  {
+    MacOSXContentGeneratorType(cmMakefileTargetGenerator* gen) :
+      Generator(gen) {}
+
+    void operator()(cmSourceFile& source, const char* pkgloc);
+
+  private:
+    cmMakefileTargetGenerator* Generator;
+  };
+  friend struct MacOSXContentGeneratorType;
 
   // write the rules for an object
   void WriteObjectRuleFiles(cmSourceFile& source);
@@ -103,6 +109,8 @@ protected:
   void GenerateExtraOutput(const char* out, const char* in,
                            bool symbolic = false);
 
+  void AppendProgress(std::vector<std::string>& commands);
+
   // write out the variable that lists the objects for this target
   void WriteObjectsVariable(std::string& variableName,
                             std::string& variableNameExternal);
@@ -118,8 +126,19 @@ protected:
   // Return the a string with -F flags on apple
   std::string GetFrameworkFlags();
 
+  void AppendFortranFormatFlags(std::string& flags, cmSourceFile& source);
+
   // append intertarget dependencies
   void AppendTargetDepends(std::vector<std::string>& depends);
+
+  // Append object file dependencies.
+  void AppendObjectDepends(std::vector<std::string>& depends);
+
+  // Append link rule dependencies (objects, etc.).
+  void AppendLinkDepends(std::vector<std::string>& depends);
+
+  // Lookup the link rule for this target.
+  std::string GetLinkRule(const char* linkRuleVar);
 
   /** In order to support parallel builds for custom commands with
       multiple outputs the outputs are given a serial order, and only
@@ -149,13 +168,17 @@ protected:
                          bool useResponseFile, std::string& buildObjs,
                          std::vector<std::string>& makefile_depends);
 
+  void AddIncludeFlags(std::string& flags, const char* lang);
+
   virtual void CloseFileStreams();
   void RemoveForbiddenFlags(const char* flagVar, const char* linkLang,
                             std::string& linkFlags);
   cmTarget *Target;
+  cmGeneratorTarget* GeneratorTarget;
   cmLocalUnixMakefileGenerator3 *LocalGenerator;
   cmGlobalUnixMakefileGenerator3 *GlobalGenerator;
   cmMakefile *Makefile;
+  const char *ConfigName;
 
   enum CustomCommandDriveType { OnBuild, OnDepends, OnUtility };
   CustomCommandDriveType CustomCommandDriver;
@@ -165,9 +188,9 @@ protected:
   std::string BuildFileNameFull;
 
   // the full path to the progress file
-  std::string ProgressFileName;
   std::string ProgressFileNameFull;
   unsigned long NumberOfProgressActions;
+  bool NoRuleMessages;
 
   // the path to the directory the build file is in
   std::string TargetBuildDirectory;
@@ -179,6 +202,8 @@ protected:
   // the stream for the flag file
   std::string FlagFileNameFull;
   cmGeneratedFileStream *FlagFileStream;
+  class StringList: public std::vector<std::string> {};
+  std::map<cmStdString, StringList> FlagFileDepends;
 
   // the stream for the info file
   std::string InfoFileNameFull;
@@ -208,8 +233,15 @@ protected:
   std::string TargetNamePDB;
 
   // Mac OS X content info.
-  std::string MacContentDirectory;
   std::set<cmStdString> MacContentFolders;
+  cmOSXBundleGenerator* OSXBundleGenerator;
+  MacOSXContentGeneratorType* MacOSXContentGenerator;
+
+  typedef std::map<cmStdString, cmStdString> ByLanguageMap;
+  std::string GetFlags(const std::string &l);
+  ByLanguageMap FlagsByLanguage;
+  std::string GetDefines(const std::string &l);
+  ByLanguageMap DefinesByLanguage;
 
   // Target-wide Fortran module output directory.
   bool FortranModuleDirectoryComputed;
@@ -218,6 +250,16 @@ protected:
 
   // Compute target-specific Fortran language flags.
   void AddFortranFlags(std::string& flags);
+
+  // Helper to add flag for windows .def file.
+  void AddModuleDefinitionFlag(std::string& flags);
+
+  // Add language feature flags.
+  void AddFeatureFlags(std::string& flags, const char* lang);
+
+  // Feature query methods.
+  const char* GetFeature(const char* feature);
+  bool GetFeatureAsBool(const char* feature);
 
   //==================================================================
   // Convenience routines that do nothing more than forward to

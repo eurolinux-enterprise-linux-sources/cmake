@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmGlobalWatcomWMakeGenerator.cxx,v $
-  Language:  C++
-  Date:      $Date: 2007-10-22 16:48:39 $
-  Version:   $Revision: 1.14 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmGlobalWatcomWMakeGenerator.h"
 #include "cmLocalUnixMakefileGenerator3.h"
 #include "cmMakefile.h"
@@ -28,11 +23,11 @@ cmGlobalWatcomWMakeGenerator::cmGlobalWatcomWMakeGenerator()
 }
 
 void cmGlobalWatcomWMakeGenerator
-::EnableLanguage(std::vector<std::string>const& l, 
-                 cmMakefile *mf, 
+::EnableLanguage(std::vector<std::string>const& l,
+                 cmMakefile *mf,
                  bool optional)
 {
-  // pick a default 
+  // pick a default
   mf->AddDefinition("WATCOM", "1");
   mf->AddDefinition("CMAKE_QUOTE_INCLUDE_PATHS", "1");
   mf->AddDefinition("CMAKE_MANGLE_OBJECT_FILE_NAMES", "1");
@@ -63,9 +58,9 @@ cmLocalGenerator *cmGlobalWatcomWMakeGenerator::CreateLocalGenerator()
 
 //----------------------------------------------------------------------------
 void cmGlobalWatcomWMakeGenerator
-::GetDocumentation(cmDocumentationEntry& entry) const
+::GetDocumentation(cmDocumentationEntry& entry)
 {
-  entry.Name = this->GetName();
+  entry.Name = cmGlobalWatcomWMakeGenerator::GetActualName();
   entry.Brief = "Generates Watcom WMake makefiles.";
   entry.Full = "";
 }

@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc.
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmCPackPackageMakerGenerator.h,v $
-  Language:  C++
-  Date:      $Date: 2008-07-30 18:54:50 $
-  Version:   $Revision: 1.12.2.3 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc. All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 
 #ifndef cmCPackPackageMakerGenerator_h
 #define cmCPackPackageMakerGenerator_h
@@ -47,8 +42,7 @@ protected:
                         const char* script,
                         const char* name);
   virtual int InitializeInternal();
-  int CompressFiles(const char* outFileName, const char* toplevel,
-    const std::vector<std::string>& files);
+  int PackageFiles();
   virtual const char* GetOutputExtension() { return ".dmg"; }
   virtual const char* GetOutputPostfix() { return "darwin"; }
 
@@ -73,8 +67,8 @@ protected:
   // Generate a package in the file packageFile for the given
   // component.  All of the files within this component are stored in
   // the directory packageDir. Returns true if successful, false
-  // otherwise. 
-  bool GenerateComponentPackage(const char *packageFile, 
+  // otherwise.
+  bool GenerateComponentPackage(const char *packageFile,
                                 const char *packageDir,
                                 const cmCPackComponent& component);
 
@@ -93,14 +87,14 @@ protected:
 
   // Subroutine of WriteDistributionFile that writes out the
   // reverse dependency attributes for inter-component dependencies.
-  void 
+  void
   AddReverseDependencyAttributes(const cmCPackComponent& component,
                                  std::set<const cmCPackComponent *>& visited,
                                  cmOStringStream& out);
 
   // Generates XML that encodes the hierarchy of component groups and
   // their components in a form that can be used by distribution
-  // metapackages. 
+  // metapackages.
   void CreateChoiceOutline(const cmCPackComponentGroup& group,
                            cmOStringStream& out);
 
@@ -117,7 +111,10 @@ protected:
   // Escape the given string to make it usable as an XML attribute
   // value.
   std::string EscapeForXML(std::string str);
-  
+
+  // The PostFlight component when creating a metapackage
+  cmCPackComponent PostFlightComponent;
+
   double PackageMakerVersion;
   double PackageCompatibilityVersion;
 };

@@ -7,18 +7,31 @@
 #  PIKE_EXECUTABLE         = full path to the pike binary
 #
 
-FILE(GLOB PIKE_POSSIBLE_INCLUDE_PATHS
+#=============================================================================
+# Copyright 2004-2009 Kitware, Inc.
+#
+# Distributed under the OSI-approved BSD License (the "License");
+# see accompanying file Copyright.txt for details.
+#
+# This software is distributed WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the License for more information.
+#=============================================================================
+# (To distribute this file outside of CMake, substitute the full
+#  License text for the above reference.)
+
+file(GLOB PIKE_POSSIBLE_INCLUDE_PATHS
   /usr/include/pike/*
   /usr/local/include/pike/*)
 
-FIND_PATH(PIKE_INCLUDE_PATH program.h
+find_path(PIKE_INCLUDE_PATH program.h
   ${PIKE_POSSIBLE_INCLUDE_PATHS})
 
-FIND_PROGRAM(PIKE_EXECUTABLE
+find_program(PIKE_EXECUTABLE
   NAMES pike7.4
   )
 
-MARK_AS_ADVANCED(
+mark_as_advanced(
   PIKE_EXECUTABLE
   PIKE_INCLUDE_PATH
   )

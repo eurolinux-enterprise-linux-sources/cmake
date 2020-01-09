@@ -1,20 +1,15 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmDependsJavaParserHelper.h,v $
-  Language:  C++
-  Date:      $Date: 2006-05-10 19:01:22 $
-  Version:   $Revision: 1.3 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
-#ifndef cmDependsJavaParserHelper_h 
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
+#ifndef cmDependsJavaParserHelper_h
 #define cmDependsJavaParserHelper_h
 
 #include "cmStandardIncludes.h"
@@ -44,7 +39,7 @@ public:
   int ParseFile(const char* file);
 
   // For the lexer:
-  void AllocateParserType(cmDependsJavaParserHelper::ParserType* pt, 
+  void AllocateParserType(cmDependsJavaParserHelper::ParserType* pt,
     const char* str, int len = 0);
 
   int LexInput(char* buf, int maxlen);
@@ -70,14 +65,37 @@ public:
 
 private:
   class CurrentClass
-    {
+  {
   public:
     cmStdString Name;
-    std::vector<CurrentClass> NestedClasses;
-    CurrentClass() {}
-    void AddFileNamesForPrinting(std::vector<cmStdString> *files, 
+    std::vector<CurrentClass>* NestedClasses;
+    CurrentClass()
+      {
+        this->NestedClasses = new std::vector<CurrentClass>;
+      }
+    ~CurrentClass()
+      {
+        delete this->NestedClasses;
+      }
+    CurrentClass& operator=(CurrentClass const& c)
+      {
+        this->NestedClasses->clear();
+        this->Name = c.Name;
+        std::copy(
+          c.NestedClasses->begin(),
+          c.NestedClasses->end(),
+          std::back_inserter(
+            *this->NestedClasses)
+          );
+        return *this;
+      }
+    CurrentClass(CurrentClass const& c)
+      {
+        (*this) = c;
+      }
+    void AddFileNamesForPrinting(std::vector<cmStdString> *files,
                                  const char* prefix, const char* sep);
-    };
+  };
   cmStdString CurrentPackage;
   cmStdString::size_type InputBufferPos;
   cmStdString InputBuffer;
@@ -99,7 +117,7 @@ private:
   void PrintClasses();
 
   void Print(const char* place, const char* str);
-  void CombineUnions(char** out, const char* in1, char** in2, 
+  void CombineUnions(char** out, const char* in1, char** in2,
                      const char* sep);
   void SafePrintMissing(const char* str, int line, int cnt);
 

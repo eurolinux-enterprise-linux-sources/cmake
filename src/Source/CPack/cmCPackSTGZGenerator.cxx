@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmCPackSTGZGenerator.cxx,v $
-  Language:  C++
-  Date:      $Date: 2006-05-12 18:44:24 $
-  Version:   $Revision: 1.15 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 
 #include "cmCPackSTGZGenerator.h"
 
@@ -57,24 +52,34 @@ int cmCPackSTGZGenerator::InitializeInternal()
 }
 
 //----------------------------------------------------------------------
-int cmCPackSTGZGenerator::CompressFiles(const char* outFileName,
-  const char* toplevel, const std::vector<std::string>& files)
+int cmCPackSTGZGenerator::PackageFiles()
 {
-  if ( !this->Superclass::CompressFiles(outFileName, toplevel, files) )
+ bool retval = true;
+  if ( !this->Superclass::PackageFiles() )
     {
     return 0;
     }
-  return cmSystemTools::SetPermissions(outFileName,
+
+  /* TGZ generator (our Superclass) may
+   * have generated several packages (component packaging)
+   * so we must iterate over generated packages.
+   */
+  for (std::vector<std::string>::iterator it=packageFileNames.begin();
+       it != packageFileNames.end(); ++it)
+  {
+    retval &= cmSystemTools::SetPermissions((*it).c_str(),
 #if defined( _MSC_VER ) || defined( __MINGW32__ )
-    S_IREAD | S_IWRITE | S_IEXEC
+      S_IREAD | S_IWRITE | S_IEXEC
 #elif defined( __BORLANDC__ )
-    S_IRUSR | S_IWUSR | S_IXUSR
+      S_IRUSR | S_IWUSR | S_IXUSR
 #else
-    S_IRUSR | S_IWUSR | S_IXUSR |
-    S_IRGRP | S_IWGRP | S_IXGRP |
-    S_IROTH | S_IWOTH | S_IXOTH
+      S_IRUSR | S_IWUSR | S_IXUSR |
+      S_IRGRP | S_IWGRP | S_IXGRP |
+      S_IROTH | S_IWOTH | S_IXOTH
 #endif
-  );
+    );
+  }
+  return retval;
 }
 
 //----------------------------------------------------------------------
@@ -92,7 +97,7 @@ int cmCPackSTGZGenerator::GenerateHeader(std::ostream* os)
     {
     licenseText += line + "\n";
     }
-  this->SetOptionIfNotSet("CPACK_RESOURCE_FILE_LICENSE_CONTENT", 
+  this->SetOptionIfNotSet("CPACK_RESOURCE_FILE_LICENSE_CONTENT",
                           licenseText.c_str());
 
   const char headerLengthTag[] = "###CPACK_HEADER_LENGTH###";
@@ -121,7 +126,7 @@ int cmCPackSTGZGenerator::GenerateHeader(std::ostream* os)
     ++ptr;
     }
   counter ++;
-  cmCPackLogger(cmCPackLog::LOG_DEBUG, 
+  cmCPackLogger(cmCPackLog::LOG_DEBUG,
                 "Number of lines: " << counter << std::endl);
   char buffer[1024];
   sprintf(buffer, "%d", counter);

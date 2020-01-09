@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmGetFilenameComponentCommand.cxx,v $
-  Language:  C++
-  Date:      $Date: 2009-03-23 17:58:40 $
-  Version:   $Revision: 1.17.2.1 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmGetFilenameComponentCommand.h"
 #include "cmSystemTools.h"
 
@@ -37,13 +32,33 @@ bool cmGetFilenameComponentCommand
       return true;
       }
     }
-  
+
   std::string result;
   std::string filename = args[1];
-  cmSystemTools::ExpandRegistryValues(filename);
+  if(filename.find("[HKEY") != filename.npos)
+    {
+    // Check the registry as the target application would view it.
+    cmSystemTools::KeyWOW64 view = cmSystemTools::KeyWOW64_32;
+    cmSystemTools::KeyWOW64 other_view = cmSystemTools::KeyWOW64_64;
+    if(this->Makefile->PlatformIs64Bit())
+      {
+      view = cmSystemTools::KeyWOW64_64;
+      other_view = cmSystemTools::KeyWOW64_32;
+      }
+    cmSystemTools::ExpandRegistryValues(filename, view);
+    if(filename.find("/registry") != filename.npos)
+      {
+      std::string other = args[1];
+      cmSystemTools::ExpandRegistryValues(other, other_view);
+      if(other.find("/registry") == other.npos)
+        {
+        filename = other;
+        }
+      }
+    }
   std::string storeArgs;
   std::string programArgs;
-  if (args[2] == "PATH")
+  if (args[2] == "DIRECTORY" || args[2] == "PATH")
     {
     result = cmSystemTools::GetFilenamePath(filename);
     }
@@ -64,7 +79,7 @@ bool cmGetFilenameComponentCommand
           }
         }
       }
-    cmSystemTools::SplitProgramFromArgs(filename.c_str(), 
+    cmSystemTools::SplitProgramFromArgs(filename.c_str(),
                                         result, programArgs);
     }
   else if (args[2] == "EXT")
@@ -78,28 +93,18 @@ bool cmGetFilenameComponentCommand
   else if (args[2] == "ABSOLUTE" ||
            args[2] == "REALPATH")
     {
+    // Collapse the path to its simplest form.
     // If the path given is relative evaluate it relative to the
     // current source directory.
-    if(!cmSystemTools::FileIsFullPath(filename.c_str()))
-      {
-      std::string fname = this->Makefile->GetCurrentDirectory();
-      if(!fname.empty())
-        {
-        fname += "/";
-        fname += filename;
-        filename = fname;
-        }
-      }
-
-    // Collapse the path to its simplest form.
-    result = cmSystemTools::CollapseFullPath(filename.c_str());
+    result = cmSystemTools::CollapseFullPath(
+      filename.c_str(), this->Makefile->GetCurrentDirectory());
     if(args[2] == "REALPATH")
       {
       // Resolve symlinks if possible
-      result = cmSystemTools::GetRealPath(filename.c_str());
+      result = cmSystemTools::GetRealPath(result.c_str());
       }
     }
-  else 
+  else
     {
     std::string err = "unknown component " + args[2];
     this->SetError(err.c_str());
@@ -120,7 +125,7 @@ bool cmGetFilenameComponentCommand
        args[2] == "PATH" ? cmCacheManager::FILEPATH
        : cmCacheManager::STRING);
     }
-  else 
+  else
     {
     if(programArgs.size() && storeArgs.size())
       {

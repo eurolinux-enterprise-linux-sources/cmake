@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmMessageCommand.h,v $
-  Language:  C++
-  Date:      $Date: 2008-01-23 15:27:59 $
-  Version:   $Revision: 1.16 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmMessageCommand_h
 #define cmMessageCommand_h
 
@@ -29,7 +24,7 @@ public:
   /**
    * This is a virtual constructor for the command.
    */
-  virtual cmCommand* Clone() 
+  virtual cmCommand* Clone()
     {
     return new cmMessageCommand;
     }
@@ -44,39 +39,52 @@ public:
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() { return "message";}
+  virtual const char* GetName() const { return "message";}
 
   /**
    * This determines if the command is invoked when in script mode.
    */
-  virtual bool IsScriptable() { return true; }
+  virtual bool IsScriptable() const { return true; }
 
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation() 
+  virtual const char* GetTerseDocumentation() const
     {
     return "Display a message to the user.";
     }
-  
+
   /**
    * More documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
     return
-      "  message([SEND_ERROR | STATUS | FATAL_ERROR]\n"
+      "  message([STATUS|WARNING|AUTHOR_WARNING|FATAL_ERROR|SEND_ERROR]\n"
       "          \"message to display\" ...)\n"
-      "By default the message is displayed in a pop up window (CMakeSetup), "
-      "or in the stdout of cmake, or the error section of ccmake. "
-      "If the first argument is "
-      "SEND_ERROR then an error is raised, and the generate phase will "
-      "be skipped.  If the first argument is FATAL_ERROR, all processing "
-      "is halted. If the first argument is STATUS then the message is "
-      "displayed in the progress line for the GUI, or with a -- in the "
-      "command line cmake.";
+      "The optional keyword determines the type of message:\n"
+      "  (none)         = Important information\n"
+      "  STATUS         = Incidental information\n"
+      "  WARNING        = CMake Warning, continue processing\n"
+      "  AUTHOR_WARNING = CMake Warning (dev), continue processing\n"
+      "  SEND_ERROR     = CMake Error, continue processing,\n"
+      "                                but skip generation\n"
+      "  FATAL_ERROR    = CMake Error, stop processing and generation\n"
+      "The CMake command-line tool displays STATUS messages on stdout "
+      "and all other message types on stderr.  "
+      "The CMake GUI displays all messages in its log area.  "
+      "The interactive dialogs (ccmake and CMakeSetup) show STATUS messages "
+      "one at a time on a status line and other messages in interactive "
+      "pop-up boxes."
+      "\n"
+      "CMake Warning and Error message text displays using a simple "
+      "markup language.  "
+      "Non-indented text is formatted in line-wrapped paragraphs delimited "
+      "by newlines.  "
+      "Indented text is considered pre-formatted."
+      ;
     }
-  
+
   cmTypeMacro(cmMessageCommand, cmCommand);
 };
 

@@ -2,10 +2,10 @@
 # This module finds if any HLA RTI is installed and locates the standard RTI
 # include files and libraries.
 #
-# RTI is a simulation infrastructure standartized by IEEE and SISO. It has a
+# RTI is a simulation infrastructure standardized by IEEE and SISO. It has a
 # well defined C++ API that assures that simulation applications are
 # independent on a particular RTI implementation.
-# http://en.wikipedia.org/wiki/Run-Time_Infrastructure_(simulation)
+#  http://en.wikipedia.org/wiki/Run-Time_Infrastructure_(simulation)
 #
 # This code sets the following variables:
 #  RTI_INCLUDE_DIR = the directory where RTI includes file are found
@@ -15,74 +15,83 @@
 #
 # Report problems to <certi-devel@nongnu.org>
 
-MACRO(RTI_MESSAGE_QUIETLY QUIET TYPE MSG)
-  IF(NOT ${QUIET})
-    MESSAGE(${TYPE} "${MSG}")
-  ENDIF(NOT ${QUIET})
-ENDMACRO(RTI_MESSAGE_QUIETLY QUIET TYPE MSG)
+#=============================================================================
+# Copyright 2008-2009 Kitware, Inc.
+# Copyright 2008 Petr Gotthard <gotthard@honeywell.com>
+#
+# Distributed under the OSI-approved BSD License (the "License");
+# see accompanying file Copyright.txt for details.
+#
+# This software is distributed WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the License for more information.
+#=============================================================================
+# (To distribute this file outside of CMake, substitute the full
+#  License text for the above reference.)
+
+macro(RTI_MESSAGE_QUIETLY QUIET TYPE MSG)
+  if(NOT ${QUIET})
+    message(${TYPE} "${MSG}")
+  endif()
+endmacro()
+
+set(RTI_DEFINITIONS "-DRTI_USES_STD_FSTREAM")
 
 # Detect the CERTI installation, http://www.cert.fr/CERTI
-IF ("$ENV{CERTI_HOME}" STRGREATER "")
-  FILE(TO_CMAKE_PATH "$ENV{CERTI_HOME}" CERTI_HOME)
-  RTI_MESSAGE_QUIETLY(RTI_FIND_QUIETLY STATUS "Using environment defined CERTI_HOME: ${CERTI_HOME}")
-ENDIF ("$ENV{CERTI_HOME}" STRGREATER "")
-
-SET(RTI_DEFINITIONS "-DRTI_USES_STD_FSTREAM")
-
 # Detect the MAK Technologies RTI installation, http://www.mak.com/products/rti.php
 # note: the following list is ordered to find the most recent version first
-SET(RTI_POSSIBLE_DIRS
-  ${CERTI_HOME}
+set(RTI_POSSIBLE_DIRS
+  ENV CERTI_HOME
   "[HKEY_LOCAL_MACHINE\\SOFTWARE\\MAK Technologies\\MAK RTI 3.2 MSVC++ 8.0;Location]"
   "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\MAK RTI 3.2-win32-msvc++8.0;InstallLocation]"
   "[HKEY_LOCAL_MACHINE\\SOFTWARE\\MAK Technologies\\MAK RTI 2.2;Location]"
   "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\MAK RTI 2.2;InstallLocation]")
 
-SET(RTI_OLD_FIND_LIBRARY_PREFIXES "${CMAKE_FIND_LIBRARY_PREFIXES}")
+set(RTI_OLD_FIND_LIBRARY_PREFIXES "${CMAKE_FIND_LIBRARY_PREFIXES}")
 # The MAK RTI has the "lib" prefix even on Windows.
-SET(CMAKE_FIND_LIBRARY_PREFIXES "lib" "")
+set(CMAKE_FIND_LIBRARY_PREFIXES "lib" "")
 
-FIND_LIBRARY(RTI_LIBRARY
+find_library(RTI_LIBRARY
   NAMES RTI RTI-NG
   PATHS ${RTI_POSSIBLE_DIRS}
   PATH_SUFFIXES lib
   DOC "The RTI Library")
 
-IF (RTI_LIBRARY)
-  SET(RTI_LIBRARIES ${RTI_LIBRARY})
+if (RTI_LIBRARY)
+  set(RTI_LIBRARIES ${RTI_LIBRARY})
   RTI_MESSAGE_QUIETLY(RTI_FIND_QUIETLY STATUS "RTI library found: ${RTI_LIBRARY}")
-ELSE (RTI_LIBRARY)
+else ()
   RTI_MESSAGE_QUIETLY(RTI_FIND_QUIETLY STATUS "RTI library NOT found")
-ENDIF (RTI_LIBRARY)
+endif ()
 
-FIND_LIBRARY(RTI_FEDTIME_LIBRARY
+find_library(RTI_FEDTIME_LIBRARY
   NAMES FedTime
   PATHS ${RTI_POSSIBLE_DIRS}
   PATH_SUFFIXES lib
   DOC "The FedTime Library")
 
-IF (RTI_FEDTIME_LIBRARY)
-  SET(RTI_LIBRARIES ${RTI_LIBRARIES} ${RTI_FEDTIME_LIBRARY})
+if (RTI_FEDTIME_LIBRARY)
+  set(RTI_LIBRARIES ${RTI_LIBRARIES} ${RTI_FEDTIME_LIBRARY})
   RTI_MESSAGE_QUIETLY(RTI_FIND_QUIETLY STATUS "RTI FedTime found: ${RTI_FEDTIME_LIBRARY}")
-ENDIF (RTI_FEDTIME_LIBRARY)
+endif ()
 
-FIND_PATH(RTI_INCLUDE_DIR
+find_path(RTI_INCLUDE_DIR
   NAMES RTI.hh
   PATHS ${RTI_POSSIBLE_DIRS}
   PATH_SUFFIXES include
   DOC "The RTI Include Files")
 
-IF (RTI_INCLUDE_DIR)
+if (RTI_INCLUDE_DIR)
   RTI_MESSAGE_QUIETLY(RTI_FIND_QUIETLY STATUS "RTI headers found: ${RTI_INCLUDE_DIR}")
-ELSE (RTI_INCLUDE_DIR)
+else ()
   RTI_MESSAGE_QUIETLY(RTI_FIND_QUIETLY STATUS "RTI headers NOT found")
-ENDIF (RTI_INCLUDE_DIR)
+endif ()
 
 # Set the modified system variables back to the original value.
-SET(CMAKE_FIND_LIBRARY_PREFIXES "${RTI_OLD_FIND_LIBRARY_PREFIXES}")
+set(CMAKE_FIND_LIBRARY_PREFIXES "${RTI_OLD_FIND_LIBRARY_PREFIXES}")
 
-INCLUDE(FindPackageHandleStandardArgs)
+include(${CMAKE_CURRENT_LIST_DIR}/FindPackageHandleStandardArgs.cmake)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(RTI DEFAULT_MSG
   RTI_LIBRARY RTI_INCLUDE_DIR)
 
-# $Id: FindRTI.cmake,v 1.3.2.2 2009-02-04 16:44:12 hoffman Exp $
+# $Id$

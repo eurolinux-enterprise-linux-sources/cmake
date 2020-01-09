@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmUseMangledMesaCommand.h,v $
-  Language:  C++
-  Date:      $Date: 2008-01-23 15:27:59 $
-  Version:   $Revision: 1.14 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmUseMangledMesaCommand_h
 #define cmUseMangledMesaCommand_h
 
@@ -35,7 +30,7 @@ public:
   /**
    * This is a virtual constructor for the command.
    */
-  virtual cmCommand* Clone() 
+  virtual cmCommand* Clone()
     {
     return new cmUseMangledMesaCommand;
     }
@@ -46,24 +41,24 @@ public:
    */
   virtual bool InitialPass(std::vector<std::string> const& args,
                            cmExecutionStatus &status);
-  
+
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() { return "use_mangled_mesa";}
+  virtual const char* GetName() const { return "use_mangled_mesa";}
 
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation() 
+  virtual const char* GetTerseDocumentation() const
     {
     return "Copy mesa headers for use in combination with system GL.";
     }
-  
+
   /**
    * More documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
     return
       "  use_mangled_mesa(PATH_TO_MESA OUTPUT_DIRECTORY)\n"
@@ -73,8 +68,13 @@ public:
       "being added to the include directory path earlier.";
     }
 
+  /**
+   * This determines if the command is invoked when in script mode.
+   */
+  virtual bool IsScriptable() const { return true; }
+
   /** This command is kept for compatibility with older CMake versions. */
-  virtual bool IsDiscouraged()
+  virtual bool IsDiscouraged() const
     {
     return true;
     }
@@ -83,7 +83,6 @@ protected:
   void CopyAndFullPathMesaHeader(const char* source,
                                  const char* outdir);
 };
-
 
 
 #endif

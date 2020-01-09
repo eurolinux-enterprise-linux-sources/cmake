@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: QCMake.h,v $
-  Language:  C++
-  Date:      $Date: 2008-05-23 20:09:43 $
-  Version:   $Revision: 1.9.2.2 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 
 #ifndef __QCMake_h
 #define __QCMake_h
@@ -28,6 +23,7 @@
 #include <QList>
 #include <QStringList>
 #include <QMetaType>
+#include <QAtomicInt>
 
 class cmake;
 
@@ -38,15 +34,16 @@ struct QCMakeProperty
   enum PropertyType { BOOL, PATH, FILEPATH, STRING };
   QString Key;
   QVariant Value;
+  QStringList Strings;
   QString Help;
   PropertyType Type;
   bool Advanced;
-  bool operator==(const QCMakeProperty& other) const 
-    { 
+  bool operator==(const QCMakeProperty& other) const
+    {
     return this->Key == other.Key;
     }
-  bool operator<(const QCMakeProperty& other) const 
-    { 
+  bool operator<(const QCMakeProperty& other) const
+    {
     return this->Key < other.Key;
     }
 };
@@ -59,7 +56,7 @@ Q_DECLARE_METATYPE(QCMakeProperty)
 Q_DECLARE_METATYPE(QCMakePropertyList)
 
 /// Qt API for CMake library.
-/// Wrapper like class allows for easier integration with 
+/// Wrapper like class allows for easier integration with
 /// Qt features such as, signal/slot connections, multi-threading, etc..
 class QCMake : public QObject
 {
@@ -82,7 +79,7 @@ public slots:
   void generate();
   /// set the property values
   void setProperties(const QCMakePropertyList&);
-  /// interrupt the configure or generate process
+  /// interrupt the configure or generate process (if connecting, make a direct connection)
   void interrupt();
   /// delete the cache in binary directory
   void deleteCache();
@@ -92,6 +89,10 @@ public slots:
   void setDebugOutput(bool);
   /// set whether to do suppress dev warnings
   void setSuppressDevWarnings(bool value);
+  /// set whether to run cmake with warnings about uninitialized variables
+  void setWarnUninitializedMode(bool value);
+  /// set whether to run cmake with warnings about unused variables
+  void setWarnUnusedMode(bool value);
 
 public:
   /// get the list of cache properties
@@ -133,15 +134,20 @@ signals:
 protected:
   cmake* CMakeInstance;
 
+  static bool interruptCallback(void*);
   static void progressCallback(const char* msg, float percent, void* cd);
-  static void errorCallback(const char* msg, const char* title, 
+  static void errorCallback(const char* msg, const char* title,
                             bool&, void* cd);
   bool SuppressDevWarnings;
+  bool WarnUninitializedMode;
+  bool WarnUnusedMode;
+  bool WarnUnusedAllMode;
   QString SourceDirectory;
   QString BinaryDirectory;
   QString Generator;
   QStringList AvailableGenerators;
   QString CMakeExecutable;
+  QAtomicInt InterruptFlag;
 };
 
 #endif // __QCMake_h

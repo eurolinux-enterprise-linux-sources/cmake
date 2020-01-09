@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmCTestUpdateCommand.h,v $
-  Language:  C++
-  Date:      $Date: 2008-05-15 19:40:00 $
-  Version:   $Revision: 1.5.12.1 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmCTestUpdateCommand_h
 #define cmCTestUpdateCommand_h
 
@@ -44,26 +39,28 @@ public:
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() { return "ctest_update";}
+  virtual const char* GetName() const { return "ctest_update";}
 
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation()
+  virtual const char* GetTerseDocumentation() const
     {
-    return "Updates the repository.";
+    return "Update the work tree from version control.";
     }
 
   /**
    * More documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
     return
       "  ctest_update([SOURCE source] [RETURN_VALUE res])\n"
       "Updates the given source directory and stores results in Update.xml. "
-      "The second argument is a variable that will hold the number of files "
-      "modified. If there is a problem, the variable will be -1.";
+      "If no SOURCE is given, the CTEST_SOURCE_DIRECTORY variable is used. "
+      "The RETURN_VALUE option specifies a variable in which to store the "
+      "result, which is the number of files updated or -1 on error."
+      ;
     }
 
   cmTypeMacro(cmCTestUpdateCommand, cmCTestHandlerCommand);

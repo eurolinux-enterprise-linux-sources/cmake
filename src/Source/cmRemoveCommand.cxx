@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmRemoveCommand.cxx,v $
-  Language:  C++
-  Date:      $Date: 2008-01-23 15:27:59 $
-  Version:   $Revision: 1.7 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmRemoveCommand.h"
 
 // cmRemoveCommand
@@ -35,13 +30,13 @@ bool cmRemoveCommand
     {
     return true;
     }
-  
+
   // expand the variable
   std::vector<std::string> varArgsExpanded;
   cmSystemTools::ExpandListArgument(cacheValue, varArgsExpanded);
-  
+
   // expand the args
-  // check for REMOVE(VAR v1 v2 ... vn) 
+  // check for REMOVE(VAR v1 v2 ... vn)
   std::vector<std::string> argsExpanded;
   std::vector<std::string> temp;
   for(unsigned int j = 1; j < args.size(); ++j)
@@ -49,7 +44,7 @@ bool cmRemoveCommand
     temp.push_back(args[j]);
     }
   cmSystemTools::ExpandList(temp, argsExpanded);
-  
+
   // now create the new value
   std::string value;
   for(unsigned int j = 0; j < varArgsExpanded.size(); ++j)
@@ -72,7 +67,7 @@ bool cmRemoveCommand
       value += varArgsExpanded[j];
       }
     }
-  
+
   // add the definition
   this->Makefile->AddDefinition(variable, value.c_str());
 

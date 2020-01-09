@@ -1,31 +1,27 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: AddCacheEntry.cxx,v $
-  Language:  C++
-  Date:      $Date: 2008-05-23 20:09:41 $
-  Version:   $Revision: 1.3.2.1 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 
 #include "AddCacheEntry.h"
 #include <QMetaProperty>
+#include <QCompleter>
 
 static const int NumTypes = 4;
-static const QString TypeStrings[NumTypes] = 
+static const QByteArray TypeStrings[NumTypes] =
   { "BOOL", "PATH", "FILEPATH", "STRING" };
-static const QCMakeProperty::PropertyType Types[NumTypes] = 
-  { QCMakeProperty::BOOL, QCMakeProperty::PATH, 
-    QCMakeProperty::FILEPATH, QCMakeProperty::STRING}; 
+static const QCMakeProperty::PropertyType Types[NumTypes] =
+  { QCMakeProperty::BOOL, QCMakeProperty::PATH,
+    QCMakeProperty::FILEPATH, QCMakeProperty::STRING};
 
-AddCacheEntry::AddCacheEntry(QWidget* p)
+AddCacheEntry::AddCacheEntry(QWidget* p, const QStringList& completions)
   : QWidget(p)
 {
   this->setupUi(this);
@@ -47,6 +43,7 @@ AddCacheEntry::AddCacheEntry(QWidget* p)
   this->setTabOrder(path, filepath);
   this->setTabOrder(filepath, string);
   this->setTabOrder(string, this->Description);
+  this->Name->setCompleter(new QCompleter(completions, this));
 }
 
 QString AddCacheEntry::name() const

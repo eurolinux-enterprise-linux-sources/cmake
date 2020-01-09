@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmAddDefinitionsCommand.h,v $
-  Language:  C++
-  Date:      $Date: 2008-01-23 15:27:59 $
-  Version:   $Revision: 1.14 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmAddDefinitionsCommand_h
 #define cmAddDefinitionsCommand_h
 
@@ -46,12 +41,12 @@ public:
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() {return "add_definitions";}
+  virtual const char* GetName() const {return "add_definitions";}
 
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation()
+  virtual const char* GetTerseDocumentation() const
     {
     return "Adds -D define flags to the compilation of source files.";
     }
@@ -59,7 +54,7 @@ public:
   /**
    * More documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
     return
       "  add_definitions(-DFOO -DBAR ...)\n"
@@ -68,7 +63,7 @@ public:
       "but it was originally intended to add preprocessor definitions.  "
       "Flags beginning in -D or /D that look like preprocessor definitions "
       "are automatically added to the COMPILE_DEFINITIONS property for "
-      "the current directory.  Definitions with non-trival values may be "
+      "the current directory.  Definitions with non-trivial values may be "
       "left in the set of flags instead of being converted for reasons of "
       "backwards compatibility.  See documentation of the directory, "
       "target, and source file COMPILE_DEFINITIONS properties for details "
@@ -78,8 +73,6 @@ public:
     }
 
   cmTypeMacro(cmAddDefinitionsCommand, cmCommand);
-private:
-  bool ParseDefinition(std::string const& def);
 };
 
 

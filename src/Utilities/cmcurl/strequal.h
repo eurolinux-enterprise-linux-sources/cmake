@@ -20,7 +20,7 @@
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
  *
- * $Id: strequal.h,v 1.2 2007-03-15 19:22:13 andy Exp $
+ * $Id$
  ***************************************************************************/
 
 #include <curl/curl.h>
@@ -34,10 +34,5 @@
 
 /* case insensitive strstr() */
 char *Curl_strcasestr(const char *haystack, const char *needle);
-
-#ifndef HAVE_STRLCAT
-#define strlcat(x,y,z) Curl_strlcat(x,y,z)
-#endif
-size_t strlcat(char *dst, const char *src, size_t siz);
 
 #endif

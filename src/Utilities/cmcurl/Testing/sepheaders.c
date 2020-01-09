@@ -5,7 +5,7 @@
  *                            | (__| |_| |  _ <| |___ 
  *                             \___|\___/|_| \_\_____|
  *
- * $Id: sepheaders.c,v 1.2 2007-04-15 15:56:07 andy Exp $
+ * $Id$
  */
 
 /* to make this work under windows, use the win32-functions from the
@@ -56,6 +56,7 @@ int main(int argc, char **argv)
   bodyfile = fopen(bodyfilename,"w");
   if (bodyfile == NULL) {
     curl_easy_cleanup(curl_handle);
+    fclose(headerfile);
     return -1;
   }
 
@@ -70,6 +71,7 @@ int main(int argc, char **argv)
 
   /* close the header file */
   fclose(headerfile);
+  fclose(bodyfile);
 
   /* cleanup curl stuff */
   curl_easy_cleanup(curl_handle);

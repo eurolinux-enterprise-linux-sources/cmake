@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmGetTestPropertyCommand.h,v $
-  Language:  C++
-  Date:      $Date: 2008-01-23 15:27:59 $
-  Version:   $Revision: 1.5 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmGetTestPropertyCommand_h
 #define cmGetTestPropertyCommand_h
 
@@ -22,7 +17,7 @@
 class cmGetTestPropertyCommand : public cmCommand
 {
 public:
-  virtual cmCommand* Clone() 
+  virtual cmCommand* Clone()
     {
     return new cmGetTestPropertyCommand;
     }
@@ -37,12 +32,12 @@ public:
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() { return "get_test_property";}
+  virtual const char* GetName() const { return "get_test_property";}
 
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation() 
+  virtual const char* GetTerseDocumentation() const
     {
     return "Get a property of the test.";
     }
@@ -50,14 +45,16 @@ public:
   /**
    * Longer documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
     return
-      "  get_test_property(test VAR property)\n"
-      "Get a property from the Test.  The value of the property is " 
-      "stored in the variable VAR. If the property is not found, "
-      "CMake will report an error. For a list of standard properties "
-      "you can type cmake --help-property-list";
+      "  get_test_property(test property VAR)\n"
+      "Get a property from the Test.  The value of the property is "
+      "stored in the variable VAR.  If the property is not found, VAR "
+      "will be set to \"NOTFOUND\". For a list of standard properties "
+      "you can type cmake --help-property-list"
+      "\n"
+      "See also the more general get_property() command.";
     }
 
   cmTypeMacro(cmGetTestPropertyCommand, cmCommand);

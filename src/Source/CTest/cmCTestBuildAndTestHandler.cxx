@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmCTestBuildAndTestHandler.cxx,v $
-  Language:  C++
-  Date:      $Date: 2009-01-13 18:03:54 $
-  Version:   $Revision: 1.20.2.3 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 
 #include "cmCTestBuildAndTestHandler.h"
 
@@ -72,7 +67,13 @@ int cmCTestBuildAndTestHandler::RunCMake(std::string* outstring,
     generator += this->BuildGenerator;
     args.push_back(generator);
     }
-  
+  if(this->BuildGeneratorToolset.size())
+    {
+    std::string toolset = "-T";
+    toolset += this->BuildGeneratorToolset;
+    args.push_back(toolset);
+    }
+
   const char* config = 0;
   if ( this->CTest->GetConfigType().size() > 0 )
     {
@@ -84,7 +85,7 @@ int cmCTestBuildAndTestHandler::RunCMake(std::string* outstring,
     config = CMAKE_INTDIR;
     }
 #endif
-  
+
   if ( config )
     {
     std::string btype
@@ -159,6 +160,14 @@ void CMakeStdoutCallback(const char* m, int len, void* s)
   std::string* out = (std::string*)s;
   out->append(m, len);
 }
+struct cmSetupOutputCaptureCleanup
+{
+  ~cmSetupOutputCaptureCleanup()
+  {
+    cmSystemTools::SetErrorCallback(0, 0);
+    cmSystemTools::SetStdoutCallback(0, 0);
+  }
+};
 
 //----------------------------------------------------------------------
 int cmCTestBuildAndTestHandler::RunCMakeAndTest(std::string* outstring)
@@ -167,6 +176,11 @@ int cmCTestBuildAndTestHandler::RunCMakeAndTest(std::string* outstring)
   std::string cmakeOutString;
   cmSystemTools::SetErrorCallback(CMakeMessageCallback, &cmakeOutString);
   cmSystemTools::SetStdoutCallback(CMakeStdoutCallback, &cmakeOutString);
+  // make sure SetStdoutCallback and SetErrorCallback are set to null
+  // after this function exits so that they do not point at a destroyed
+  // string cmakeOutString
+  cmSetupOutputCaptureCleanup cleanup;
+  static_cast<void>(cleanup);
   cmOStringStream out;
 
   // if the generator and make program are not specified then it is an error
@@ -190,8 +204,8 @@ int cmCTestBuildAndTestHandler::RunCMakeAndTest(std::string* outstring)
     std::string resultingConfig;
     std::vector<std::string> extraPaths;
     std::vector<std::string> failed;
-    fullPath = 
-      cmCTestTestHandler::FindExecutable(this->CTest, 
+    fullPath =
+      cmCTestTestHandler::FindExecutable(this->CTest,
                                          this->ConfigSample.c_str(),
                                          resultingConfig,
                                          extraPaths,
@@ -203,7 +217,7 @@ int cmCTestBuildAndTestHandler::RunCMakeAndTest(std::string* outstring)
     out << "Using config sample with results: "
         << fullPath << " and " << resultingConfig << std::endl;
     }
-  
+
   // we need to honor the timeout specified, the timeout include cmake, build
   // and test time
   double clock_start = cmSystemTools::GetTime();
@@ -220,11 +234,15 @@ int cmCTestBuildAndTestHandler::RunCMakeAndTest(std::string* outstring)
 
   // should we cmake?
   cmake cm;
-  cm.SetProgressCallback(CMakeProgressCallback, &cmakeOutString); 
-  cm.SetGlobalGenerator(cm.CreateGlobalGenerator(
-      this->BuildGenerator.c_str()));
+  cm.SetProgressCallback(CMakeProgressCallback, &cmakeOutString);
 
-  if(!this->BuildNoCMake)
+  if(this->BuildNoCMake)
+    {
+    cm.SetGlobalGenerator(cm.CreateGlobalGenerator(
+                            this->BuildGenerator.c_str()));
+    cm.SetGeneratorToolset(this->BuildGeneratorToolset);
+    }
+  else
     {
     // do the cmake step, no timeout here since it is not a sub process
     if (this->RunCMake(outstring,out,cmakeOutString,cwd,&cm))
@@ -239,11 +257,11 @@ int cmCTestBuildAndTestHandler::RunCMakeAndTest(std::string* outstring)
     {
     this->BuildTargets.push_back("");
     }
-  for ( tarIt = this->BuildTargets.begin(); 
+  for ( tarIt = this->BuildTargets.begin();
         tarIt != this->BuildTargets.end(); ++ tarIt )
     {
     double remainingTime = 0;
-    if (this->Timeout)
+    if (this->Timeout > 0)
       {
       remainingTime = this->Timeout - cmSystemTools::GetTime() + clock_start;
       if (remainingTime <= 0)
@@ -276,7 +294,7 @@ int cmCTestBuildAndTestHandler::RunCMakeAndTest(std::string* outstring)
       this->BuildProject.c_str(), tarIt->c_str(),
       &output, this->BuildMakeProgram.c_str(),
       config,
-      !this->BuildNoClean, 
+      !this->BuildNoClean,
       false, remainingTime);
     out << output;
     // if the build failed then return
@@ -314,13 +332,13 @@ int cmCTestBuildAndTestHandler::RunCMakeAndTest(std::string* outstring)
     extraPaths.push_back(tempPath);
     }
   std::vector<std::string> failed;
-  fullPath = 
-    cmCTestTestHandler::FindExecutable(this->CTest, 
+  fullPath =
+    cmCTestTestHandler::FindExecutable(this->CTest,
                                        this->TestCommand.c_str(),
                                        resultingConfig,
                                        extraPaths,
                                        failed);
-  
+
   if(!cmSystemTools::FileExists(fullPath.c_str()))
     {
     out << "Could not find path to executable, perhaps it was not built: "
@@ -368,7 +386,7 @@ int cmCTestBuildAndTestHandler::RunCMakeAndTest(std::string* outstring)
 
   // how much time is remaining
   double remainingTime = 0;
-  if (this->Timeout)
+  if (this->Timeout > 0)
     {
     remainingTime = this->Timeout - cmSystemTools::GetTime() + clock_start;
     if (remainingTime <= 0)
@@ -380,9 +398,9 @@ int cmCTestBuildAndTestHandler::RunCMakeAndTest(std::string* outstring)
       return 1;
       }
     }
-  
-  int runTestRes = this->CTest->RunTest(testCommand, &outs, &retval, 0, 
-                                        remainingTime);
+
+  int runTestRes = this->CTest->RunTest(testCommand, &outs, &retval, 0,
+                                        remainingTime, 0);
 
   if(runTestRes != cmsysProcess_State_Exited || retval != 0)
     {
@@ -458,10 +476,16 @@ int cmCTestBuildAndTestHandler::ProcessCommandLineArguments(
     idx++;
     this->Timeout = atof(allArgs[idx].c_str());
     }
-  if(currentArg.find("--build-generator",0) == 0 && idx < allArgs.size() - 1)
+  if(currentArg == "--build-generator" && idx < allArgs.size() - 1)
     {
     idx++;
     this->BuildGenerator = allArgs[idx];
+    }
+  if(currentArg == "--build-generator-toolset" &&
+     idx < allArgs.size() - 1)
+    {
+    idx++;
+    this->BuildGeneratorToolset = allArgs[idx];
     }
   if(currentArg.find("--build-project",0) == 0 && idx < allArgs.size() - 1)
     {

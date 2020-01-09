@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmProjectCommand.cxx,v $
-  Language:  C++
-  Date:      $Date: 2008-01-23 15:27:59 $
-  Version:   $Revision: 1.25 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmProjectCommand.h"
 
 // cmProjectCommand
@@ -24,14 +19,14 @@ bool cmProjectCommand
     {
     this->SetError("PROJECT called with incorrect number of arguments");
     return false;
-    } 
+    }
   this->Makefile->SetProjectName(args[0].c_str());
 
   std::string bindir = args[0];
   bindir += "_BINARY_DIR";
   std::string srcdir = args[0];
   srcdir += "_SOURCE_DIR";
-  
+
   this->Makefile->AddCacheDefinition
     (bindir.c_str(),
      this->Makefile->GetCurrentOutputDirectory(),
@@ -40,7 +35,7 @@ bool cmProjectCommand
     (srcdir.c_str(),
      this->Makefile->GetCurrentDirectory(),
      "Value Computed by CMake", cmCacheManager::STATIC);
-  
+
   bindir = "PROJECT_BINARY_DIR";
   srcdir = "PROJECT_SOURCE_DIR";
 
@@ -52,11 +47,19 @@ bool cmProjectCommand
   this->Makefile->AddDefinition("PROJECT_NAME", args[0].c_str());
 
   // Set the CMAKE_PROJECT_NAME variable to be the highest-level
-  // project name in the tree.  This is always the first PROJECT
-  // command encountered.
-  if(!this->Makefile->GetDefinition("CMAKE_PROJECT_NAME"))
+  // project name in the tree. If there are two project commands
+  // in the same CMakeLists.txt file, and it is the top level
+  // CMakeLists.txt file, then go with the last one, so that
+  // CMAKE_PROJECT_NAME will match PROJECT_NAME, and cmake --build
+  // will work.
+  if(!this->Makefile->GetDefinition("CMAKE_PROJECT_NAME")
+     || (this->Makefile->GetLocalGenerator()->GetParent() == 0) )
     {
     this->Makefile->AddDefinition("CMAKE_PROJECT_NAME", args[0].c_str());
+    this->Makefile->AddCacheDefinition
+      ("CMAKE_PROJECT_NAME",
+       args[0].c_str(),
+       "Value Computed by CMake", cmCacheManager::STATIC);
     }
 
   std::vector<std::string> languages;
@@ -74,6 +77,24 @@ bool cmProjectCommand
     languages.push_back("CXX");
     }
   this->Makefile->EnableLanguage(languages, false);
+  std::string extraInclude = "CMAKE_PROJECT_" + args[0] + "_INCLUDE";
+  const char* include = this->Makefile->GetDefinition(extraInclude.c_str());
+  if(include)
+    {
+    std::string fullFilePath;
+    bool readit =
+      this->Makefile->ReadListFile( this->Makefile->GetCurrentListFile(),
+                                    include);
+    if(!readit && !cmSystemTools::GetFatalErrorOccured())
+      {
+      std::string m =
+        "could not find file:\n"
+        "  ";
+      m += include;
+      this->SetError(m.c_str());
+      return false;
+      }
+    }
   return true;
 }
 

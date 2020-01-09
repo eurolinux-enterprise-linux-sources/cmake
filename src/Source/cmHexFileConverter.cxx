@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmHexFileConverter.cxx,v $
-  Language:  C++
-  Date:      $Date: 2007-07-20 12:36:16 $
-  Version:   $Revision: 1.5 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmHexFileConverter.h"
 
 #include <stdio.h>
@@ -27,8 +22,8 @@
 // might go to SystemTools ?
 static bool cm_IsHexChar(char c)
 {
-  return (((c >= '0') && (c <= '9')) 
-         || ((c >= 'a') && (c <= 'f')) 
+  return (((c >= '0') && (c <= '9'))
+         || ((c >= 'a') && (c <= 'f'))
          || ((c >= 'A') && (c <= 'F')));
 }
 
@@ -50,7 +45,7 @@ static unsigned int ChompStrlen(const char* line)
   return length;
 }
 
-static bool OutputBin(FILE* file, const char * buf, 
+static bool OutputBin(FILE* file, const char * buf,
                       unsigned int startIndex, unsigned int stopIndex)
 {
   bool success = true;
@@ -68,7 +63,7 @@ static bool OutputBin(FILE* file, const char * buf,
       success = false;
       break;
       }
-    outBuf[outBufCount] = convertedByte & 0xff;
+    outBuf[outBufCount] = static_cast<char>(convertedByte & 0xff);
     outBufCount++;
     }
   if (success)
@@ -82,7 +77,7 @@ static bool OutputBin(FILE* file, const char * buf,
 static bool ConvertMotorolaSrecLine(const char* buf, FILE* outFile)
 {
   unsigned int slen = ChompStrlen(buf);
-  if ((slen < MOTOROLA_SREC_MIN_LINE_LENGTH) 
+  if ((slen < MOTOROLA_SREC_MIN_LINE_LENGTH)
        || (slen > MOTOROLA_SREC_MAX_LINE_LENGTH))
     {
     return false;
@@ -130,7 +125,7 @@ static bool ConvertMotorolaSrecLine(const char* buf, FILE* outFile)
 static bool ConvertIntelHexLine(const char* buf, FILE* outFile)
 {
   unsigned int slen = ChompStrlen(buf);
-  if ((slen < INTEL_HEX_MIN_LINE_LENGTH) 
+  if ((slen < INTEL_HEX_MIN_LINE_LENGTH)
        || (slen > INTEL_HEX_MAX_LINE_LENGTH))
     {
     return false;
@@ -153,7 +148,7 @@ static bool ConvertIntelHexLine(const char* buf, FILE* outFile)
     dataStart = 9;
     }
   // ignore extra address records
-  else if ((buf[8] == '2') || (buf[8] == '3') || (buf[8] == '4') 
+  else if ((buf[8] == '2') || (buf[8] == '3') || (buf[8] == '4')
             || (buf[8] == '5'))
     {
     return true;
@@ -177,7 +172,10 @@ cmHexFileConverter::FileType cmHexFileConverter::DetermineFileType(
     return Binary;
     }
 
-  fgets(buf, 1024, inFile);
+  if(!fgets(buf, 1024, inFile))
+    {
+    buf[0] = 0;
+    }
   fclose(inFile);
   FileType type = Binary;
   unsigned int minLineLength = 0;

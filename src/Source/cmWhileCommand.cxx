@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmWhileCommand.cxx,v $
-  Language:  C++
-  Date:      $Date: 2009-02-04 16:44:17 $
-  Version:   $Revision: 1.12.2.2 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmWhileCommand.h"
 #include "cmIfCommand.h"
 
@@ -30,7 +25,7 @@ IsFunctionBlocked(const cmListFileFunction& lff, cmMakefile &mf,
   else if (!cmSystemTools::Strucmp(lff.Name.c_str(),"endwhile"))
     {
     // if this is the endwhile for this while loop then execute
-    if (!this->Depth) 
+    if (!this->Depth)
       {
       // Remove the function blocker for this scope or bail.
       cmsys::auto_ptr<cmFunctionBlocker>
@@ -38,14 +33,38 @@ IsFunctionBlocked(const cmListFileFunction& lff, cmMakefile &mf,
       if(!fb.get()) { return false; }
 
       std::string errorString;
-    
+
       std::vector<std::string> expandedArguments;
       mf.ExpandArguments(this->Args, expandedArguments);
-      bool isTrue = 
-        cmIfCommand::IsTrue(expandedArguments,errorString,&mf);
+      cmake::MessageType messageType;
+      bool isTrue =
+        cmIfCommand::IsTrue(expandedArguments,errorString,
+                            &mf, messageType);
 
       while (isTrue)
-        {      
+        {
+        if (errorString.size())
+          {
+          std::string err = "had incorrect arguments: ";
+          unsigned int i;
+          for(i =0; i < this->Args.size(); ++i)
+            {
+            err += (this->Args[i].Delim?"\"":"");
+            err += this->Args[i].Value;
+            err += (this->Args[i].Delim?"\"":"");
+            err += " ";
+            }
+          err += "(";
+          err += errorString;
+          err += ").";
+          mf.IssueMessage(messageType, err);
+          if (messageType == cmake::FATAL_ERROR)
+            {
+            cmSystemTools::SetFatalErrorOccured();
+            return true;
+            }
+          }
+
         // Invoke all the functions that were collected in the block.
         for(unsigned int c = 0; c < this->Functions.size(); ++c)
           {
@@ -60,11 +79,16 @@ IsFunctionBlocked(const cmListFileFunction& lff, cmMakefile &mf,
             {
             return true;
             }
+          if(cmSystemTools::GetFatalErrorOccured() )
+            {
+            return true;
+            }
           }
         expandedArguments.clear();
         mf.ExpandArguments(this->Args, expandedArguments);
-        isTrue = 
-          cmIfCommand::IsTrue(expandedArguments,errorString,&mf);
+        isTrue =
+          cmIfCommand::IsTrue(expandedArguments,errorString,
+                              &mf, messageType);
         }
       return true;
       }
@@ -77,7 +101,7 @@ IsFunctionBlocked(const cmListFileFunction& lff, cmMakefile &mf,
 
   // record the command
   this->Functions.push_back(lff);
-  
+
   // always return true
   return true;
 }
@@ -99,7 +123,7 @@ ShouldRemove(const cmListFileFunction& lff, cmMakefile& )
 }
 
 bool cmWhileCommand
-::InvokeInitialPass(const std::vector<cmListFileArgument>& args, 
+::InvokeInitialPass(const std::vector<cmListFileArgument>& args,
                     cmExecutionStatus &)
 {
   if(args.size() < 1)
@@ -107,12 +131,12 @@ bool cmWhileCommand
     this->SetError("called with incorrect number of arguments");
     return false;
     }
-  
+
   // create a function blocker
   cmWhileFunctionBlocker *f = new cmWhileFunctionBlocker();
   f->Args = args;
   this->Makefile->AddFunctionBlocker(f);
-  
+
   return true;
 }
 

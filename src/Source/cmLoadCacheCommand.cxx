@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmLoadCacheCommand.cxx,v $
-  Language:  C++
-  Date:      $Date: 2008-01-23 15:27:59 $
-  Version:   $Revision: 1.19 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmLoadCacheCommand.h"
 
 #include <cmsys/RegularExpression.hxx>
@@ -31,7 +26,7 @@ bool cmLoadCacheCommand
     {
     return this->ReadWithPrefix(args);
     }
-  
+
   // Cache entries to be excluded from the import list.
   // If this set is empty, all cache entries are brought in
   // and they can not be overridden.
@@ -102,7 +97,7 @@ bool cmLoadCacheCommand::ReadWithPrefix(std::vector<std::string> const& args)
     this->SetError("READ_WITH_PREFIX form must specify a prefix.");
     return false;
     }
-  
+
   // Make sure the cache file exists.
   std::string cacheFile = args[0]+"/CMakeCache.txt";
   if(!cmSystemTools::FileExists(cacheFile.c_str()))
@@ -111,22 +106,22 @@ bool cmLoadCacheCommand::ReadWithPrefix(std::vector<std::string> const& args)
     this->SetError(e.c_str());
     return false;
     }
-  
+
   // Prepare the table of variables to read.
   this->Prefix = args[2];
   for(unsigned int i=3; i < args.size(); ++i)
     {
     this->VariablesToRead.insert(args[i]);
     }
-  
+
   // Read the cache file.
-  std::ifstream fin(cacheFile.c_str());  
-  
+  std::ifstream fin(cacheFile.c_str());
+
   // This is a big hack read loop to overcome a buggy ifstream
   // implementation on HP-UX.  This should work on all platforms even
   // for small buffer sizes.
   const int bufferSize = 4096;
-  char buffer[bufferSize];  
+  char buffer[bufferSize];
   std::string line;
   while(fin)
     {
@@ -157,7 +152,7 @@ bool cmLoadCacheCommand::ReadWithPrefix(std::vector<std::string> const& args)
           // Completed a line.
           this->CheckLine(line.c_str());
           line = "";
-          
+
           // Skip the newline character.
           ++i;
           }
@@ -169,7 +164,7 @@ bool cmLoadCacheCommand::ReadWithPrefix(std::vector<std::string> const& args)
     // Partial last line.
     this->CheckLine(line.c_str());
     }
-  
+
   return true;
 }
 
@@ -179,7 +174,8 @@ void cmLoadCacheCommand::CheckLine(const char* line)
   // Check one line of the cache file.
   std::string var;
   std::string value;
-  if(this->ParseEntry(line, var, value))
+  cmCacheManager::CacheEntryType type = cmCacheManager::UNINITIALIZED;
+  if(cmCacheManager::ParseEntry(line, var, value, type))
     {
     // Found a real entry.  See if this one was requested.
     if(this->VariablesToRead.find(var) != this->VariablesToRead.end())
@@ -197,39 +193,4 @@ void cmLoadCacheCommand::CheckLine(const char* line)
         }
       }
     }
-}
-
-//----------------------------------------------------------------------------
-bool cmLoadCacheCommand::ParseEntry(const char* entry, std::string& var,
-                                    std::string& value)
-{
-  // input line is:         key:type=value
-  cmsys::RegularExpression reg("^([^:]*):([^=]*)=(.*[^\t ]|[\t ]*)[\t ]*$");
-  // input line is:         "key":type=value
-  cmsys::RegularExpression 
-    regQuoted("^\"([^\"]*)\":([^=]*)=(.*[^\t ]|[\t ]*)[\t ]*$");
-  bool flag = false;
-  if(regQuoted.find(entry))
-    {
-    var = regQuoted.match(1);
-    value = regQuoted.match(3);
-    flag = true;
-    }
-  else if (reg.find(entry))
-    {
-    var = reg.match(1);
-    value = reg.match(3);
-    flag = true;
-    }
-
-  // if value is enclosed in single quotes ('foo') then remove them
-  // it is used to enclose trailing space or tab
-  if (flag && 
-      value.size() >= 2 &&
-      value[0] == '\'' && 
-      value[value.size() - 1] == '\'') 
-    {
-    value = value.substr(1, value.size() - 2);
-    }
-  return flag;
 }

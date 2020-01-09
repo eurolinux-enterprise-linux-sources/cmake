@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmCommandArgumentParserHelper.h,v $
-  Language:  C++
-  Date:      $Date: 2009-01-01 17:49:41 $
-  Version:   $Revision: 1.11.4.1 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmCommandArgumentParserHelper_h
 #define cmCommandArgumentParserHelper_h
 
@@ -71,8 +66,8 @@ public:
   void SetNoEscapeMode(bool b) { this->NoEscapeMode = b; }
   void SetReplaceAtSyntax(bool b) { this->ReplaceAtSyntax = b; }
   void SetRemoveEmpty(bool b) { this->RemoveEmpty = b; }
-  
-  const char* GetError() { return this->ErrorString.c_str(); } 
+
+  const char* GetError() { return this->ErrorString.c_str(); }
   char EmptyVariable[1];
   char DCURLYVariable[3];
   char RCURLYVariable[3];
@@ -86,7 +81,6 @@ private:
   cmStdString InputBuffer;
   std::vector<char> OutputBuffer;
   int CurrentLine;
-  int UnionsAvailable;
   int Verbose;
 
   void Print(const char* place, const char* str);
@@ -101,12 +95,14 @@ private:
   const cmMakefile* Makefile;
   std::string Result;
   const char* FileName;
+  bool WarnUninitialized;
+  bool CheckSystemVars;
   long FileLine;
   bool EscapeQuotes;
   std::string ErrorString;
   bool NoEscapeMode;
   bool ReplaceAtSyntax;
-  bool RemoveEmpty; 
+  bool RemoveEmpty;
 };
 
 #endif

@@ -1,16 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  KWSys - Kitware System Library
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   KWSys - Kitware System Library
-  Module:    $RCSfile: testCommandLineArguments.cxx,v $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "kwsysPrivate.h"
 #include KWSYS_HEADER(CommandLineArguments.hxx)
 #include KWSYS_HEADER(ios/iostream)
@@ -26,9 +24,9 @@
 #include <stddef.h> /* size_t */
 #include <string.h> /* strcmp */
 
-void* random_ptr = reinterpret_cast<void*>(0x123);
+static void* random_ptr = reinterpret_cast<void*>(0x123);
 
-int argument(const char* arg, const char* value, void* call_data)
+static int argument(const char* arg, const char* value, void* call_data)
 {
   kwsys_ios::cout << "Got argument: \"" << arg << "\" value: \"" << (value?value:"(null)") << "\"" << kwsys_ios::endl;
   if ( call_data != random_ptr )
@@ -39,7 +37,7 @@ int argument(const char* arg, const char* value, void* call_data)
   return 1;
 }
 
-int unknown_argument(const char* argument, void* call_data)
+static int unknown_argument(const char* argument, void* call_data)
 {
   kwsys_ios::cout << "Got unknown argument: \"" << argument << "\"" << kwsys_ios::endl;
   if ( call_data != random_ptr )
@@ -50,12 +48,12 @@ int unknown_argument(const char* argument, void* call_data)
   return 1;
 }
 
-bool CompareTwoItemsOnList(bool i1, bool i2) { return i1 == i2; }
-bool CompareTwoItemsOnList(int i1, int i2) { return i1 == i2; }
-bool CompareTwoItemsOnList(double i1, double i2) { return i1 == i2; }
-bool CompareTwoItemsOnList(const char* i1,
+static bool CompareTwoItemsOnList(bool i1, bool i2) { return i1 == i2; }
+static bool CompareTwoItemsOnList(int i1, int i2) { return i1 == i2; }
+static bool CompareTwoItemsOnList(double i1, double i2) { return i1 == i2; }
+static bool CompareTwoItemsOnList(const char* i1,
   const char* i2) { return strcmp(i1, i2) == 0; }
-bool CompareTwoItemsOnList(const kwsys_stl::string& i1,
+static bool CompareTwoItemsOnList(const kwsys_stl::string& i1,
   const kwsys_stl::string& i2) { return i1 == i2; }
 
 int testCommandLineArguments(int argc, char* argv[])

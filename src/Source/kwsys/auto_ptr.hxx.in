@@ -1,16 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  KWSys - Kitware System Library
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   KWSys - Kitware System Library
-  Module:    $RCSfile: auto_ptr.hxx.in,v $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef @KWSYS_NAMESPACE@_auto_ptr_hxx
 #define @KWSYS_NAMESPACE@_auto_ptr_hxx
 
@@ -31,6 +29,17 @@
 # define @KWSYS_NAMESPACE@_AUTO_PTR_REF 1
 # define @KWSYS_NAMESPACE@_AUTO_PTR_CONST
 # define @KWSYS_NAMESPACE@_AUTO_PTR_CAST(a) a
+#endif
+
+// In C++11, clang will warn about using dynamic exception specifications
+// as they are deprecated.  But as this class is trying to faithfully
+// mimic std::auto_ptr, we want to keep the 'throw()' decorations below.
+// So we suppress the warning.
+#if defined(__clang__) && defined(__has_warning)
+# if __has_warning("-Wdeprecated")
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wdeprecated"
+# endif
 #endif
 
 namespace @KWSYS_NAMESPACE@
@@ -199,5 +208,12 @@ public:
 };
 
 } // namespace @KWSYS_NAMESPACE@
+
+// Undo warning suppression.
+#if defined(__clang__) && defined(__has_warning)
+# if __has_warning("-Wdeprecated")
+#  pragma clang diagnostic pop
+# endif
+#endif
 
 #endif

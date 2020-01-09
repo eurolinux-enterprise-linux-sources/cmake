@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmCMakePolicyCommand.h,v $
-  Language:  C++
-  Date:      $Date: 2009-02-04 16:44:16 $
-  Version:   $Revision: 1.4.2.3 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmCMakePolicyCommand_h
 #define cmCMakePolicyCommand_h
 
@@ -22,8 +17,8 @@
 /** \class cmCMakePolicyCommand
  * \brief Set how CMake should handle policies
  *
- * cmCMakePolicyCommand sets how CMake should deal with backwards 
- * compatibility policies.   
+ * cmCMakePolicyCommand sets how CMake should deal with backwards
+ * compatibility policies.
  */
 class cmCMakePolicyCommand : public cmCommand
 {
@@ -31,7 +26,7 @@ public:
   /**
    * This is a virtual constructor for the command.
    */
-  virtual cmCommand* Clone() 
+  virtual cmCommand* Clone()
     {
     return new cmCMakePolicyCommand;
     }
@@ -46,25 +41,25 @@ public:
  /**
    * This determines if the command is invoked when in script mode.
    */
-  virtual bool IsScriptable() { return true; }
+  virtual bool IsScriptable() const { return true; }
 
  /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() {return "cmake_policy";}
-  
+  virtual const char* GetName() const {return "cmake_policy";}
+
  /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation() 
+  virtual const char* GetTerseDocumentation() const
     {
     return "Manage CMake Policy settings.";
     }
-  
+
   /**
    * More documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
     return
       "As CMake evolves it is sometimes necessary to change existing "
@@ -85,13 +80,13 @@ public:
       "behavior.  "
       "While setting policies individually is supported, we encourage "
       "projects to set policies based on CMake versions.\n"
-      "  cmake_policy(VERSION major.minor[.patch])\n"
+      "  cmake_policy(VERSION major.minor[.patch[.tweak]])\n"
       "Specify that the current CMake list file is written for the "
       "given version of CMake.  "
       "All policies introduced in the specified version or earlier "
       "will be set to use NEW behavior.  "
-      "All policies introduced after the specified version will be reset "
-      "to use OLD behavior with a warning.  "
+      "All policies introduced after the specified version will be unset "
+      "(unless variable CMAKE_POLICY_DEFAULT_CMP<NNNN> sets a default).  "
       "This effectively requests behavior preferred as of a given CMake "
       "version and tells newer CMake versions to warn about their new "
       "policies.  "
@@ -134,7 +129,7 @@ public:
       "closest nested policy stack entry."
       ;
     }
-  
+
   cmTypeMacro(cmCMakePolicyCommand, cmCommand);
 private:
   bool HandleSetMode(std::vector<std::string> const& args);

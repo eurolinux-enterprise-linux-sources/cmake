@@ -1,28 +1,23 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmCursesStringWidget.cxx,v $
-  Language:  C++
-  Date:      $Date: 2008-09-03 13:43:19 $
-  Version:   $Revision: 1.13.12.1 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmCursesStringWidget.h"
 #include "cmCursesMainForm.h"
 
 inline int ctrl(int z)
 {
     return (z&037);
-} 
+}
 
-cmCursesStringWidget::cmCursesStringWidget(int width, int height, 
+cmCursesStringWidget::cmCursesStringWidget(int width, int height,
                                            int left, int top) :
   cmCursesWidget(width, height, left, top)
 {
@@ -68,7 +63,7 @@ void cmCursesStringWidget::OnType(int& key, cmCursesMainForm* fm, WINDOW*)
   form_driver(fm->GetForm(), key);
 }
 
-bool cmCursesStringWidget::HandleInput(int& key, cmCursesMainForm* fm, 
+bool cmCursesStringWidget::HandleInput(int& key, cmCursesMainForm* fm,
                                        WINDOW* w)
 {
   int x,y;
@@ -95,7 +90,7 @@ bool cmCursesStringWidget::HandleInput(int& key, cmCursesMainForm* fm,
 
     getmaxyx(stdscr, y, x);
     // If window too small, handle 'q' only
-    if ( x < cmCursesMainForm::MIN_WIDTH  || 
+    if ( x < cmCursesMainForm::MIN_WIDTH  ||
          y < cmCursesMainForm::MIN_HEIGHT )
       {
       // quit
@@ -105,7 +100,7 @@ bool cmCursesStringWidget::HandleInput(int& key, cmCursesMainForm* fm,
         }
       else
         {
-        key=getch(); 
+        key=getch();
         continue;
         }
       }
@@ -116,7 +111,7 @@ bool cmCursesStringWidget::HandleInput(int& key, cmCursesMainForm* fm,
       return false;
       }
     // 10 == enter
-    if (key == 10 || key == KEY_ENTER) 
+    if (key == 10 || key == KEY_ENTER)
       {
       this->OnReturn(fm, w);
       }
@@ -126,7 +121,7 @@ bool cmCursesStringWidget::HandleInput(int& key, cmCursesMainForm* fm,
               key == KEY_PPAGE || key == ctrl('u'))
       {
       this->InEdit = false;
-      delete[] this->OriginalString;     
+      delete[] this->OriginalString;
       // trick to force forms to update the field buffer
       form_driver(form, REQ_NEXT_FIELD);
       form_driver(form, REQ_PREV_FIELD);
@@ -141,8 +136,8 @@ bool cmCursesStringWidget::HandleInput(int& key, cmCursesMainForm* fm,
         fm->PrintKeys();
         this->SetString(this->OriginalString);
         delete[] this->OriginalString;
-        touchwin(w); 
-        wrefresh(w); 
+        touchwin(w);
+        wrefresh(w);
         return true;
         }
       }
@@ -170,7 +165,7 @@ bool cmCursesStringWidget::HandleInput(int& key, cmCursesMainForm* fm,
       {
       form_driver(form, REQ_END_FIELD);
       }
-    else if ( key == 127 || 
+    else if ( key == 127 ||
               key == KEY_BACKSPACE )
       {
       if ( form->curcol > 0 )
@@ -180,7 +175,7 @@ bool cmCursesStringWidget::HandleInput(int& key, cmCursesMainForm* fm,
       }
     else if ( key == ctrl('d') ||key == KEY_DC )
       {
-      if ( form->curcol > 0 )
+      if ( form->curcol >= 0 )
         {
         form_driver(form, REQ_DEL_CHAR);
         }
@@ -191,10 +186,10 @@ bool cmCursesStringWidget::HandleInput(int& key, cmCursesMainForm* fm,
       }
     if ( !this->Done )
       {
-      touchwin(w); 
-      wrefresh(w); 
-      
-      key=getch(); 
+      touchwin(w);
+      wrefresh(w);
+
+      key=getch();
       }
     }
   return true;
@@ -219,7 +214,7 @@ bool cmCursesStringWidget::PrintKeys()
 {
   int x,y;
   getmaxyx(stdscr, y, x);
-  if ( x < cmCursesMainForm::MIN_WIDTH  || 
+  if ( x < cmCursesMainForm::MIN_WIDTH  ||
        y < cmCursesMainForm::MIN_HEIGHT )
     {
     return false;

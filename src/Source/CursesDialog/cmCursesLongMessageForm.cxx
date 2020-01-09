@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmCursesLongMessageForm.cxx,v $
-  Language:  C++
-  Date:      $Date: 2006-11-29 22:25:46 $
-  Version:   $Revision: 1.16 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "../cmCacheManager.h"
 #include "../cmSystemTools.h"
 #include "../cmake.h"
@@ -24,10 +19,10 @@
 inline int ctrl(int z)
 {
     return (z&037);
-} 
+}
 
-cmCursesLongMessageForm::cmCursesLongMessageForm(std::vector<std::string> 
-                                                 const& messages, const char* 
+cmCursesLongMessageForm::cmCursesLongMessageForm(std::vector<std::string>
+                                                 const& messages, const char*
                                                  title)
 {
   // Append all messages into on big string
@@ -58,13 +53,13 @@ void cmCursesLongMessageForm::UpdateStatusBar()
   getmaxyx(stdscr, y, x);
 
   char bar[cmCursesMainForm::MAX_WIDTH];
-  int size = strlen(this->Title.c_str());
+  size_t size = strlen(this->Title.c_str());
   if ( size >= cmCursesMainForm::MAX_WIDTH )
     {
     size = cmCursesMainForm::MAX_WIDTH-1;
     }
   strncpy(bar, this->Title.c_str(), size);
-  for(int i=size-1; i<cmCursesMainForm::MAX_WIDTH; i++) bar[i] = ' ';
+  for(size_t i=size-1; i<cmCursesMainForm::MAX_WIDTH; i++) bar[i] = ' ';
 
   int width;
   if (x < cmCursesMainForm::MAX_WIDTH )
@@ -73,24 +68,23 @@ void cmCursesLongMessageForm::UpdateStatusBar()
     }
   else
     {
-    width = cmCursesMainForm::MAX_WIDTH;
+    width = cmCursesMainForm::MAX_WIDTH-1;
     }
 
   bar[width] = '\0';
 
   char version[cmCursesMainForm::MAX_WIDTH];
   char vertmp[128];
-  sprintf(vertmp,"CMake Version %d.%d - %s", cmVersion::GetMajorVersion(),
-          cmVersion::GetMinorVersion(),cmVersion::GetReleaseVersion().c_str());
-  int sideSpace = (width-strlen(vertmp));
-  for(int i=0; i<sideSpace; i++) { version[i] = ' '; }
+  sprintf(vertmp,"CMake Version %s", cmVersion::GetCMakeVersion());
+  size_t sideSpace = (width-strlen(vertmp));
+  for(size_t i=0; i<sideSpace; i++) { version[i] = ' '; }
   sprintf(version+sideSpace, "%s", vertmp);
   version[width] = '\0';
 
   curses_move(y-4,0);
   attron(A_STANDOUT);
   printw(bar);
-  attroff(A_STANDOUT);  
+  attroff(A_STANDOUT);
   curses_move(y-3,0);
   printw(version);
   pos_form_cursor(this->Form);
@@ -100,7 +94,7 @@ void cmCursesLongMessageForm::PrintKeys()
 {
   int x,y;
   getmaxyx(stdscr, y, x);
-  if ( x < cmCursesMainForm::MIN_WIDTH  || 
+  if ( x < cmCursesMainForm::MIN_WIDTH  ||
        y < cmCursesMainForm::MIN_HEIGHT )
     {
     return;
@@ -111,7 +105,7 @@ void cmCursesLongMessageForm::PrintKeys()
   curses_move(y-2,0);
   printw(firstLine);
   pos_form_cursor(this->Form);
-  
+
 }
 
 void cmCursesLongMessageForm::Render(int, int, int, int)
@@ -161,7 +155,7 @@ void cmCursesLongMessageForm::Render(int, int, int, int)
 
   this->UpdateStatusBar();
   this->PrintKeys();
-  touchwin(stdscr); 
+  touchwin(stdscr);
   refresh();
 
 }
@@ -206,8 +200,8 @@ void cmCursesLongMessageForm::HandleInput()
 
     this->UpdateStatusBar();
     this->PrintKeys();
-    touchwin(stdscr); 
-    wrefresh(stdscr); 
+    touchwin(stdscr);
+    wrefresh(stdscr);
     }
 
 }

@@ -1,26 +1,25 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmStringCommand.cxx,v $
-  Language:  C++
-  Date:      $Date: 2008-09-03 13:43:18 $
-  Version:   $Revision: 1.27.2.1 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmStringCommand.h"
+#include "cmCryptoHash.h"
+
 #include <cmsys/RegularExpression.hxx>
 #include <cmsys/SystemTools.hxx>
 
 #include <stdlib.h> // required for atoi
 #include <ctype.h>
 #include <time.h>
+
+#include <cmTimestamp.h>
 
 //----------------------------------------------------------------------------
 bool cmStringCommand
@@ -31,7 +30,7 @@ bool cmStringCommand
     this->SetError("must be called with at least one argument.");
     return false;
     }
-  
+
   const std::string &subCommand = args[0];
   if(subCommand == "REGEX")
     {
@@ -40,6 +39,15 @@ bool cmStringCommand
   else if(subCommand == "REPLACE")
     {
     return this->HandleReplaceCommand(args);
+    }
+  else if ( subCommand == "MD5" ||
+            subCommand == "SHA1" ||
+            subCommand == "SHA224" ||
+            subCommand == "SHA256" ||
+            subCommand == "SHA384" ||
+            subCommand == "SHA512" )
+    {
+    return this->HandleHashCommand(args);
     }
   else if(subCommand == "TOLOWER")
     {
@@ -77,10 +85,50 @@ bool cmStringCommand
     {
     return this->HandleRandomCommand(args);
     }
-  
+  else if(subCommand == "FIND")
+    {
+    return this->HandleFindCommand(args);
+    }
+  else if(subCommand == "TIMESTAMP")
+    {
+    return this->HandleTimestampCommand(args);
+    }
+  else if(subCommand == "MAKE_C_IDENTIFIER")
+    {
+    return this->HandleMakeCIdentifierCommand(args);
+    }
+
   std::string e = "does not recognize sub-command "+subCommand;
   this->SetError(e.c_str());
   return false;
+}
+
+//----------------------------------------------------------------------------
+bool cmStringCommand::HandleHashCommand(std::vector<std::string> const& args)
+{
+#if defined(CMAKE_BUILD_WITH_CMAKE)
+  if(args.size() != 3)
+    {
+    cmOStringStream e;
+    e << args[0] << " requires an output variable and an input string";
+    this->SetError(e.str().c_str());
+    return false;
+    }
+
+  cmsys::auto_ptr<cmCryptoHash> hash(cmCryptoHash::New(args[0].c_str()));
+  if(hash.get())
+    {
+    std::string out = hash->HashString(args[2].c_str());
+    this->Makefile->AddDefinition(args[1].c_str(), out.c_str());
+    return true;
+    }
+  return false;
+#else
+  cmOStringStream e;
+  e << args[0] << " not available during bootstrap";
+  this->SetError(e.str().c_str());
+  return false;
+#endif
 }
 
 //----------------------------------------------------------------------------
@@ -96,11 +144,11 @@ bool cmStringCommand::HandleToUpperLowerCommand(
   std::string outvar = args[2];
   std::string output;
 
-  if (toUpper) 
+  if (toUpper)
     {
     output = cmSystemTools::UpperCase(args[1]);
-    } 
-  else 
+    }
+  else
     {
     output = cmSystemTools::LowerCase(args[1]);
     }
@@ -131,7 +179,7 @@ bool cmStringCommand::HandleAsciiCommand(std::vector<std::string> const& args)
     else
       {
       std::string error = "Character with code ";
-      error += ch;
+      error += args[cc];
       error += " does not exist.";
       this->SetError(error.c_str());
       return false;
@@ -228,7 +276,7 @@ bool cmStringCommand::HandleRegexCommand(std::vector<std::string> const& args)
       }
     return this->RegexReplace(args);
     }
-  
+
   std::string e = "sub-command REGEX does not recognize mode "+mode;
   this->SetError(e.c_str());
   return false;
@@ -241,25 +289,25 @@ bool cmStringCommand::RegexMatch(std::vector<std::string> const& args)
   // <input> [<input>...])\n";
   std::string regex = args[2];
   std::string outvar = args[3];
-  
+
   // Concatenate all the last arguments together.
   std::string input = args[4];
   for(unsigned int i=5; i < args.size(); ++i)
     {
     input += args[i];
     }
-  
+
   this->ClearMatches(this->Makefile);
   // Compile the regular expression.
   cmsys::RegularExpression re;
   if(!re.compile(regex.c_str()))
     {
-    std::string e = 
+    std::string e =
       "sub-command REGEX, mode MATCH failed to compile regex \""+regex+"\".";
     this->SetError(e.c_str());
     return false;
     }
-  
+
   // Scan through the input for all matches.
   std::string output;
   if(re.find(input.c_str()))
@@ -269,7 +317,7 @@ bool cmStringCommand::RegexMatch(std::vector<std::string> const& args)
     std::string::size_type r = re.end();
     if(r-l == 0)
       {
-      std::string e = 
+      std::string e =
         "sub-command REGEX, mode MATCH regex \""+regex+
         "\" matched an empty string.";
       this->SetError(e.c_str());
@@ -277,7 +325,7 @@ bool cmStringCommand::RegexMatch(std::vector<std::string> const& args)
       }
     output = input.substr(l, r-l);
     }
-  
+
   // Store the output in the provided variable.
   this->Makefile->AddDefinition(outvar.c_str(), output.c_str());
   return true;
@@ -286,18 +334,18 @@ bool cmStringCommand::RegexMatch(std::vector<std::string> const& args)
 //----------------------------------------------------------------------------
 bool cmStringCommand::RegexMatchAll(std::vector<std::string> const& args)
 {
-  //"STRING(REGEX MATCHALL <regular_expression> <output variable> <input> 
+  //"STRING(REGEX MATCHALL <regular_expression> <output variable> <input>
   // [<input>...])\n";
   std::string regex = args[2];
   std::string outvar = args[3];
-  
+
   // Concatenate all the last arguments together.
   std::string input = args[4];
   for(unsigned int i=5; i < args.size(); ++i)
     {
     input += args[i];
     }
-  
+
   this->ClearMatches(this->Makefile);
   // Compile the regular expression.
   cmsys::RegularExpression re;
@@ -309,7 +357,7 @@ bool cmStringCommand::RegexMatchAll(std::vector<std::string> const& args)
     this->SetError(e.c_str());
     return false;
     }
-  
+
   // Scan through the input for all matches.
   std::string output;
   const char* p = input.c_str();
@@ -332,7 +380,7 @@ bool cmStringCommand::RegexMatchAll(std::vector<std::string> const& args)
     output += std::string(p+l, r-l);
     p += r;
     }
-  
+
   // Store the output in the provided variable.
   this->Makefile->AddDefinition(outvar.c_str(), output.c_str());
   return true;
@@ -341,12 +389,12 @@ bool cmStringCommand::RegexMatchAll(std::vector<std::string> const& args)
 //----------------------------------------------------------------------------
 bool cmStringCommand::RegexReplace(std::vector<std::string> const& args)
 {
-  //"STRING(REGEX REPLACE <regular_expression> <replace_expression> 
+  //"STRING(REGEX REPLACE <regular_expression> <replace_expression>
   // <output variable> <input> [<input>...])\n"
   std::string regex = args[2];
-  std::string replace = args[3];  
+  std::string replace = args[3];
   std::string outvar = args[4];
-  
+
   // Pull apart the replace expression to find the escaped [0-9] values.
   std::vector<RegexReplacement> replacement;
   std::string::size_type l = 0;
@@ -386,7 +434,7 @@ bool cmStringCommand::RegexReplace(std::vector<std::string> const& args)
         {
         std::string e = "sub-command REGEX, mode REPLACE: Unknown escape \"";
         e += replace.substr(r, 2);
-        e += "\"in replace-expression.";
+        e += "\" in replace-expression.";
         this->SetError(e.c_str());
         return false;
         }
@@ -394,26 +442,26 @@ bool cmStringCommand::RegexReplace(std::vector<std::string> const& args)
       }
     l = r;
     }
-  
+
   // Concatenate all the last arguments together.
   std::string input = args[5];
   for(unsigned int i=6; i < args.size(); ++i)
     {
     input += args[i];
     }
-  
+
   this->ClearMatches(this->Makefile);
   // Compile the regular expression.
   cmsys::RegularExpression re;
   if(!re.compile(regex.c_str()))
     {
-    std::string e = 
+    std::string e =
       "sub-command REGEX, mode REPLACE failed to compile regex \""+
       regex+"\".";
     this->SetError(e.c_str());
     return false;
     }
-  
+
   // Scan through the input for all matches.
   std::string output;
   std::string::size_type base = 0;
@@ -422,10 +470,10 @@ bool cmStringCommand::RegexReplace(std::vector<std::string> const& args)
     this->StoreMatches(this->Makefile, re);
     std::string::size_type l2 = re.start();
     std::string::size_type r = re.end();
-    
+
     // Concatenate the part of the input that was not matched.
     output += input.substr(base, l2);
-    
+
     // Make sure the match had some text.
     if(r-l2 == 0)
       {
@@ -434,7 +482,7 @@ bool cmStringCommand::RegexReplace(std::vector<std::string> const& args)
       this->SetError(e.c_str());
       return false;
       }
-    
+
     // Concatenate the replacement for the match.
     for(unsigned int i=0; i < replacement.size(); ++i)
       {
@@ -466,14 +514,14 @@ bool cmStringCommand::RegexReplace(std::vector<std::string> const& args)
           }
         }
       }
-    
+
     // Move past the match.
     base += r;
     }
-  
+
   // Concatenate the text after the last match.
   output += input.substr(base, input.length()-base);
-  
+
   // Store the output in the provided variable.
   this->Makefile->AddDefinition(outvar.c_str(), output.c_str());
   return true;
@@ -486,7 +534,12 @@ void cmStringCommand::ClearMatches(cmMakefile* mf)
     {
     char name[128];
     sprintf(name, "CMAKE_MATCH_%d", i);
-    mf->AddDefinition(name, "");
+    const char* s = mf->GetDefinition(name);
+    if(s && *s != 0)
+      {
+      mf->AddDefinition(name, "");
+      mf->MarkVariableAsUsed(name);
+      }
     }
 }
 
@@ -495,10 +548,77 @@ void cmStringCommand::StoreMatches(cmMakefile* mf,cmsys::RegularExpression& re)
 {
   for (unsigned int i=0; i<10; i++)
     {
-    char name[128];
-    sprintf(name, "CMAKE_MATCH_%d", i);
-    mf->AddDefinition(name, re.match(i).c_str());
+    std::string m = re.match(i);
+    if(m.size() > 0)
+      {
+      char name[128];
+      sprintf(name, "CMAKE_MATCH_%d", i);
+      mf->AddDefinition(name, re.match(i).c_str());
+      mf->MarkVariableAsUsed(name);
+      }
     }
+}
+
+//----------------------------------------------------------------------------
+bool cmStringCommand::HandleFindCommand(std::vector<std::string> const&
+                                           args)
+{
+  // check if all required parameters were passed
+  if(args.size() < 4 || args.size() > 5)
+    {
+    this->SetError("sub-command FIND requires 3 or 4 parameters.");
+    return false;
+    }
+
+  // check if the reverse flag was set or not
+  bool reverseMode = false;
+  if(args.size() == 5 && args[4] == "REVERSE")
+    {
+    reverseMode = true;
+    }
+
+  // if we have 5 arguments the last one must be REVERSE
+  if(args.size() == 5 && args[4] != "REVERSE")
+    {
+    this->SetError("sub-command FIND: unknown last parameter");
+    return false;
+    }
+
+  // local parameter names.
+  const std::string& sstring = args[1];
+  const std::string& schar = args[2];
+  const std::string& outvar = args[3];
+
+  // ensure that the user cannot accidentally specify REVERSE as a variable
+  if(outvar == "REVERSE")
+    {
+    this->SetError("sub-command FIND does not allow to select REVERSE as "
+                   "the output variable.  "
+                   "Maybe you missed the actual output variable?");
+    return false;
+    }
+
+  // try to find the character and return its position
+  size_t pos;
+  if(!reverseMode)
+    {
+    pos = sstring.find(schar);
+    }
+  else
+    {
+    pos = sstring.rfind(schar);
+    }
+  if(std::string::npos != pos)
+    {
+    cmOStringStream s;
+    s << pos;
+    this->Makefile->AddDefinition(outvar.c_str(), s.str().c_str());
+    return true;
+    }
+
+  // the character was not found, but this is not really an error
+  this->Makefile->AddDefinition(outvar.c_str(), "-1");
+  return true;
 }
 
 //----------------------------------------------------------------------------
@@ -522,9 +642,9 @@ bool cmStringCommand::HandleCompareCommand(std::vector<std::string> const&
       this->SetError(e.c_str());
       return false;
       }
-    
+
     const std::string& left = args[2];
-    const std::string& right = args[3];  
+    const std::string& right = args[3];
     const std::string& outvar = args[4];
     bool result;
     if(mode == "LESS")
@@ -552,7 +672,7 @@ bool cmStringCommand::HandleCompareCommand(std::vector<std::string> const&
       this->Makefile->AddDefinition(outvar.c_str(), "0");
       }
     return true;
-    }  
+    }
   std::string e = "sub-command COMPARE does not recognize mode "+mode;
   this->SetError(e.c_str());
   return false;
@@ -564,7 +684,7 @@ bool cmStringCommand::HandleReplaceCommand(std::vector<std::string> const&
 {
   if(args.size() < 5)
     {
-    this->SetError("sub-command REPLACE requires four arguments.");
+    this->SetError("sub-command REPLACE requires at least four arguments.");
     return false;
     }
 
@@ -578,7 +698,7 @@ bool cmStringCommand::HandleReplaceCommand(std::vector<std::string> const&
     input += args[i];
     }
 
-  cmsys::SystemTools::ReplaceString(input, matchExpression.c_str(), 
+  cmsys::SystemTools::ReplaceString(input, matchExpression.c_str(),
                                     replaceExpression.c_str());
 
   this->Makefile->AddDefinition(variableName.c_str(), input.c_str());
@@ -586,12 +706,12 @@ bool cmStringCommand::HandleReplaceCommand(std::vector<std::string> const&
 }
 
 //----------------------------------------------------------------------------
-bool cmStringCommand::HandleSubstringCommand(std::vector<std::string> const& 
+bool cmStringCommand::HandleSubstringCommand(std::vector<std::string> const&
                                              args)
 {
   if(args.size() != 5)
     {
-    this->SetError("sub-command REPLACE requires four arguments.");
+    this->SetError("sub-command SUBSTRING requires four arguments.");
     return false;
     }
 
@@ -611,16 +731,16 @@ bool cmStringCommand::HandleSubstringCommand(std::vector<std::string> const&
     return false;
     }
   int leftOverLength = intStringLength - begin;
-  if ( end < 0 || end > leftOverLength )
+  if ( end < -1 || end > leftOverLength )
     {
     cmOStringStream ostr;
-    ostr << "end index: " << end << " is out of range " << 0 << " - "
+    ostr << "end index: " << end << " is out of range -1 - "
          << leftOverLength;
     this->SetError(ostr.str().c_str());
     return false;
     }
 
-  this->Makefile->AddDefinition(variableName.c_str(), 
+  this->Makefile->AddDefinition(variableName.c_str(),
                                 stringValue.substr(begin, end).c_str());
   return true;
 }
@@ -647,12 +767,30 @@ bool cmStringCommand
 }
 
 //----------------------------------------------------------------------------
+bool cmStringCommand
+::HandleMakeCIdentifierCommand(std::vector<std::string> const& args)
+{
+  if(args.size() != 3)
+    {
+    this->SetError("sub-command MAKE_C_IDENTIFIER requires two arguments.");
+    return false;
+    }
+
+  const std::string& input = args[1];
+  const std::string& variableName = args[2];
+
+  this->Makefile->AddDefinition(variableName.c_str(),
+                      cmSystemTools::MakeCidentifier(input.c_str()).c_str());
+  return true;
+}
+
+//----------------------------------------------------------------------------
 bool cmStringCommand::HandleStripCommand(
   std::vector<std::string> const& args)
 {
  if(args.size() != 3)
     {
-    this->SetError("sub-command LENGTH requires two arguments.");
+    this->SetError("sub-command STRIP requires two arguments.");
     return false;
     }
 
@@ -678,7 +816,7 @@ bool cmStringCommand::HandleStripCommand(
 
   size_t outLength = 0;
 
-  // if the input string didn't contain any non-space characters, return 
+  // if the input string didn't contain any non-space characters, return
   // an empty string
   if (startPos > inStringLength)
     {
@@ -705,6 +843,9 @@ bool cmStringCommand
     return false;
     }
 
+  static bool seeded = false;
+  bool force_seed = false;
+  unsigned int seed = 0;
   int length = 5;
   const char cmStringCommandDefaultAlphabet[] = "qwertyuiopasdfghjklzxcvbnm"
     "QWERTYUIOPASDFGHJKLZXCVBNM"
@@ -728,6 +869,12 @@ bool cmStringCommand
         ++i;
         alphabet = args[i];
         }
+      else if ( args[i] == "RANDOM_SEED" )
+        {
+        ++i;
+        seed = static_cast<unsigned int>(atoi(args[i].c_str()));
+        force_seed = true;
+        }
       }
     }
   if ( !alphabet.size() )
@@ -735,7 +882,7 @@ bool cmStringCommand
     alphabet = cmStringCommandDefaultAlphabet;
     }
 
-  double sizeofAlphabet = alphabet.size();
+  double sizeofAlphabet = static_cast<double>(alphabet.size());
   if ( sizeofAlphabet < 1 )
     {
     this->SetError("sub-command RANDOM invoked with bad alphabet.");
@@ -749,7 +896,13 @@ bool cmStringCommand
   const std::string& variableName = args[args.size()-1];
 
   std::vector<char> result;
-  srand((int)time(NULL));
+
+  if (!seeded || force_seed)
+    {
+    seeded = true;
+    srand(force_seed? seed : cmSystemTools::RandomSeed());
+    }
+
   const char* alphaPtr = alphabet.c_str();
   int cc;
   for ( cc = 0; cc < length; cc ++ )
@@ -760,5 +913,53 @@ bool cmStringCommand
   result.push_back(0);
 
   this->Makefile->AddDefinition(variableName.c_str(), &*result.begin());
+  return true;
+}
+
+//----------------------------------------------------------------------------
+bool cmStringCommand
+::HandleTimestampCommand(std::vector<std::string> const& args)
+{
+  if(args.size() < 2)
+    {
+    this->SetError("sub-command TIMESTAMP requires at least one argument.");
+    return false;
+    }
+  else if(args.size() > 4)
+    {
+    this->SetError("sub-command TIMESTAMP takes at most three arguments.");
+    return false;
+    }
+
+  unsigned int argsIndex = 1;
+
+  const std::string &outputVariable = args[argsIndex++];
+
+  std::string formatString;
+  if(args.size() > argsIndex && args[argsIndex] != "UTC")
+    {
+    formatString = args[argsIndex++];
+    }
+
+  bool utcFlag = false;
+  if(args.size() > argsIndex)
+    {
+    if(args[argsIndex] == "UTC")
+      {
+      utcFlag = true;
+      }
+    else
+      {
+      std::string e = " TIMESTAMP sub-command does not recognize option " +
+          args[argsIndex] + ".";
+      this->SetError(e.c_str());
+      return false;
+      }
+    }
+
+  cmTimestamp timestamp;
+  std::string result = timestamp.CurrentTime(formatString, utcFlag);
+  this->Makefile->AddDefinition(outputVariable.c_str(), result.c_str());
+
   return true;
 }

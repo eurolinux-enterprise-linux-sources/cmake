@@ -1,1 +1,1 @@
-include(Platform/xlf)
+include(Platform/AIX-XL-Fortran)

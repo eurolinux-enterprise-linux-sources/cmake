@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmInstallExportGenerator.cxx,v $
-  Language:  C++
-  Date:      $Date: 2009-01-13 18:03:52 $
-  Version:   $Revision: 1.8.2.1 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmInstallExportGenerator.h"
 
 #include <stdio.h>
@@ -21,7 +16,6 @@
 #include "cmake.h"
 #include "cmInstallTargetGenerator.h"
 #include "cmGeneratedFileStream.h"
-#include "cmTarget.h"
 #include "cmMakefile.h"
 #include "cmLocalGenerator.h"
 #include "cmGlobalGenerator.h"
@@ -29,24 +23,28 @@
 #include "cmInstallFilesGenerator.h"
 
 #include "cmExportInstallFileGenerator.h"
+#include "cmExportSet.h"
 
 //----------------------------------------------------------------------------
 cmInstallExportGenerator::cmInstallExportGenerator(
-  const char* name,
+  cmExportSet* exportSet,
   const char* destination,
   const char* file_permissions,
   std::vector<std::string> const& configurations,
   const char* component,
   const char* filename, const char* name_space,
+  bool exportOld,
   cmMakefile* mf)
   :cmInstallGenerator(destination, configurations, component)
-  ,Name(name)
+  ,ExportSet(exportSet)
   ,FilePermissions(file_permissions)
   ,FileName(filename)
   ,Namespace(name_space)
+  ,ExportOld(exportOld)
   ,Makefile(mf)
 {
   this->EFGen = new cmExportInstallFileGenerator(this);
+  exportSet->AddInstallation(this);
 }
 
 //----------------------------------------------------------------------------
@@ -119,16 +117,12 @@ void cmInstallExportGenerator::ComputeTempDir()
 //----------------------------------------------------------------------------
 void cmInstallExportGenerator::GenerateScript(std::ostream& os)
 {
-  // Get the export set requested.
-  ExportSet const* exportSet =
-    this->Makefile->GetLocalGenerator()->GetGlobalGenerator()
-    ->GetExportSet(this->Name.c_str());
-
   // Skip empty sets.
-  if(!exportSet)
+  if(ExportSet->GetTargetExports()->empty())
     {
     cmOStringStream e;
-    e << "INSTALL(EXPORT) given unknown export \"" << this->Name << "\"";
+    e << "INSTALL(EXPORT) given unknown export \""
+      << ExportSet->GetName() << "\"";
     cmSystemTools::Error(e.str().c_str());
     return;
     }
@@ -143,10 +137,9 @@ void cmInstallExportGenerator::GenerateScript(std::ostream& os)
   this->MainImportFile += this->FileName;
 
   // Generate the import file for this export set.
-  this->EFGen->SetName(this->Name.c_str());
-  this->EFGen->SetExportSet(exportSet);
   this->EFGen->SetExportFile(this->MainImportFile.c_str());
   this->EFGen->SetNamespace(this->Namespace.c_str());
+  this->EFGen->SetExportOld(this->ExportOld);
   if(this->ConfigurationTypes->empty())
     {
     if(this->ConfigurationName && *this->ConfigurationName)
@@ -191,7 +184,7 @@ cmInstallExportGenerator::GenerateScriptConfigs(std::ostream& os,
     files.push_back(i->second);
     std::string config_test = this->CreateConfigTest(i->first.c_str());
     os << indent << "IF(" << config_test << ")\n";
-    this->AddInstallRule(os, cmTarget::INSTALL_FILES, files, false, 0,
+    this->AddInstallRule(os, cmInstallType_FILES, files, false,
                          this->FilePermissions.c_str(), 0, 0, 0,
                          indent.Next());
     os << indent << "ENDIF(" << config_test << ")\n";
@@ -230,6 +223,6 @@ void cmInstallExportGenerator::GenerateScriptActions(std::ostream& os,
   // Install the main export file.
   std::vector<std::string> files;
   files.push_back(this->MainImportFile);
-  this->AddInstallRule(os, cmTarget::INSTALL_FILES, files, false, 0,
+  this->AddInstallRule(os, cmInstallType_FILES, files, false,
                        this->FilePermissions.c_str(), 0, 0, 0, indent);
 }

@@ -18,7 +18,7 @@
  * This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
  * KIND, either express or implied.
  *
- * $Id: ftp.c,v 1.3 2007-11-05 19:34:36 king Exp $
+ * $Id$
  ***************************************************************************/
 
 #include "setup.h"
@@ -3683,7 +3683,7 @@ CURLcode ftp_parse_url_path(struct connectdata *conn)
       /* seek out the next path component */
       if (slash_pos-cur_pos) {
         /* we skip empty path components, like "x//y" since the FTP command
-           CWD requires a parameter and a non-existant parameter a) doesn't
+           CWD requires a parameter and a non-existent parameter a) doesn't
            work on many servers and b) has no effect on the others. */
         int len = (int)(slash_pos - cur_pos + absolute_dir);
         ftpc->dirs[ftpc->dirdepth] = curl_easy_unescape(conn->data,

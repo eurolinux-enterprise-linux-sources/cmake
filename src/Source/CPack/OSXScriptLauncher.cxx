@@ -1,25 +1,19 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: OSXScriptLauncher.cxx,v $
-  Language:  C++
-  Date:      $Date: 2007-07-27 14:55:24 $
-  Version:   $Revision: 1.4 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include <cmsys/SystemTools.hxx>
 #include <cmsys/Process.h>
 #include <cmsys/ios/fstream>
 #include <cmsys/ios/iostream>
 
-#include <Carbon/Carbon.h>
 #include <CoreFoundation/CoreFoundation.h>
 
 // For the PATH_MAX constant
@@ -99,7 +93,7 @@ int main(int argc, char* argv[])
   cmsysProcess_SetOption(cp, cmsysProcess_Option_HideWindow, 1);
   cmsysProcess_SetTimeout(cp, 0);
   cmsysProcess_Execute(cp);
-  
+
   std::vector<char> tempOutput;
   char* data;
   int length;
@@ -117,9 +111,9 @@ int main(int argc, char* argv[])
       }
     cmsys_ios::cout.write(data, length);
     }
-  
+
   cmsysProcess_WaitForExit(cp, 0);
-  
+
   bool result = true;
   if(cmsysProcess_GetState(cp) == cmsysProcess_State_Exited)
     {
@@ -146,7 +140,7 @@ int main(int argc, char* argv[])
     std::cerr << error_str << std::endl;
     result = false;
     }
-  
+
   cmsysProcess_Delete(cp);
 
   return 0;

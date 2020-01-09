@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmXMLParser.cxx,v $
-  Language:  C++
-  Date:      $Date: 2007-07-31 01:38:50 $
-  Version:   $Revision: 1.8 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmXMLParser.h"
 
 #include <cm_expat.h>
@@ -39,7 +34,7 @@ cmXMLParser::~cmXMLParser()
 int cmXMLParser::Parse(const char* string)
 {
   return (int)this->InitializeParser() &&
-    this->ParseChunk(string, strlen(string)) && 
+    this->ParseChunk(string, strlen(string)) &&
     this->CleanupParser();
 }
 
@@ -84,7 +79,7 @@ int cmXMLParser::InitializeParser()
 }
 
 //----------------------------------------------------------------------------
-int cmXMLParser::ParseChunk(const char* inputString, 
+int cmXMLParser::ParseChunk(const char* inputString,
                             std::string::size_type length)
 {
   if ( !this->Parser )
@@ -121,11 +116,11 @@ int cmXMLParser::CleanupParser()
       result = 0;
       }
     }
-  
+
   // Clean up the parser.
   XML_ParserFree(static_cast<XML_Parser>(this->Parser));
   this->Parser = 0;
-  
+
   return result;
 }
 
@@ -133,7 +128,7 @@ int cmXMLParser::CleanupParser()
 int cmXMLParser::ParseBuffer(const char* buffer, std::string::size_type count)
 {
   // Pass the buffer to the expat XML parser.
-  if(!XML_Parse(static_cast<XML_Parser>(this->Parser), buffer, 
+  if(!XML_Parse(static_cast<XML_Parser>(this->Parser), buffer,
                 static_cast<int>(count), 0))
     {
     this->ReportXmlParseError();
@@ -181,6 +176,23 @@ int cmXMLParser::IsSpace(char c)
 }
 
 //----------------------------------------------------------------------------
+const char* cmXMLParser::FindAttribute(const char** atts,
+                                       const char* attribute)
+{
+  if(atts && attribute)
+    {
+    for(const char** a = atts; *a && *(a+1); a += 2)
+      {
+      if(strcmp(*a, attribute) == 0)
+        {
+        return *(a+1);
+        }
+      }
+    }
+  return 0;
+}
+
+//----------------------------------------------------------------------------
 void cmXMLParserStartElement(void* parser, const char *name,
                               const char **atts)
 {
@@ -211,10 +223,15 @@ void cmXMLParserCharacterDataHandler(void* parser, const char* data,
 //----------------------------------------------------------------------------
 void cmXMLParser::ReportXmlParseError()
 {
-  std::cerr << "Error parsing XML in stream at line "
-    << XML_GetCurrentLineNumber(static_cast<XML_Parser>(this->Parser))
-    << ": " 
-    << XML_ErrorString(XML_GetErrorCode(
-        static_cast<XML_Parser>(this->Parser))) << std::endl;
+  XML_Parser parser = static_cast<XML_Parser>(this->Parser);
+  this->ReportError(XML_GetCurrentLineNumber(parser),
+                    XML_GetCurrentColumnNumber(parser),
+                    XML_ErrorString(XML_GetErrorCode(parser)));
 }
 
+//----------------------------------------------------------------------------
+void cmXMLParser::ReportError(int line, int, const char* msg)
+{
+  std::cerr << "Error parsing XML in stream at line "
+            << line << ": " << msg << std::endl;
+}

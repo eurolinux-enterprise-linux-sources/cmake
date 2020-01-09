@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmAuxSourceDirectoryCommand.cxx,v $
-  Language:  C++
-  Date:      $Date: 2008-05-01 16:35:39 $
-  Version:   $Revision: 1.26.2.1 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmAuxSourceDirectoryCommand.h"
 #include "cmSourceFile.h"
 
@@ -28,7 +23,7 @@ bool cmAuxSourceDirectoryCommand::InitialPass
     this->SetError("called with incorrect number of arguments");
     return false;
     }
-  
+
   std::string sourceListValue;
   std::string templateDirectory = args[0];
   this->Makefile->AddExtraDirectory(templateDirectory.c_str());
@@ -45,12 +40,12 @@ bool cmAuxSourceDirectoryCommand::InitialPass
     }
 
   // was the list already populated
-  const char *def = this->Makefile->GetDefinition(args[1].c_str());  
+  const char *def = this->Makefile->GetDefinition(args[1].c_str());
   if (def)
     {
     sourceListValue = def;
     }
-  
+
   // Load all the files in the directory
   cmsys::Directory dir;
   if(dir.Load(tdir.c_str()))
@@ -74,7 +69,7 @@ bool cmAuxSourceDirectoryCommand::InitialPass
           std::string fullname = templateDirectory;
           fullname += "/";
           fullname += file;
-          // add the file as a class file so 
+          // add the file as a class file so
           // depends can be done
           cmSourceFile* sf =
             this->Makefile->GetOrCreateSource(fullname.c_str());
@@ -88,7 +83,7 @@ bool cmAuxSourceDirectoryCommand::InitialPass
         }
       }
     }
-  this->Makefile->AddDefinition(args[1].c_str(), sourceListValue.c_str());  
+  this->Makefile->AddDefinition(args[1].c_str(), sourceListValue.c_str());
   return true;
 }
 

@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmSetTargetPropertiesCommand.h,v $
-  Language:  C++
-  Date:      $Date: 2008-10-24 15:18:54 $
-  Version:   $Revision: 1.31.2.1 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmSetTargetsPropertiesCommand_h
 #define cmSetTargetsPropertiesCommand_h
 
@@ -22,7 +17,7 @@
 class cmSetTargetPropertiesCommand : public cmCommand
 {
 public:
-  virtual cmCommand* Clone() 
+  virtual cmCommand* Clone()
     {
       return new cmSetTargetPropertiesCommand;
     }
@@ -37,27 +32,27 @@ public:
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() { return "set_target_properties";}  
+  virtual const char* GetName() const { return "set_target_properties";}
 
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation() 
+  virtual const char* GetTerseDocumentation() const
     {
     return "Targets can have properties that affect how they are built.";
     }
-  
+
   /**
    *  Used by this command and cmSetPropertiesCommand
    */
-  static bool SetOneTarget(const char *tname, 
-                           std::vector<std::string> &propertyPairs, 
+  static bool SetOneTarget(const char *tname,
+                           std::vector<std::string> &propertyPairs,
                            cmMakefile *mf);
 
   /**
    * Longer documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
       return
         "  set_target_properties(target1 target2 ...\n"
@@ -97,7 +92,7 @@ public:
         "If not set here then it is set to target_EXPORTS by default "
         "(with some substitutions if the target is not a valid C "
         "identifier). This is useful for headers to know whether they are "
-        "being included from inside their library our outside to properly "
+        "being included from inside their library or outside to properly "
         "setup dllexport/dllimport decorations. "
         "The COMPILE_FLAGS property sets additional compiler flags used "
         "to build sources within the target.  It may also be used to pass "
@@ -109,7 +104,7 @@ public:
         "are common values for this property."
         "\n"
         "For shared libraries VERSION and SOVERSION can be used to specify "
-        "the build version and api version respectively. When building or "
+        "the build version and API version respectively. When building or "
         "installing appropriate symlinks are created if the platform "
         "supports symlinks and the linker supports so-names. "
         "If only one of both is specified the missing is assumed to have "
@@ -143,18 +138,16 @@ public:
         "are used to initialize these properties.\n"
         "PROJECT_LABEL can be used to change the name of "
         "the target in an IDE like visual studio.  VS_KEYWORD can be set "
-        "to change the visual studio keyword, for example QT integration "
+        "to change the visual studio keyword, for example Qt integration "
         "works better if this is set to Qt4VSv1.0.\n"
-        "VS_SCC_PROJECTNAME, VS_SCC_LOCALPATH, VS_SCC_PROVIDER can be set "
+        "VS_SCC_PROJECTNAME, VS_SCC_LOCALPATH, VS_SCC_PROVIDER and "
+        "VS_SCC_AUXPATH can be set "
         "to add support for source control bindings in a  Visual Studio "
         "project file.\n"
-        "When a library is built CMake by default generates code to remove "
-        "any existing library using all possible names.  This is needed "
-        "to support libraries that switch between STATIC and SHARED by "
-        "a user option.  However when using OUTPUT_NAME to build a static "
-        "and shared library of the same name using different logical target "
-        "names the two targets will remove each other's files.  This can be "
-        "prevented by setting the CLEAN_DIRECT_OUTPUT property to 1.\n"
+        "VS_GLOBAL_<variable> can be set to add a Visual Studio "
+        "project-specific global variable. "
+        "Qt integration works better if VS_GLOBAL_QtVersion is set to "
+        "the Qt version FindQt4.cmake found. For example, \"4.7.3\"\n"
         "The PRE_INSTALL_SCRIPT and POST_INSTALL_SCRIPT properties are the "
         "old way to specify CMake scripts to run before and after "
         "installing a target.  They are used only when the old "
@@ -163,10 +156,12 @@ public:
         "\n"
         "The EXCLUDE_FROM_DEFAULT_BUILD property is used by the visual "
         "studio generators.  If it is set to 1 the target will not be "
-        "part of the default build when you select \"Build Solution\"."
+        "part of the default build when you select \"Build Solution\". "
+        "This can also be set on a per-configuration basis using "
+        "EXCLUDE_FROM_DEFAULT_BUILD_<CONFIG>."
         ;
     }
-  
+
   cmTypeMacro(cmSetTargetPropertiesCommand, cmCommand);
 };
 

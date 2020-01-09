@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmGetFilenameComponentCommand.h,v $
-  Language:  C++
-  Date:      $Date: 2009-03-23 17:58:40 $
-  Version:   $Revision: 1.14.2.1 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmGetFilenameComponentCommand_h
 #define cmGetFilenameComponentCommand_h
 
@@ -23,7 +18,7 @@
  * \brief Get a specific component of a filename.
  *
  * cmGetFilenameComponentCommand is a utility command used to get the path,
- * name, extension or name without extension of a full filename. 
+ * name, extension or name without extension of a full filename.
  */
 class cmGetFilenameComponentCommand : public cmCommand
 {
@@ -31,7 +26,7 @@ public:
   /**
    * This is a virtual constructor for the command.
    */
-  virtual cmCommand* Clone() 
+  virtual cmCommand* Clone()
     {
     return new cmGetFilenameComponentCommand;
     }
@@ -46,48 +41,50 @@ public:
   /**
    * This determines if the command is invoked when in script mode.
    */
-  virtual bool IsScriptable() { return true; }
+  virtual bool IsScriptable() const { return true; }
 
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() { return "get_filename_component";}
+  virtual const char* GetName() const { return "get_filename_component";}
 
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation() 
+  virtual const char* GetTerseDocumentation() const
     {
     return "Get a specific component of a full filename.";
     }
-  
+
   /**
    * More documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
     return
-      "  get_filename_component(VarName FileName\n"
-      "                         PATH|ABSOLUTE|NAME|EXT|NAME_WE|REALPATH\n"
-      "                         [CACHE])\n"
-      "Set VarName to be the path (PATH), file name (NAME), file "
-      "extension (EXT), file name without extension (NAME_WE) of FileName, "
-      "the full path (ABSOLUTE), or the full path with all symlinks "
-      "resolved (REALPATH).  "
-      "Note that the path is converted to Unix slashes format and has no "
-      "trailing slashes. The longest file extension is always considered. "
+      "  get_filename_component(<VAR> <FileName> <COMP> [CACHE])\n"
+      "Set <VAR> to a component of <FileName>, where <COMP> is one of:\n"
+      " DIRECTORY = Directory without file name\n"
+      " NAME      = File name without directory\n"
+      " EXT       = File name longest extension (.b.c from d/a.b.c)\n"
+      " NAME_WE   = File name without directory or longest extension\n"
+      " ABSOLUTE  = Full path to file\n"
+      " REALPATH  = Full path to existing file with symlinks resolved\n"
+      " PATH      = Legacy alias for DIRECTORY (use for CMake <= 2.8.11)\n"
+      "Paths are returned with forward slashes and have no trailing slahes. "
+      "The longest file extension is always considered. "
       "If the optional CACHE argument is specified, the result variable is "
       "added to the cache.\n"
-      "  get_filename_component(VarName FileName\n"
-      "                         PROGRAM [PROGRAM_ARGS ArgVar]\n"
+      "  get_filename_component(<VAR> FileName\n"
+      "                         PROGRAM [PROGRAM_ARGS <ARG_VAR>]\n"
       "                         [CACHE])\n"
       "The program in FileName will be found in the system search path or "
       "left as a full path.  If PROGRAM_ARGS is present with PROGRAM, then "
       "any command-line arguments present in the FileName string are split "
-      "from the program name and stored in ArgVar.  This is used to separate "
-      "a program name from its arguments in a command line string.";
+      "from the program name and stored in <ARG_VAR>.  This is used to "
+      "separate a program name from its arguments in a command line string.";
     }
-  
+
   cmTypeMacro(cmGetFilenameComponentCommand, cmCommand);
 };
 

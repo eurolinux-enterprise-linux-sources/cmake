@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmDocumentationFormatterText.cxx,v $
-  Language:  C++
-  Date:      $Date: 2008-03-07 21:01:22 $
-  Version:   $Revision: 1.5 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 
 #include "cmDocumentationFormatterText.h"
 #include "cmDocumentationSection.h"
@@ -30,7 +25,7 @@ void cmDocumentationFormatterText
                const cmDocumentationSection &section,
                const char* name)
 {
-  if(name)
+  if(name && (strcmp(name, "SingleItem")!=0))
     {
     os <<
       "---------------------------------------"
@@ -38,9 +33,9 @@ void cmDocumentationFormatterText
     os << name << "\n\n";
     }
 
-  const std::vector<cmDocumentationEntry> &entries = 
+  const std::vector<cmDocumentationEntry> &entries =
     section.GetEntries();
-  for(std::vector<cmDocumentationEntry>::const_iterator op = entries.begin(); 
+  for(std::vector<cmDocumentationEntry>::const_iterator op = entries.begin();
       op != entries.end(); ++op)
     {
     if(op->Name.size())
@@ -63,7 +58,7 @@ void cmDocumentationFormatterText
     }
 }
 
-void cmDocumentationFormatterText::PrintPreformatted(std::ostream& os, 
+void cmDocumentationFormatterText::PrintPreformatted(std::ostream& os,
                                                      const char* text)
 {
   bool newline = true;
@@ -83,7 +78,7 @@ void cmDocumentationFormatterText::PrintPreformatted(std::ostream& os,
   os << "\n";
 }
 
-void cmDocumentationFormatterText::PrintParagraph(std::ostream& os, 
+void cmDocumentationFormatterText::PrintParagraph(std::ostream& os,
                                                   const char* text)
 {
   os << this->TextIndent;
@@ -96,23 +91,23 @@ void cmDocumentationFormatterText::SetIndent(const char* indent)
   this->TextIndent = indent;
 }
 
-void cmDocumentationFormatterText::PrintColumn(std::ostream& os, 
+void cmDocumentationFormatterText::PrintColumn(std::ostream& os,
                                                const char* text)
 {
   // Print text arranged in an indented column of fixed witdh.
   const char* l = text;
-  int column = 0;
+  long column = 0;
   bool newSentence = false;
   bool firstLine = true;
   int width = this->TextWidth - static_cast<int>(strlen(this->TextIndent));
-  
+
   // Loop until the end of the text.
   while(*l)
     {
     // Parse the next word.
     const char* r = l;
     while(*r && (*r != '\n') && (*r != ' ')) { ++r; }
-    
+
     // Does it fit on this line?
     if(r-l < (width-column-(newSentence?1:0)))
       {
@@ -140,12 +135,12 @@ void cmDocumentationFormatterText::PrintColumn(std::ostream& os,
           // first line.
           os << (firstLine?"":this->TextIndent);
           }
-        
+
         // Print the word.
         os.write(l, static_cast<long>(r-l));
         newSentence = (*(r-1) == '.');
         }
-      
+
       if(*r == '\n')
         {
         // Text provided a newline.  Start a new line.
@@ -180,6 +175,6 @@ void cmDocumentationFormatterText::PrintColumn(std::ostream& os,
 
     // Move to beginning of next word.  Skip over whitespace.
     l = r;
-    while(*l && (*l == ' ')) { ++l; }    
+    while(*l && (*l == ' ')) { ++l; }
     }
 }

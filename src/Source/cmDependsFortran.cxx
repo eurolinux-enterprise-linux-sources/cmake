@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmDependsFortran.cxx,v $
-  Language:  C++
-  Date:      $Date: 2009-03-23 17:58:40 $
-  Version:   $Revision: 1.46.2.3 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmDependsFortran.h"
 
 #include "cmSystemTools.h"
@@ -35,7 +30,7 @@
 class cmDependsFortranSourceInfo
 {
 public:
-  // The name of the soruce file.
+  // The name of the source file.
   std::string Source;
 
   // Set of provided and required modules.
@@ -175,44 +170,50 @@ cmDependsFortran::~cmDependsFortran()
 }
 
 //----------------------------------------------------------------------------
-bool cmDependsFortran::WriteDependencies(const char *src, const char *obj,
-                                         std::ostream&, std::ostream&)
+bool cmDependsFortran::WriteDependencies(
+    const std::set<std::string>& sources, const std::string& obj,
+    std::ostream&, std::ostream&)
 {
   // Make sure this is a scanning instance.
-  if(!src || src[0] == '\0')
+  if(sources.empty() || sources.begin()->empty())
     {
-    cmSystemTools::Error("Cannot scan dependencies without an source file.");
+    cmSystemTools::Error("Cannot scan dependencies without a source file.");
     return false;
     }
-  if(!obj || obj[0] == '\0')
+  if(obj.empty())
     {
     cmSystemTools::Error("Cannot scan dependencies without an object file.");
     return false;
     }
 
-  // Get the information object for this source.
-  cmDependsFortranSourceInfo& info =
-    this->Internal->CreateObjectInfo(obj, src);
-
-  // Make a copy of the macros defined via ADD_DEFINITIONS
-  std::set<std::string> ppDefines(this->PPDefinitions.begin(),
-                                  this->PPDefinitions.end());
-
-  // Create the parser object. The constructor takes ppMacro and info per
-  // reference, so we may look into the resulting objects later.
-  cmDependsFortranParser parser(this, ppDefines, info);
-
-  // Push on the starting file.
-  cmDependsFortranParser_FilePush(&parser, src);
-
-  // Parse the translation unit.
-  if(cmDependsFortran_yyparse(parser.Scanner) != 0)
+  bool okay = true;
+  for(std::set<std::string>::const_iterator it = sources.begin();
+      it != sources.end(); ++it)
     {
-    // Failed to parse the file.  Report failure to write dependencies.
-    return false;
-    }
+    const std::string& src = *it;
+    // Get the information object for this source.
+    cmDependsFortranSourceInfo& info =
+      this->Internal->CreateObjectInfo(obj.c_str(), src.c_str());
 
-  return true;
+    // Make a copy of the macros defined via ADD_DEFINITIONS
+    std::set<std::string> ppDefines(this->PPDefinitions.begin(),
+                                    this->PPDefinitions.end());
+
+    // Create the parser object. The constructor takes ppMacro and info per
+    // reference, so we may look into the resulting objects later.
+    cmDependsFortranParser parser(this, ppDefines, info);
+
+    // Push on the starting file.
+    cmDependsFortranParser_FilePush(&parser, src.c_str());
+
+    // Parse the translation unit.
+    if(cmDependsFortran_yyparse(parser.Scanner) != 0)
+      {
+      // Failed to parse the file.  Report failure to write dependencies.
+      okay = false;
+      }
+    }
+  return okay;
 }
 
 //----------------------------------------------------------------------------
@@ -447,9 +448,11 @@ cmDependsFortran
   for(std::set<cmStdString>::const_iterator i = info.Includes.begin();
       i != info.Includes.end(); ++i)
     {
-    makeDepends << obj << ": "
-       << cmSystemTools::ConvertToOutputPath(i->c_str()).c_str()
-       << std::endl;
+    makeDepends << obj << ": " <<
+      this->LocalGenerator->Convert(i->c_str(),
+                                    cmLocalGenerator::HOME_OUTPUT,
+                                    cmLocalGenerator::MAKEFILE)
+                << std::endl;
     internalDepends << " " << i->c_str() << std::endl;
     }
   makeDepends << std::endl;
@@ -496,7 +499,7 @@ cmDependsFortran
       std::string stampFile =
         this->LocalGenerator->Convert(required->second.c_str(),
                                       cmLocalGenerator::HOME_OUTPUT,
-                                      cmLocalGenerator::SHELL);
+                                      cmLocalGenerator::MAKEFILE);
       makeDepends << obj << ": " << stampFile << "\n";
       }
     else
@@ -509,7 +512,7 @@ cmDependsFortran
         module =
           this->LocalGenerator->Convert(module.c_str(),
                                         cmLocalGenerator::HOME_OUTPUT,
-                                        cmLocalGenerator::SHELL);
+                                        cmLocalGenerator::MAKEFILE);
         makeDepends << obj << ": " << module << "\n";
         }
       }
@@ -813,8 +816,8 @@ bool cmDependsFortran::ModulesDiffer(const char* modFile,
    *   -GNU
    *   -Intel
    *
-   * Eat the stream content until all recompile only realated changes
-   * are left bedind.
+   * Eat the stream content until all recompile only related changes
+   * are left behind.
    */
   if (strcmp(compilerId, "GNU") == 0 )
     {
@@ -855,7 +858,7 @@ bool cmDependsFortran::ModulesDiffer(const char* modFile,
       }
     }
 
-  // Compare the remainng content.  If no compiler id matched above,
+  // Compare the remaining content.  If no compiler id matched above,
   // including the case none was given, this will compare the whole
   // content.
   if(!cmDependsFortranStreamsDiffer(finModFile, finStampFile))
@@ -892,7 +895,7 @@ bool cmDependsFortran::FindIncludeFile(const char* dir,
       }
 
     // Search the include path for the file.
-    for(std::vector<std::string>::const_iterator i = 
+    for(std::vector<std::string>::const_iterator i =
           this->IncludePath.begin(); i != this->IncludePath.end(); ++i)
       {
       fullName = *i;
@@ -1212,7 +1215,7 @@ void cmDependsFortranParser_RuleElif(cmDependsFortranParser* parser)
    * cmDependsFortranParser_RuleIf(..)
    */
 
-  // Allways taken unless an #ifdef or #ifndef-branch has been taken
+  // Always taken unless an #ifdef or #ifndef-branch has been taken
   // already.  If the second condition isn't meet already
   // (parser->InPPFalseBranch == 0) correct it.
   if(!parser->SkipToEnd.empty() &&
@@ -1231,7 +1234,7 @@ void cmDependsFortranParser_RuleElse(cmDependsFortranParser* parser)
     return;
     }
 
-  // parser->InPPFalseBranch is either 0 or 1.  We change it denpending on
+  // parser->InPPFalseBranch is either 0 or 1.  We change it depending on
   // parser->SkipToEnd.top()
   if(!parser->SkipToEnd.empty() &&
      parser->SkipToEnd.top())

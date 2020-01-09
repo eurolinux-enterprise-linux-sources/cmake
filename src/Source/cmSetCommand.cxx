@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmSetCommand.cxx,v $
-  Language:  C++
-  Date:      $Date: 2009-01-13 18:03:53 $
-  Version:   $Revision: 1.33.2.1 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmSetCommand.h"
 
 // cmSetCommand
@@ -25,7 +20,7 @@ bool cmSetCommand
     this->SetError("called with incorrect number of arguments");
     return false;
     }
-  
+
   // watch for ENV signatures
   const char* variable = args[0].c_str(); // VAR is always first
   if (!strncmp(variable,"ENV{",4) && strlen(variable) > 5)
@@ -36,7 +31,7 @@ bool cmSetCommand
     varName[strlen(variable)-5] = '\0';
     std::string putEnvArg = varName;
     putEnvArg += "=";
-    
+
     // what is the current value if any
     const char *currValue = getenv(varName);
     delete [] varName;
@@ -52,7 +47,7 @@ bool cmSetCommand
         }
       return true;
       }
-    
+
     // if it will be cleared, then clear it if it isn;t already clear
     if (currValue)
       {
@@ -60,7 +55,7 @@ bool cmSetCommand
       }
     return true;
     }
-  
+
   // SET (VAR) // Removes the definition of VAR.
   if (args.size() == 1)
     {
@@ -68,7 +63,7 @@ bool cmSetCommand
     return true;
     }
 
-  // here are the remaining options 
+  // here are the remaining options
   //  SET (VAR value )
   //  SET (VAR CACHE TYPE "doc String" [FORCE])
   //  SET (VAR value CACHE TYPE "doc string" [FORCE])
@@ -76,11 +71,10 @@ bool cmSetCommand
   bool cache = false; // optional
   bool force = false; // optional
   bool parentScope = false;
-  cmCacheManager::CacheEntryType type 
+  cmCacheManager::CacheEntryType type
     = cmCacheManager::STRING; // required if cache
   const char* docstring = 0; // required if cache
-  std::string::size_type cacheStart = 0;
-  
+
   unsigned int ignoreLastArgs = 0;
   // look for PARENT_SCOPE argument
   if (args.size() > 1 && args[args.size()-1] == "PARENT_SCOPE")
@@ -105,7 +99,7 @@ bool cmSetCommand
       }
     }
 
-  // collect any values into a single semi-colon seperated value list
+  // collect any values into a single semi-colon separated value list
   if(static_cast<unsigned short>(args.size()) >
      static_cast<unsigned short>(1 + ignoreLastArgs))
     {
@@ -135,23 +129,23 @@ bool cmSetCommand
   // we should be nice and try to catch some simple screwups if the last or
   // next to last args are CACHE then they screwed up.  If they used FORCE
   // without CACHE they screwed up
-  if (args[args.size() - 1] == "CACHE" ||
-      args.size() > 1 && args[args.size() - 2] == "CACHE" ||
-      force && !cache)
+  if ((args[args.size() - 1] == "CACHE") ||
+      (args.size() > 1 && args[args.size() - 2] == "CACHE") ||
+      (force && !cache))
     {
     this->SetError("given invalid arguments for CACHE mode.");
     return false;
     }
-  
+
   if(cache)
     {
-    cacheStart = args.size() - 3 - (force ? 1 : 0);
+    std::string::size_type cacheStart = args.size() - 3 - (force ? 1 : 0);
     type = cmCacheManager::StringToType(args[cacheStart+1].c_str());
     docstring = args[cacheStart+2].c_str();
     }
 
   // see if this is already in the cache
-  cmCacheManager::CacheIterator it = 
+  cmCacheManager::CacheIterator it =
     this->Makefile->GetCacheManager()->GetCacheIterator(variable);
   if(!it.IsAtEnd() && (it.GetType() != cmCacheManager::UNINITIALIZED))
     {
@@ -164,7 +158,7 @@ bool cmSetCommand
       return true;
       }
     }
-  
+
   // if it is meant to be in the cache then define it in the cache
   if(cache)
     {

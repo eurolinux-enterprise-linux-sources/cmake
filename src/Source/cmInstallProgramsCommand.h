@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmInstallProgramsCommand.h,v $
-  Language:  C++
-  Date:      $Date: 2008-01-23 15:27:59 $
-  Version:   $Revision: 1.20 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmInstallProgramsCommand_h
 #define cmInstallProgramsCommand_h
 
@@ -23,7 +18,7 @@
  * \brief Specifies where to install some programs
  *
  * cmInstallProgramsCommand specifies the relative path where a list of
- * programs should be installed.  
+ * programs should be installed.
  */
 class cmInstallProgramsCommand : public cmCommand
 {
@@ -31,7 +26,7 @@ public:
   /**
    * This is a virtual constructor for the command.
    */
-  virtual cmCommand* Clone() 
+  virtual cmCommand* Clone()
     {
     return new cmInstallProgramsCommand;
     }
@@ -46,16 +41,16 @@ public:
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() { return "install_programs";}
+  virtual const char* GetName() const { return "install_programs";}
 
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation() 
+  virtual const char* GetTerseDocumentation() const
     {
     return "Deprecated. Use the install(PROGRAMS ) command instead.";
     }
-  
+
   /**
    * This is called at the end after all the information
    * specified by the command is accumulated. Most commands do
@@ -64,10 +59,12 @@ public:
    */
   virtual void FinalPass();
 
+  virtual bool HasFinalPass() const { return true; }
+
   /**
    * More documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
     return
       "This command has been superceded by the install command.  It "
@@ -90,9 +87,9 @@ public:
       "The directory <dir> is relative to the installation prefix, which "
       "is stored in the variable CMAKE_INSTALL_PREFIX.";
     }
-  
+
   /** This command is kept for compatibility with older CMake versions. */
-  virtual bool IsDiscouraged()
+  virtual bool IsDiscouraged() const
     {
     return true;
     }

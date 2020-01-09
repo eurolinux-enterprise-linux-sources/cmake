@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmDocumentationFormatterMan.cxx,v $
-  Language:  C++
-  Date:      $Date: 2009-03-23 17:58:40 $
-  Version:   $Revision: 1.5.2.2 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 
 #include "cmDocumentationFormatterMan.h"
 #include "cmDocumentationSection.h"
@@ -24,7 +19,13 @@
 
 cmDocumentationFormatterMan::cmDocumentationFormatterMan()
 :cmDocumentationFormatter()
+,ManSection(1)
 {
+}
+
+void cmDocumentationFormatterMan::SetManSection(int manSection)
+{
+  this->ManSection = manSection;
 }
 
 void cmDocumentationFormatterMan
@@ -37,9 +38,9 @@ void cmDocumentationFormatterMan
     os << ".SH " << name << "\n";
     }
 
-  const std::vector<cmDocumentationEntry> &entries = 
+  const std::vector<cmDocumentationEntry> &entries =
     section.GetEntries();
-  for(std::vector<cmDocumentationEntry>::const_iterator op = entries.begin(); 
+  for(std::vector<cmDocumentationEntry>::const_iterator op = entries.begin();
       op != entries.end(); ++op)
     {
     if(op->Name.size())
@@ -63,7 +64,7 @@ void cmDocumentationFormatterMan::EscapeText(std::string& man_text)
   cmSystemTools::ReplaceString(man_text, "-", "\\-");
 }
 
-void cmDocumentationFormatterMan::PrintPreformatted(std::ostream& os, 
+void cmDocumentationFormatterMan::PrintPreformatted(std::ostream& os,
                                                     const char* text)
 {
   std::string man_text = text;
@@ -74,7 +75,7 @@ void cmDocumentationFormatterMan::PrintPreformatted(std::ostream& os,
   os << ".fi\n\n";
 }
 
-void cmDocumentationFormatterMan::PrintParagraph(std::ostream& os, 
+void cmDocumentationFormatterMan::PrintParagraph(std::ostream& os,
                                                  const char* text)
 {
   std::string man_text = text;
@@ -92,7 +93,7 @@ void cmDocumentationFormatterMan::PrintHeader(const char* docname,
 
   this->EscapeText(s_docname);
   this->EscapeText(s_appname);
-  os << ".TH " << s_docname << " 1 \""
+  os << ".TH " << s_docname << " " << this->ManSection << " \""
     << cmSystemTools::GetCurrentDateTime("%B %d, %Y").c_str()
     << "\" \"" << s_appname
     << " " << cmVersion::GetCMakeVersion()

@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmComputeLinkDepends.cxx,v $
-  Language:  C++
-  Date:      $Date: 2009-04-07 19:32:07 $
-  Version:   $Revision: 1.12.2.8 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmComputeLinkDepends.h"
 
 #include "cmComputeComponentGraph.h"
@@ -32,7 +27,7 @@
 This file computes an ordered list of link items to use when linking a
 single target in one configuration.  Each link item is identified by
 the string naming it.  A graph of dependencies is created in which
-each node corresponds to one item and directed eges lead from nodes to
+each node corresponds to one item and directed edges lead from nodes to
 those which must *follow* them on the link line.  For example, the
 graph
 
@@ -47,7 +42,7 @@ search of the link dependencies starting from the main target.
 
 There are two types of items: those with known direct dependencies and
 those without known dependencies.  We will call the two types "known
-items" and "unknown items", respecitvely.  Known items are those whose
+items" and "unknown items", respectively.  Known items are those whose
 names correspond to targets (built or imported) and those for which an
 old-style <item>_LIB_DEPENDS variable is defined.  All other items are
 unknown and we must infer dependencies for them.  For items that look
@@ -74,7 +69,7 @@ We can also infer the edge
 because *every* time A appears B is seen on its right.  We do not know
 whether A really needs symbols from B to link, but it *might* so we
 must preserve their order.  This is the case also for the following
-explict lists:
+explicit lists:
 
   X: A B Y
   Y: A B
@@ -155,7 +150,7 @@ times the component needs to be seen (once for trivial components,
 twice for non-trivial).  If at any time another component finishes and
 re-adds an already pending component, the pending component is reset
 so that it needs to be seen in its entirety again.  This ensures that
-all dependencies of a component are satisified no matter where it
+all dependencies of a component are satisfied no matter where it
 appears.
 
 After the original link line has been completed, we append to it the
@@ -177,10 +172,11 @@ satisfy dependencies.
 
 //----------------------------------------------------------------------------
 cmComputeLinkDepends
-::cmComputeLinkDepends(cmTarget* target, const char* config)
+::cmComputeLinkDepends(cmTarget* target, const char* config, cmTarget* head)
 {
   // Store context information.
   this->Target = target;
+  this->HeadTarget = head;
   this->Makefile = this->Target->GetMakefile();
   this->LocalGenerator = this->Makefile->GetLocalGenerator();
   this->GlobalGenerator = this->LocalGenerator->GetGlobalGenerator();
@@ -223,7 +219,7 @@ std::vector<cmComputeLinkDepends::LinkEntry> const&
 cmComputeLinkDepends::Compute()
 {
   // Follow the link dependencies of the target to be linked.
-  this->AddTargetLinkEntries(-1, this->Target->GetOriginalLinkLibraries());
+  this->AddDirectLinkEntries();
 
   // Complete the breadth-first search of dependencies.
   while(!this->BFSQueue.empty())
@@ -290,7 +286,7 @@ cmComputeLinkDepends::AllocateLinkEntry(std::string const& item)
     lei = this->LinkEntryIndex.insert(index_entry).first;
   this->EntryList.push_back(LinkEntry());
   this->InferredDependSets.push_back(0);
-  this->EntryConstraintGraph.push_back(NodeList());
+  this->EntryConstraintGraph.push_back(EdgeList());
   return lei;
 }
 
@@ -356,27 +352,45 @@ void cmComputeLinkDepends::FollowLinkEntry(BFSEntry const& qe)
   if(entry.Target)
     {
     // Follow the target dependencies.
-    if(cmTargetLinkInterface const* iface =
-       entry.Target->GetLinkInterface(this->Config))
+    if(cmTarget::LinkInterface const* iface =
+       entry.Target->GetLinkInterface(this->Config, this->HeadTarget))
       {
       // This target provides its own link interface information.
       this->AddLinkEntries(depender_index, iface->Libraries);
 
       // Handle dependent shared libraries.
-      this->QueueSharedDependencies(depender_index, iface->SharedDeps);
-      }
-    else if(!entry.Target->IsImported() &&
-            entry.Target->GetType() != cmTarget::EXECUTABLE)
-      {
-      // Use the target's link implementation as the interface.
-      this->AddTargetLinkEntries(depender_index,
-                                 entry.Target->GetOriginalLinkLibraries());
+      this->FollowSharedDeps(depender_index, iface);
+
+      // Support for CMP0003.
+      for(std::vector<std::string>::const_iterator
+            oi = iface->WrongConfigLibraries.begin();
+          oi != iface->WrongConfigLibraries.end(); ++oi)
+        {
+        this->CheckWrongConfigItem(depender_index, *oi);
+        }
       }
     }
   else
     {
     // Follow the old-style dependency list.
     this->AddVarLinkEntries(depender_index, qe.LibDepends);
+    }
+}
+
+//----------------------------------------------------------------------------
+void
+cmComputeLinkDepends
+::FollowSharedDeps(int depender_index, cmTarget::LinkInterface const* iface,
+                   bool follow_interface)
+{
+  // Follow dependencies if we have not followed them already.
+  if(this->SharedDepFollowed.insert(depender_index).second)
+    {
+    if(follow_interface)
+      {
+      this->QueueSharedDependencies(depender_index, iface->Libraries);
+      }
+    this->QueueSharedDependencies(depender_index, iface->SharedDeps);
     }
 }
 
@@ -430,11 +444,11 @@ void cmComputeLinkDepends::HandleSharedDependency(SharedDepEntry const& dep)
   // Target items may have their own dependencies.
   if(entry.Target)
     {
-    if(cmTargetLinkInterface const* iface =
-       entry.Target->GetLinkInterface(this->Config))
+    if(cmTarget::LinkInterface const* iface =
+       entry.Target->GetLinkInterface(this->Config, this->HeadTarget))
       {
-      // We use just the shared dependencies, not the interface.
-      this->QueueSharedDependencies(index, iface->SharedDeps);
+      // Follow public and private dependencies transitively.
+      this->FollowSharedDeps(index, iface, true);
       }
     }
 }
@@ -516,27 +530,18 @@ void cmComputeLinkDepends::AddVarLinkEntries(int depender_index,
 }
 
 //----------------------------------------------------------------------------
-void
-cmComputeLinkDepends::AddTargetLinkEntries(int depender_index,
-                                           LinkLibraryVectorType const& libs)
+void cmComputeLinkDepends::AddDirectLinkEntries()
 {
-  // Look for entries meant for this configuration.
-  std::vector<std::string> actual_libs;
-  for(cmTarget::LinkLibraryVectorType::const_iterator li = libs.begin();
-      li != libs.end(); ++li)
+  // Add direct link dependencies in this configuration.
+  cmTarget::LinkImplementation const* impl =
+    this->Target->GetLinkImplementation(this->Config, this->HeadTarget);
+  this->AddLinkEntries(-1, impl->Libraries);
+  for(std::vector<std::string>::const_iterator
+        wi = impl->WrongConfigLibraries.begin();
+      wi != impl->WrongConfigLibraries.end(); ++wi)
     {
-    if(li->second == cmTarget::GENERAL || li->second == this->LinkType)
-      {
-      actual_libs.push_back(li->first);
-      }
-    else if(this->OldLinkDirMode)
-      {
-      this->CheckWrongConfigItem(depender_index, li->first);
-      }
+    this->CheckWrongConfigItem(-1, *wi);
     }
-
-  // Add these entries.
-  this->AddLinkEntries(depender_index, actual_libs);
 }
 
 //----------------------------------------------------------------------------
@@ -553,7 +558,7 @@ cmComputeLinkDepends::AddLinkEntries(int depender_index,
     {
     // Skip entries that will resolve to the target getting linked or
     // are empty.
-    std::string item = this->CleanItemName(*li);
+    std::string item = this->Target->CheckCMP0004(*li);
     if(item == this->Target->GetName() || item.empty())
       {
       continue;
@@ -606,66 +611,6 @@ cmComputeLinkDepends::AddLinkEntries(int depender_index,
 }
 
 //----------------------------------------------------------------------------
-std::string cmComputeLinkDepends::CleanItemName(std::string const& item)
-{
-  // Strip whitespace off the library names because we used to do this
-  // in case variables were expanded at generate time.  We no longer
-  // do the expansion but users link to libraries like " ${VAR} ".
-  std::string lib = item;
-  std::string::size_type pos = lib.find_first_not_of(" \t\r\n");
-  if(pos != lib.npos)
-    {
-    lib = lib.substr(pos, lib.npos);
-    }
-  pos = lib.find_last_not_of(" \t\r\n");
-  if(pos != lib.npos)
-    {
-    lib = lib.substr(0, pos+1);
-    }
-  if(lib != item)
-    {
-    switch(this->Target->GetPolicyStatusCMP0004())
-      {
-      case cmPolicies::WARN:
-        {
-        cmOStringStream w;
-        w << (this->Makefile->GetPolicies()
-              ->GetPolicyWarning(cmPolicies::CMP0004)) << "\n"
-          << "Target \"" << this->Target->GetName() << "\" links to item \""
-          << item << "\" which has leading or trailing whitespace.";
-        this->CMakeInstance->IssueMessage(cmake::AUTHOR_WARNING, w.str(),
-                                          this->Target->GetBacktrace());
-        }
-      case cmPolicies::OLD:
-        break;
-      case cmPolicies::NEW:
-        {
-        cmOStringStream e;
-        e << "Target \"" << this->Target->GetName() << "\" links to item \""
-          << item << "\" which has leading or trailing whitespace.  "
-          << "This is now an error according to policy CMP0004.";
-        this->CMakeInstance->IssueMessage(cmake::FATAL_ERROR, e.str(),
-                                          this->Target->GetBacktrace());
-        }
-        break;
-      case cmPolicies::REQUIRED_IF_USED:
-      case cmPolicies::REQUIRED_ALWAYS:
-        {
-        cmOStringStream e;
-        e << (this->Makefile->GetPolicies()
-              ->GetRequiredPolicyError(cmPolicies::CMP0004)) << "\n"
-          << "Target \"" << this->Target->GetName() << "\" links to item \""
-          << item << "\" which has leading or trailing whitespace.";
-        this->CMakeInstance->IssueMessage(cmake::FATAL_ERROR, e.str(),
-                                          this->Target->GetBacktrace());
-        }
-        break;
-      }
-    }
-  return lib;
-}
-
-//----------------------------------------------------------------------------
 cmTarget* cmComputeLinkDepends::FindTargetToLink(int depender_index,
                                                  const char* name)
 {
@@ -686,6 +631,19 @@ cmTarget* cmComputeLinkDepends::FindTargetToLink(int depender_index,
   if(tgt && tgt->GetType() == cmTarget::EXECUTABLE &&
      !tgt->IsExecutableWithExports())
     {
+    tgt = 0;
+    }
+
+  if(tgt && tgt->GetType() == cmTarget::OBJECT_LIBRARY)
+    {
+    cmOStringStream e;
+    e << "Target \"" << this->Target->GetName() << "\" links to "
+      "OBJECT library \"" << tgt->GetName() << "\" but this is not "
+      "allowed.  "
+      "One may link only to STATIC or SHARED libraries, or to executables "
+      "with the ENABLE_EXPORTS property set.";
+    this->CMakeInstance->IssueMessage(cmake::FATAL_ERROR, e.str(),
+                                      this->Target->GetBacktrace());
     tgt = 0;
     }
 
@@ -742,7 +700,7 @@ void cmComputeLinkDepends::CleanConstraintGraph()
     cmsys_stl::sort(i->begin(), i->end());
 
     // Make the edge list unique.
-    NodeList::iterator last = cmsys_stl::unique(i->begin(), i->end());
+    EdgeList::iterator last = cmsys_stl::unique(i->begin(), i->end());
     i->erase(last, i->end());
     }
 }
@@ -754,9 +712,9 @@ void cmComputeLinkDepends::DisplayConstraintGraph()
   cmOStringStream e;
   for(unsigned int i=0; i < this->EntryConstraintGraph.size(); ++i)
     {
-    NodeList const& nl = this->EntryConstraintGraph[i];
+    EdgeList const& nl = this->EntryConstraintGraph[i];
     e << "item " << i << " is [" << this->EntryList[i].Item << "]\n";
-    for(NodeList::const_iterator j = nl.begin(); j != nl.end(); ++j)
+    for(EdgeList::const_iterator j = nl.begin(); j != nl.end(); ++j)
       {
       e << "  item " << *j << " must follow it\n";
       }
@@ -831,10 +789,11 @@ cmComputeLinkDepends::DisplayComponents()
       fprintf(stderr, "  item %d [%s]\n", i,
               this->EntryList[i].Item.c_str());
       }
-    NodeList const& ol = this->CCG->GetComponentGraphEdges(c);
-    for(NodeList::const_iterator oi = ol.begin(); oi != ol.end(); ++oi)
+    EdgeList const& ol = this->CCG->GetComponentGraphEdges(c);
+    for(EdgeList::const_iterator oi = ol.begin(); oi != ol.end(); ++oi)
       {
-      fprintf(stderr, "  followed by Component (%d)\n", *oi);
+      int i = *oi;
+      fprintf(stderr, "  followed by Component (%d)\n", i);
       }
     fprintf(stderr, "  topo order index %d\n",
             this->ComponentOrder[c]);
@@ -857,8 +816,8 @@ void cmComputeLinkDepends::VisitComponent(unsigned int c)
   // Visit the neighbors of the component first.
   // Run in reverse order so the topological order will preserve the
   // original order where there are no constraints.
-  NodeList const& nl = this->CCG->GetComponentGraphEdges(c);
-  for(NodeList::const_reverse_iterator ni = nl.rbegin();
+  EdgeList const& nl = this->CCG->GetComponentGraphEdges(c);
+  for(EdgeList::const_reverse_iterator ni = nl.rbegin();
       ni != nl.rend(); ++ni)
     {
     this->VisitComponent(*ni);
@@ -929,8 +888,8 @@ void cmComputeLinkDepends::VisitEntry(int index)
   // are now pending.
   if(completed)
     {
-    NodeList const& ol = this->CCG->GetComponentGraphEdges(component);
-    for(NodeList::const_iterator oi = ol.begin(); oi != ol.end(); ++oi)
+    EdgeList const& ol = this->CCG->GetComponentGraphEdges(component);
+    for(EdgeList::const_iterator oi = ol.begin(); oi != ol.end(); ++oi)
       {
       // This entire component is now pending no matter whether it has
       // been partially seen already.
@@ -968,13 +927,34 @@ cmComputeLinkDepends::MakePendingComponent(unsigned int component)
     // advantage that the item directly linked by a target requiring
     // this component will come first which minimizes the number of
     // repeats needed.
-    pc.Count = 2;
+    pc.Count = this->ComputeComponentCount(nl);
     }
 
   // Store the entries to be seen.
   pc.Entries.insert(nl.begin(), nl.end());
 
   return pc;
+}
+
+//----------------------------------------------------------------------------
+int cmComputeLinkDepends::ComputeComponentCount(NodeList const& nl)
+{
+  int count = 2;
+  for(NodeList::const_iterator ni = nl.begin(); ni != nl.end(); ++ni)
+    {
+    if(cmTarget* target = this->EntryList[*ni].Target)
+      {
+      if(cmTarget::LinkInterface const* iface =
+         target->GetLinkInterface(this->Config, this->HeadTarget))
+        {
+        if(iface->Multiplicity > count)
+          {
+          count = iface->Multiplicity;
+          }
+        }
+      }
+    }
+  return count;
 }
 
 //----------------------------------------------------------------------------

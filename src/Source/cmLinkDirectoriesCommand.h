@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmLinkDirectoriesCommand.h,v $
-  Language:  C++
-  Date:      $Date: 2009-02-04 22:04:49 $
-  Version:   $Revision: 1.13.2.1 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmLinkDirectoriesCommand_h
 #define cmLinkDirectoriesCommand_h
 
@@ -23,8 +18,8 @@
  * \brief Define a list of directories containing files to link.
  *
  * cmLinkDirectoriesCommand is used to specify a list
- * of directories containing files to link into executable(s). 
- * Note that the command supports the use of CMake built-in variables 
+ * of directories containing files to link into executable(s).
+ * Note that the command supports the use of CMake built-in variables
  * such as CMAKE_BINARY_DIR and CMAKE_SOURCE_DIR.
  */
 class cmLinkDirectoriesCommand : public cmCommand
@@ -33,7 +28,7 @@ public:
   /**
    * This is a virtual constructor for the command.
    */
-  virtual cmCommand* Clone() 
+  virtual cmCommand* Clone()
     {
     return new cmLinkDirectoriesCommand;
     }
@@ -48,33 +43,38 @@ public:
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() { return "link_directories";}
+  virtual const char* GetName() const { return "link_directories";}
 
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation() 
+  virtual const char* GetTerseDocumentation() const
     {
     return "Specify directories in which the linker will look for libraries.";
     }
-  
+
   /**
    * More documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
     return
       "  link_directories(directory1 directory2 ...)\n"
       "Specify the paths in which the linker should search for libraries. "
       "The command will apply only to targets created after it is called. "
-      "For historical reasons, relative paths given to this command are "
-      "passed to the linker unchanged "
-      "(unlike many CMake commands which interpret them relative to the "
-      "current source directory)."
+      "Relative paths given to this command are interpreted as relative to "
+      "the current source directory, see CMP0015. \n"
+      "Note that this command is rarely necessary.  Library locations "
+      "returned by find_package() and find_library() are absolute paths.  "
+      "Pass these absolute library file paths directly to the "
+      "target_link_libraries() command.  CMake will ensure the linker finds "
+      "them."
       ;
     }
-  
+
   cmTypeMacro(cmLinkDirectoriesCommand, cmCommand);
+private:
+  void AddLinkDir(std::string const& dir);
 };
 
 

@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmFindPathCommand.cxx,v $
-  Language:  C++
-  Date:      $Date: 2008-06-13 12:55:17 $
-  Version:   $Revision: 1.41.2.1 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #include "cmFindPathCommand.h"
 #include "cmCacheManager.h"
 
@@ -23,6 +18,11 @@ cmFindPathCommand::cmFindPathCommand()
 {
   this->EnvironmentPath = "INCLUDE";
   this->IncludeFileInPath = false;
+}
+
+void cmFindPathCommand::GenerateDocumentation()
+{
+  this->cmFindBase::GenerateDocumentation();
   cmSystemTools::ReplaceString(this->GenericDocumentation,
                                "FIND_XXX", "find_path");
   cmSystemTools::ReplaceString(this->GenericDocumentation,
@@ -36,27 +36,25 @@ cmFindPathCommand::cmFindPathCommand()
   cmSystemTools::ReplaceString(this->GenericDocumentation,
                                "XXX_SYSTEM", "INCLUDE");
   cmSystemTools::ReplaceString(this->GenericDocumentation,
-                               "CMAKE_SYSTEM_XXX_PATH", 
-                               "CMAKE_SYSTEM_INCLUDE_PATH"); 
+                               "CMAKE_SYSTEM_XXX_PATH",
+                               "CMAKE_SYSTEM_INCLUDE_PATH");
   cmSystemTools::ReplaceString(this->GenericDocumentation,
-                               "SEARCH_XXX_DESC", 
+                               "SEARCH_XXX_DESC",
                                "directory containing the named file");
   cmSystemTools::ReplaceString(this->GenericDocumentation,
                                "SEARCH_XXX", "file in a directory");
   cmSystemTools::ReplaceString(this->GenericDocumentation,
                                "XXX_SUBDIR", "include");
+  cmSystemTools::ReplaceString(
+    this->GenericDocumentation,
+    "XXX_EXTRA_PREFIX_ENTRY",
+    "   <prefix>/include/<arch> if CMAKE_LIBRARY_ARCHITECTURE is set, and\n");
   cmSystemTools::ReplaceString(this->GenericDocumentation,
-                               "CMAKE_FIND_ROOT_PATH_MODE_XXX", 
+                               "CMAKE_FIND_ROOT_PATH_MODE_XXX",
                                "CMAKE_FIND_ROOT_PATH_MODE_INCLUDE");
-
-  this->ExtraDocAdded = false;
-}
-
-const char* cmFindPathCommand::GetFullDocumentation()
-{
-  if(!this->ExtraDocAdded && !this->IncludeFileInPath)
+  if(!this->IncludeFileInPath)
     {
-    this->GenericDocumentation += 
+    this->GenericDocumentation +=
       "\n"
       "When searching for frameworks, if the file is specified as "
       "A/b.h, then the framework search will look for "
@@ -64,9 +62,7 @@ const char* cmFindPathCommand::GetFullDocumentation()
       "If that is found the path will be set to the path to the framework. "
       "CMake will convert this to the correct -F option to include the "
       "file. ";
-    this->ExtraDocAdded = true;
     }
-  return this->GenericDocumentation.c_str();
 }
 
 // cmFindPathCommand
@@ -110,7 +106,7 @@ bool cmFindPathCommand
     (this->VariableName.c_str(),
      (this->VariableName + "-NOTFOUND").c_str(),
      this->VariableDocumentation.c_str(),
-     (this->IncludeFileInPath) ? 
+     (this->IncludeFileInPath) ?
      cmCacheManager::FILEPATH :cmCacheManager::PATH);
   return true;
 }
@@ -149,14 +145,14 @@ cmFindPathCommand::FindHeaderInFramework(std::string const& file,
     // remove the name from the slash;
     fileName = fileName.substr(pos+1);
     frameWorkName = file;
-    frameWorkName = 
+    frameWorkName =
       frameWorkName.substr(0, frameWorkName.size()-fileName.size()-1);
     // if the framework has a path in it then just use the filename
     if(frameWorkName.find("/") != frameWorkName.npos)
       {
       fileName = file;
       frameWorkName = "";
-      } 
+      }
     if(frameWorkName.size())
       {
       std::string fpath = dir;
@@ -166,7 +162,7 @@ cmFindPathCommand::FindHeaderInFramework(std::string const& file,
       intPath += "/Headers/";
       intPath += fileName;
       if(cmSystemTools::FileExists(intPath.c_str()))
-        { 
+        {
         if(this->IncludeFileInPath)
           {
           return intPath;

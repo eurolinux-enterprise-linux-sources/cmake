@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmGlobalVisualStudio71Generator.h,v $
-  Language:  C++
-  Date:      $Date: 2008-02-15 16:49:58 $
-  Version:   $Revision: 1.18 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmGlobalVisualStudio71Generator_h
 #define cmGlobalVisualStudio71Generator_h
 
@@ -28,18 +23,19 @@
 class cmGlobalVisualStudio71Generator : public cmGlobalVisualStudio7Generator
 {
 public:
-  cmGlobalVisualStudio71Generator();
-  static cmGlobalGenerator* New() 
-    { return new cmGlobalVisualStudio71Generator; }
-  
+  cmGlobalVisualStudio71Generator(const char* platformName = NULL);
+  static cmGlobalGeneratorFactory* NewFactory() {
+    return new cmGlobalGeneratorSimpleFactory
+      <cmGlobalVisualStudio71Generator>(); }
+
   ///! Get the name for the generator.
   virtual const char* GetName() const {
     return cmGlobalVisualStudio71Generator::GetActualName();}
   static const char* GetActualName() {return "Visual Studio 7 .NET 2003";}
 
   /** Get the documentation entry for this generator.  */
-  virtual void GetDocumentation(cmDocumentationEntry& entry) const;
-  
+  static void GetDocumentation(cmDocumentationEntry& entry);
+
   ///! Create a local generator appropriate to this Global Generator
   virtual cmLocalGenerator *CreateLocalGenerator();
 
@@ -57,23 +53,24 @@ public:
   virtual std::string GetUserMacrosRegKeyBase();
 
 protected:
-  virtual void AddPlatformDefinitions(cmMakefile* mf);
-  virtual void WriteSLNFile(std::ostream& fout, 
+  virtual const char* GetIDEVersion() { return "7.1"; }
+  virtual void WriteSLNFile(std::ostream& fout,
                             cmLocalGenerator* root,
                             std::vector<cmLocalGenerator*>& generators);
   virtual void WriteSolutionConfigurations(std::ostream& fout);
-  virtual void WriteProject(std::ostream& fout, 
+  virtual void WriteProject(std::ostream& fout,
                             const char* name, const char* path, cmTarget &t);
-  virtual void WriteProjectDepends(std::ostream& fout, 
+  virtual void WriteProjectDepends(std::ostream& fout,
                            const char* name, const char* path, cmTarget &t);
-  virtual void WriteProjectConfigurations(std::ostream& fout,
-                                          const char* name,
-                                          bool partOfDefaultBuild);
+  virtual void WriteProjectConfigurations(
+    std::ostream& fout, const char* name, cmTarget::TargetType type,
+    const std::set<std::string>& configsPartOfDefaultBuild,
+    const char* platformMapping = NULL);
   virtual void WriteExternalProject(std::ostream& fout,
                                     const char* name,
                                     const char* path,
-                                    const std::vector<std::string>& depends);
-  virtual void WriteSLNFooter(std::ostream& fout);
+                                    const char* typeGuid,
+                                    const std::set<cmStdString>& depends);
   virtual void WriteSLNHeader(std::ostream& fout);
 
   std::string ProjectConfigurationSectionName;

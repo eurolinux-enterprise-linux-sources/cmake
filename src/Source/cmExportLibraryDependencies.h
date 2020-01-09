@@ -1,19 +1,14 @@
-/*=========================================================================
+/*============================================================================
+  CMake - Cross Platform Makefile Generator
+  Copyright 2000-2009 Kitware, Inc., Insight Software Consortium
 
-  Program:   CMake - Cross-Platform Makefile Generator
-  Module:    $RCSfile: cmExportLibraryDependencies.h,v $
-  Language:  C++
-  Date:      $Date: 2008-02-20 18:36:38 $
-  Version:   $Revision: 1.10 $
+  Distributed under the OSI-approved BSD License (the "License");
+  see accompanying file Copyright.txt for details.
 
-  Copyright (c) 2002 Kitware, Inc., Insight Consortium.  All rights reserved.
-  See Copyright.txt or http://www.cmake.org/HTML/Copyright.html for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
+  This software is distributed WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the License for more information.
+============================================================================*/
 #ifndef cmExportLibraryDependenciesCommand_h
 #define cmExportLibraryDependenciesCommand_h
 
@@ -23,7 +18,7 @@
  * \brief Add a test to the lists of tests to run.
  *
  * cmExportLibraryDependenciesCommand adds a test to the list of tests to run
- * 
+ *
  */
 class cmExportLibraryDependenciesCommand : public cmCommand
 {
@@ -31,7 +26,7 @@ public:
   /**
    * This is a virtual constructor for the command.
    */
-  virtual cmCommand* Clone() 
+  virtual cmCommand* Clone()
     {
     return new cmExportLibraryDependenciesCommand;
     }
@@ -45,27 +40,28 @@ public:
 
   /**
    * This is called at the end after all the information
-   * specified by the command is accumulated. 
+   * specified by the command is accumulated.
    */
   virtual void FinalPass();
+  virtual bool HasFinalPass() const { return true; }
 
   /**
    * The name of the command as specified in CMakeList.txt.
    */
-  virtual const char* GetName() { return "export_library_dependencies";}
+  virtual const char* GetName() const { return "export_library_dependencies";}
 
   /**
    * Succinct documentation.
    */
-  virtual const char* GetTerseDocumentation() 
+  virtual const char* GetTerseDocumentation() const
     {
     return "Deprecated.  Use INSTALL(EXPORT) or EXPORT command.";
     }
-  
+
   /**
    * More documentation.
    */
-  virtual const char* GetFullDocumentation()
+  virtual const char* GetFullDocumentation() const
     {
     return
       "This command generates an old-style library dependencies file.  "
@@ -87,11 +83,11 @@ public:
     }
 
   /** This command is kept for compatibility with older CMake versions. */
-  virtual bool IsDiscouraged()
+  virtual bool IsDiscouraged() const
     {
     return true;
     }
-  
+
   cmTypeMacro(cmExportLibraryDependenciesCommand, cmCommand);
 
 private:
