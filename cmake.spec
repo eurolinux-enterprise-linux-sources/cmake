@@ -13,7 +13,7 @@
 
 Name:           cmake
 Version:        2.8.11
-Release:        5%{?dist}
+Release:        4%{?dist}
 Summary:        Cross-platform make system
 
 Group:          Development/Tools
@@ -47,8 +47,6 @@ Patch5:		cmake-2.8.11-rc4-lua-5.2.patch
 Patch6:         cmake-strict_aliasing.patch
 # Desktop icon filenames should be without extension
 Patch7:         cmake-desktop_icon.patch
-# FindJNI: Add ppc64le architecture
-Patch8:         cmake-FindJNI.patch
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires:  gcc-gfortran
@@ -105,7 +103,6 @@ The %{name}-gui package contains the Qt based GUI for CMake.
 %patch5 -p1
 %patch6 -p1
 %patch7 -p1
-%patch8 -p1
 
 
 %build
@@ -202,9 +199,6 @@ update-mime-database %{_datadir}/mime &> /dev/null || :
 
 
 %changelog
-* Wed Aug 20 2014 Patsy Franklin <pfrankli@redhat.com> - 2.8.11-5
-- Add support for ppc64le to FindJNI.cmake.
-
 * Fri Jan 24 2014 Daniel Mach <dmach@redhat.com> - 2.8.11-4
 - Mass rebuild 2014-01-24
 
